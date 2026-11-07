@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ========================================================= -->
+    <!-- BUSINESS APPROVAL ROLES                                  -->
+    <!-- ========================================================= -->
+    <record id="view_employee_portal_approval_role_list" model="ir.ui.view">
+        <field name="name">employee.portal.approval.role.list</field>
+        <field name="model">employee.portal.approval.role</field>
+        <field name="arch" type="xml">
+            <list string="Approval Roles" default_order="company_id,sequence,name">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="default_user_ids" widget="many2many_tags" optional="show"/>
+                <field name="linked_role_assignment_id" string="Linked Existing Role" optional="show"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_employee_portal_approval_role_form" model="ir.ui.view">
+        <field name="name">employee.portal.approval.role.form</field>
+        <field name="model">employee.portal.approval.role</field>
+        <field name="arch" type="xml">
+            <form string="Approval Role">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. Commercial Manager"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="sequence"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="linked_role_assignment_id" options="{'no_create': True}"/>
+                            <field name="description"/>
+                        </group>
+                    </group>
+                    <group string="Default Approvers">
+                        <field name="default_user_ids" widget="many2many_tags" options="{'no_create': True}" nolabel="1"/>
+                        <div class="text-muted">Used when a project does not have its own assignment for this role.</div>
+                    </group>
+                    <notebook>
+                        <page string="Project Assignments">
+                            <field name="project_assignment_ids" context="{'default_approval_role_id': id}">
+                                <list editable="bottom">
+                                    <field name="project_id"/>
+                                    <field name="user_ids" widget="many2many_tags"/>
+                                    <field name="note" optional="show"/>
+                                    <field name="active" widget="boolean_toggle"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                    <div class="alert alert-info mt-3" role="alert">
+                        <strong>Approval Roles are business roles, not mandatory Odoo security groups.</strong>
+                        Create any position your company needs, then assign different users per project. Optionally link an existing Employee Portal role for a default user pool.
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_employee_portal_approval_role_search" model="ir.ui.view">
+        <field name="name">employee.portal.approval.role.search</field>
+        <field name="model">employee.portal.approval.role</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="default_user_ids"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <filter name="active" string="Active" domain="[('active','=',True)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_company" string="Company" context="{'group_by':'company_id'}" groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_employee_portal_approval_roles" model="ir.actions.act_window">
+        <field name="name">Approval Roles</field>
+        <field name="res_model">employee.portal.approval.role</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_employee_portal_approval_role_search"/>
+        <field name="context">{'search_default_active': 1}</field>
+    </record>
+
+    <!-- ========================================================= -->
+    <!-- PROJECT-SPECIFIC ROLE ASSIGNMENTS                         -->
+    <!-- ========================================================= -->
+    <record id="view_employee_portal_project_role_assignment_list" model="ir.ui.view">
+        <field name="name">employee.portal.project.role.assignment.list</field>
+        <field name="model">employee.portal.project.role.assignment</field>
+        <field name="arch" type="xml">
+            <list string="Project Role Assignments" editable="bottom" default_order="project_id,approval_role_id">
+                <field name="company_id" groups="base.group_multi_company" readonly="1"/>
+                <field name="project_id"/>
+                <field name="approval_role_id"/>
+                <field name="user_ids" widget="many2many_tags"/>
+                <field name="note" optional="show"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_employee_portal_project_role_assignment_search" model="ir.ui.view">
+        <field name="name">employee.portal.project.role.assignment.search</field>
+        <field name="model">employee.portal.project.role.assignment</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="project_id"/>
+                <field name="approval_role_id"/>
+                <field name="user_ids"/>
+                <filter name="active" string="Active" domain="[('active','=',True)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_project" string="Project" context="{'group_by':'project_id'}"/>
+                    <filter name="group_role" string="Approval Role" context="{'group_by':'approval_role_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_employee_portal_project_role_assignments" model="ir.actions.act_window">
+        <field name="name">Project Role Assignments</field>
+        <field name="res_model">employee.portal.project.role.assignment</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_employee_portal_project_role_assignment_search"/>
+        <field name="context">{'search_default_active': 1}</field>
+    </record>
+
+    <!-- ========================================================= -->
+    <!-- WORKFLOW DEFINITIONS                                      -->
+    <!-- ========================================================= -->
+    <record id="view_employee_portal_workflow_list" model="ir.ui.view">
+        <field name="name">employee.portal.workflow.list</field>
+        <field name="model">employee.portal.workflow</field>
+        <field name="arch" type="xml">
+            <list string="Approval Workflows" default_order="company_id,applies_to,project_id,sequence,name">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="applies_to" widget="badge"/>
+                <field name="project_id"/>
+                <field name="employee_request_type" optional="show"/>
+                <field name="step_count" string="Steps"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_employee_portal_workflow_form" model="ir.ui.view">
+        <field name="name">employee.portal.workflow.form</field>
+        <field name="model">employee.portal.workflow</field>
+        <field name="arch" type="xml">
+            <form string="Approval Workflow">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. TAAKAD GEN2 - Material Request"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="applies_to"/>
+                            <field name="project_id" options="{'no_create': True}" domain="[('company_id','=',company_id)]"/>
+                            <field name="employee_request_type" invisible="applies_to != 'employee_request'"/>
+                        </group>
+                        <group>
+                            <field name="sequence"/>
+                            <field name="active"/>
+                            <field name="step_count" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <separator string="Approval Steps"/>
+                    <field name="step_ids" nolabel="1">
+                        <list editable="bottom" default_order="sequence,id">
+                            <field name="sequence" widget="handle"/>
+                            <field name="name" string="Step" required="1"/>
+                            <field name="approver_type" required="1"/>
+                            <field name="approval_role_id" options="{'no_create': True}" domain="[('company_id','=',parent.company_id),('active','=',True)]" invisible="approver_type != 'approval_role'"/>
+                            <field name="role_assignment_id" options="{'no_create': True}" invisible="approver_type != 'role'"/>
+                            <field name="user_id" options="{'no_create': True}" invisible="approver_type != 'user'"/>
+                            <field name="description" optional="show"/>
+                        </list>
+                    </field>
+
+                    <div class="alert alert-info mt-3" role="alert">
+                        <strong>Snapshot behavior:</strong> when a request is submitted, these steps and the resolved approvers are copied onto that request. Future workflow or project-role changes do not rewrite requests already in approval.
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_employee_portal_workflow_search" model="ir.ui.view">
+        <field name="name">employee.portal.workflow.search</field>
+        <field name="model">employee.portal.workflow</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="applies_to"/>
+                <field name="employee_request_type"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <filter name="active" string="Active" domain="[('active','=',True)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_project" string="Project" context="{'group_by':'project_id'}"/>
+                    <filter name="group_type" string="Request Model" context="{'group_by':'applies_to'}"/>
+                    <filter name="group_company" string="Company" context="{'group_by':'company_id'}" groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_employee_portal_workflows" model="ir.actions.act_window">
+        <field name="name">Workflows</field>
+        <field name="res_model">employee.portal.workflow</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_employee_portal_workflow_search"/>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create a project-specific approval workflow.</p>
+            <p>Add any number of ordered steps. A step can use a configurable Approval Role, a named user, the employee's manager, the project's manager, or the project's store manager.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_employee_portal_approval_roles"
+              name="Approval Roles"
+              parent="employee_portal_suite.menu_employee_portal_configuration"
+              action="action_employee_portal_approval_roles"
+              sequence="20"
+              groups="employee_portal_suite.group_employee_portal_superadmin"/>
+
+    <menuitem id="menu_employee_portal_project_role_assignments"
+              name="Project Role Assignments"
+              parent="employee_portal_suite.menu_employee_portal_configuration"
+              action="action_employee_portal_project_role_assignments"
+              sequence="30"
+              groups="employee_portal_suite.group_employee_portal_superadmin"/>
+
+    <menuitem id="menu_employee_portal_workflows"
+              name="Workflows"
+              parent="employee_portal_suite.menu_employee_portal_configuration"
+              action="action_employee_portal_workflows"
+              sequence="40"
+              groups="employee_portal_suite.group_employee_portal_superadmin"/>
+</odoo>

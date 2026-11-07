@@ -1,0 +1,283 @@
+<?xml version='1.0' encoding='utf-8'?>
+<odoo>
+
+    <template id="portal_material_approvals_list" name="Material Approvals Page">
+        <t t-call="employee_portal_suite.employee_portal_layout">
+
+            <div class="container mt-4">
+
+    <div class="card shadow-sm border-0 eps-list-page-card">
+        <div class="card-body">
+
+            <!-- Header + Filter -->
+            <div class="material-header">
+
+                <!-- Top Row -->
+                <div class="material-header-top">
+                    <h4 class="mb-0 fw-semibold">Material Requests Approval</h4>
+
+                    <!-- Filter Dropdown -->
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="mb-0 fw-semibold small text-muted">Show:</label>
+
+                        <select id="approvalFilter" class="form-select form-select-sm" style="width:auto;">
+                            <option value="pending" t-att-selected="current_filter == 'pending'">Pending</option>
+                            <option value="approved" t-att-selected="current_filter == 'approved'">Approved</option>
+                            <option value="rejected" t-att-selected="current_filter == 'rejected'">Rejected</option>
+                            <option value="all" t-att-selected="current_filter == 'all'">All</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Search Below -->
+                <form method="get" class="material-search-form">
+                    <input type="hidden" name="filter" t-att-value="current_filter"/>
+
+                    <div class="position-relative">
+                        <input type="text" id="materialApprovalSearchInput" name="search" t-att-value="search or ''" placeholder="Search MR, employee, item, or PO" class="form-control mobile-search"/>
+
+                        <button type="submit" class="search-btn">
+                            <i class="fa fa-search"/>
+                        </button>
+
+                        <t t-if="search">
+                            <a t-att-href="'/my/employee/material/approvals?filter=%s' % current_filter" class="clear-search">
+                                <i class="fa fa-times"/>
+                            </a>
+                        </t>
+                    </div>
+                </form>
+
+            </div>
+
+
+            <!-- Table -->
+            <!-- DESKTOP TABLE -->
+            <div class="table-responsive d-none d-md-block eps-list-scroll">
+                <table class="table table-hover table-sm align-middle mb-0 material-approvals-table eps-compact-list" style="--eps-list-width:1420px">
+                    <!-- One width definition for the nine visible columns, across all filters. -->
+                    <colgroup>
+                        <col style="width: 9%;"/>
+                        <col style="width: 15%;"/>
+                        <col style="width: 14%;"/>
+                        <col style="width: 15%;"/>
+                        <col style="width: 10%;"/>
+                        <col style="width: 9%;"/>
+                        <col style="width: 10%;"/>
+                        <col style="width: 10%;"/>
+                        <col style="width: 8%;"/>
+                    </colgroup>
+
+                    <thead class="table-light">
+                        <tr>
+                            <th>Request #</th>
+                            <th>Employee</th>
+                            <th>Project</th>
+                            <th>Worksite</th>
+                            <th>Status</th>
+                            <th>PO</th>
+                            <th>Quotation</th>
+                            <th>Invoice</th>
+                            <th>Date</th>
+                            </tr>
+                    </thead>
+
+                    <tbody>
+
+                        <t t-if="shown_reqs">
+                            <t t-foreach="shown_reqs" t-as="req">
+                                <tr t-att-data-eps-record-href="'/my/employee/material/approvals/%s' % req.id" tabindex="0" role="link" class="eps-record-row">
+                                    <td class="fw-semibold"><a class="eps-record-reference" t-att-href="'/my/employee/material/approvals/%s' % req.id">
+                                        <t t-out="req.name"/>
+                                    </a></td>
+
+                                    <td><t t-out="req.employee_id.name"/></td>
+                                    <td><t t-out="req.project_id.display_name or '-'"/></td>
+                                    <td><t t-out="req.worksite"/></td>
+
+                                    <td>
+                                        <t t-out="status_badge(req)"/>
+                                    </td>
+
+                                    <td>
+                                        <t t-if="req.po_created">
+                                            <span class="badge bg-success">PO: <t t-out="req.po_name"/></span>
+                                        </t>
+                                        <t t-elif="req.no_po_required">
+                                            <span class="badge bg-info text-dark">No PO Required</span>
+                                        </t>
+                                        <t t-else="">
+                                            <span class="badge bg-light text-dark">No PO</span>
+                                        </t>
+                                    </td>
+
+                                    <td>
+                                        <span t-att-class="'badge ' + ('bg-secondary' if req.quotation_status == 'pending' else 'bg-warning text-dark' if req.quotation_status in ['remaining_2','remaining_1'] else 'bg-success' if req.quotation_status == 'uploaded' else 'bg-info text-dark')">
+                                            <t t-out="dict(req._fields['quotation_status'].selection).get(req.quotation_status)"/>
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <span class="badge bg-light text-dark">
+                                            <t t-out="dict(req._fields['accounting_docs_status'].selection).get(req.accounting_docs_status)"/>
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <small class="text-muted">
+                                            <t t-out="req.request_date"/>
+                                        </small>
+                                    </td>
+
+                                    </tr>
+                            </t>
+                        </t>
+
+                        <t t-if="not shown_reqs">
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-4">
+                                    No Requests Found.
+                                </td>
+                            </tr>
+                        </t>
+
+                    </tbody>
+                </table>
+            </div>
+            <!-- MOBILE CARD LIST -->
+            <div class="d-md-none">
+
+                <t t-if="shown_reqs">
+                    <t t-foreach="shown_reqs" t-as="req">
+
+                        <a t-att-href="'/my/employee/material/approvals/%s' % req.id" class="mobile-request-card">
+
+                            <div class="mobile-request-top">
+
+                                <div>
+                                    <div class="mobile-request-id">
+                                        <t t-out="req.name"/>
+                                    </div>
+
+                                    <div class="mobile-request-date">
+                                        <t t-out="req.employee_id.name"/>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <t t-out="status_badge(req)"/>
+                                </div>
+
+                            </div>
+
+                            <div class="mobile-request-body">
+
+                                <div>
+                                    <span class="label">Project</span>
+                                    <div><t t-out="req.project_id.display_name or '-'"/></div>
+                                </div>
+
+                                <div>
+                                    <span class="label">Worksite</span>
+                                    <div><t t-out="req.worksite"/></div>
+                                </div>
+
+                                <div>
+                                    <span class="label">PO</span>
+                                    <div>
+                                        <t t-if="req.po_created"><t t-out="req.po_name"/></t>
+                                        <t t-elif="req.no_po_required">No PO Required</t>
+                                        <t t-else="">No PO</t>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <span class="label">Quotation</span>
+                                    <div><t t-out="dict(req._fields['quotation_status'].selection).get(req.quotation_status)"/></div>
+                                </div>
+
+                                <div>
+                                    <span class="label">Invoice</span>
+                                    <div><t t-out="dict(req._fields['accounting_docs_status'].selection).get(req.accounting_docs_status)"/></div>
+                                </div>
+
+                                <div>
+                                    <span class="label">Date</span>
+                                    <div><t t-out="req.request_date"/></div>
+                                </div>
+
+                            </div>
+
+                        </a>
+
+                    </t>
+                </t>
+
+                <t t-if="not shown_reqs">
+                    <div class="text-center text-muted py-4">
+                        No Requests Found.
+                    </div>
+                </t>
+
+            </div>
+
+
+
+        </div>
+    </div>
+
+</div>
+
+
+            <style>
+                .material-approvals-table {
+                    width: 100%;
+                    table-layout: fixed;
+                }
+                .material-approvals-table th,
+                .material-approvals-table td {
+                    vertical-align: middle;
+                    overflow-wrap: anywhere;
+                }
+                .material-approvals-table .badge {
+                    max-width: 100%;
+                    white-space: normal;
+                    line-height: 1.2;
+                }
+                .material-approvals-table th:last-child,
+                .material-approvals-table td:last-child {
+                    white-space: nowrap;
+                }
+            </style>
+
+            <!-- FILTERING JS -->
+            <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const filter = document.getElementById("approvalFilter");
+                if (!filter) return;
+                filter.addEventListener("change", function() {
+                    const value = this.value;
+                    const url = new URL(window.location.href);
+                    url.searchParams.set("filter", value);
+                    window.location.href = url.toString();
+                });
+            });
+            document.addEventListener("DOMContentLoaded", function() {
+
+                const input = document.getElementById("materialApprovalSearchInput");
+                if (!input) return;
+
+                input.addEventListener("input", function() {
+                    if (this.value.trim() === "") {
+                        const filter = new URLSearchParams(window.location.search).get('filter') || 'pending';
+                        window.location.href = "/my/employee/material/approvals?filter=" + filter;
+                    }
+                });
+
+            });
+            </script>
+
+        </t>
+    </template>
+
+</odoo>

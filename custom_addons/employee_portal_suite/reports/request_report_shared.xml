@@ -1,0 +1,142 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<odoo>
+  <template id="request_report_styles">
+    <style>
+.eps-print { color:#182b3a; font-family:Arial,sans-serif; font-size:13px; line-height:1.45; }
+.eps-print .eps-title { table-layout:fixed; width:100%; border-collapse:collapse; margin:8px 0 20px; border-bottom:3px solid #177b83; }
+.eps-print .eps-title td { border:0 !important; padding:0 0 12px !important; vertical-align:bottom; }
+.eps-print h2 { font-size:27px; font-weight:700; color:#142e43 !important; margin:0 0 3px; }
+.eps-print .eps-subtitle { color:#657480; font-size:11px; letter-spacing:1px; text-transform:uppercase; }
+.eps-print .eps-number { font-size:18px; overflow-wrap:break-word; font-weight:700; color:#142e43; }
+.eps-print .eps-status { display:inline-block; background:#e7f3f3; color:#135b62; padding:4px 9px; border:1px solid #bfdcde; border-radius:4px; font-size:11px; margin-top:5px; }
+.eps-print .eps-summary { width:100%; border-collapse:collapse; table-layout:fixed; margin:0 0 18px; }
+.eps-print .eps-summary td { border:1px solid #d5dfe5 !important; padding:10px 12px !important; vertical-align:top; }
+.eps-print .eps-label { display:block; font-size:10px; text-transform:uppercase; letter-spacing:0.6px; color:#627782; font-weight:700; margin-bottom:3px; }
+.eps-print .eps-value { font-size:14px; font-weight:600; color:#172d3e; overflow-wrap:break-word; }
+.eps-print .eps-summary tr:nth-child(even) td { background:#f4f7f9; }
+.eps-print h3 { font-size:15px; font-weight:700; margin:22px 0 9px; color:#142e43; border-left:4px solid #177b83; padding-left:9px; page-break-after:avoid; }
+.eps-print .eps-table { width:100%; border-collapse:collapse; table-layout:fixed; font-size:12px; }
+.eps-print .eps-table th { background:#193b50 !important; color:#fff !important; font-size:11px; font-weight:700; padding:9px 9px !important; border:1px solid #193b50 !important; }
+.eps-print .eps-table td { padding:9px !important; border:1px solid #d5dfe5 !important; vertical-align:top; overflow-wrap:break-word; word-wrap:break-word; }
+.eps-print .eps-table tbody tr:nth-child(even) td { background:#f2f6f8; }
+.eps-print .eps-table thead { display:table-header-group; }
+.eps-print .eps-table tr { page-break-inside:avoid; }
+.eps-print .eps-right { text-align:right; }
+.eps-print .eps-center { text-align:center; }
+.eps-print .eps-notes { border:1px solid #d5dfe5; border-left:3px solid #177b83; padding:12px; background:#f6f9fa; white-space:pre-wrap; }
+.eps-print .eps-note { margin-top:5px; font-size:11px; color:#526875; white-space:pre-wrap; }
+.eps-print .eps-muted { color:#70828e; font-size:11px; }
+.eps-print .eps-step-status { font-size:11px; font-weight:700; color:#5a6b78; }
+.eps-print .eps-step-pending { color:#0b6c78; }
+.eps-print .eps-step-approved { color:#1c6d43; }
+.eps-print .eps-step-rejected { color:#a62e38; }
+.eps-print .eps-step-returned { color:#9a5b0d; }
+.eps-print .eps-description { white-space:pre-wrap; overflow-wrap:break-word; }
+
+.eps-print table, .eps-print th, .eps-print td { box-sizing:border-box; }
+
+/* Version 95: larger type and white sections, with an unframed document heading. */
+.eps-print { font-size:14px; }
+.eps-print .eps-title, .eps-print .eps-title tr, .eps-print .eps-title td {
+    border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;
+}
+.eps-print .eps-title { margin:8px 0 18px; }
+.eps-print h2 { font-size:28px; white-space:nowrap; }
+.eps-print .eps-subtitle { font-size:12px; }
+.eps-print .eps-number { font-size:19px; }
+.eps-print .eps-status { font-size:12px; background:#fff; border:0; padding:3px 0; }
+.eps-print .eps-card {
+    background:#fff !important; border:1px solid #e0e7eb; border-radius:7px;
+    padding:14px 15px; margin:0 0 17px; page-break-inside:auto;
+}
+.eps-print .eps-card h3 { font-size:17px; margin:0 0 12px; border:0; padding:0; }
+.eps-print .eps-summary { margin:0; }
+.eps-print .eps-summary td {
+    border:0 !important; padding:8px 9px !important; background:#fff !important;
+}
+.eps-print .eps-summary tr:nth-child(even) td { background:#fff !important; }
+.eps-print .eps-label { font-size:10px; }
+.eps-print .eps-value { font-size:13px; }
+.eps-print .eps-table { font-size:13px; }
+.eps-print .eps-table th {
+    background:#fff !important; color:#183b4c !important; font-size:12px;
+    border:0 !important; border-bottom:2px solid #177b83 !important;
+    padding:8px 7px !important;
+}
+.eps-print .eps-table td {
+    border:0 !important; border-bottom:1px solid #e0e7eb !important;
+    background:#fff !important; padding:9px 7px !important;
+}
+.eps-print .eps-table tbody tr:nth-child(even) td { background:#fff !important; }
+.eps-print .eps-notes { border:0; background:#fff; padding:0; }
+.eps-print .eps-note, .eps-print .eps-muted, .eps-print .eps-step-status { font-size:12px; }
+
+.eps-print .eps-title { margin-bottom:12px; }
+.eps-print .eps-card { padding:10px 12px; margin-bottom:12px; }
+.eps-print .eps-card h3 { font-size:16px; margin-bottom:8px; }
+.eps-print .eps-summary td { padding:5px 8px !important; }
+.eps-print .eps-label { margin-bottom:2px; }
+.eps-print .eps-table td { padding:7px 6px !important; }
+.eps-print .eps-table th { padding:7px 6px !important; }
+
+/* Version 96: override company-layout table rules, keeping one card outline. */
+.eps-print { font-size:15px !important; }
+.eps-print .eps-number { font-size:21px !important; font-weight:700 !important; }
+.eps-print .eps-status { font-size:13px !important; }
+.eps-print .eps-card h3 { font-size:18px !important; font-weight:700 !important; }
+.eps-print .eps-label { font-size:11px !important; }
+.eps-print .eps-value { font-size:14px !important; font-weight:600 !important; }
+.eps-print .eps-table { font-size:15px !important; }
+.eps-print .eps-table th { font-size:14px !important; font-weight:700 !important; text-align:left; }
+.eps-print .eps-table .eps-right { text-align:right !important; }
+.eps-print .eps-table .eps-center { text-align:center !important; }
+.eps-print .eps-note, .eps-print .eps-muted, .eps-print .eps-step-status { font-size:13px !important; }
+
+
+/* Version 97: ABSAR teal accent cards on Material and Employee Request printouts. */
+.eps-print .eps-card {
+    background:#fff !important;
+    border:1px solid #63aeb2 !important;
+    border-left:6px solid #177b83 !important;
+    border-radius:16px !important;
+    box-shadow:0 0 15px rgba(23,123,131,.25) !important;
+}
+</style>
+  </template>
+  <template id="request_report_approval_table">
+<div class="eps-card"><h3>Approval History</h3>
+<table class="eps-table" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
+<colgroup style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><col style="width:25%;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"/><col style="width:13%;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"/><col style="width:25%;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"/><col style="width:37%;border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"/></colgroup><thead style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><tr style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><th style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:2px solid #177b83 !important;">Approval stage</th><th style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:2px solid #177b83 !important;">Status</th><th style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:2px solid #177b83 !important;">Approver / acted by</th><th style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:2px solid #177b83 !important;">Date and remarks</th></tr></thead>
+<tbody t-if="o.workflow_id" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
+<tr t-foreach="o.approval_line_ids.sorted(lambda step: (step.sequence, step.id))" t-as="step" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
+<td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:1px solid #e0e7eb !important;"><strong t-field="step.name"/></td>
+<td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:1px solid #e0e7eb !important;"><span t-att-class="'eps-step-status eps-step-' + step.state" t-field="step.state"/></td>
+<td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:1px solid #e0e7eb !important;">
+<t t-if="step.state == 'returned'"><span t-field="step.returned_by"/></t>
+<t t-elif="step.state == 'rejected'"><span t-field="step.rejected_by"/></t>
+<t t-elif="step.approved_by"><span t-field="step.approved_by"/></t>
+<t t-elif="step.state in ('pending', 'waiting')"><span t-out="', '.join(step.approver_user_ids.mapped('name')) or '-'"/></t>
+<t t-else="">-</t>
+</td>
+<td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:1px solid #e0e7eb !important;">
+<t t-if="step.state == 'returned'"><span t-field="step.returned_date"/></t>
+<t t-elif="step.state == 'rejected'"><span t-field="step.rejected_date"/></t>
+<t t-elif="step.approved_date"><span t-field="step.approved_date"/></t>
+<t t-else=""><span class="eps-muted">No decision recorded</span></t>
+<div class="eps-note" t-if="step.comment" t-field="step.comment"/>
+<div class="eps-note" t-if="step.return_reason"><strong>Correction requested: </strong><span t-field="step.return_reason"/></div>
+<div class="eps-note" t-if="step.override_reason"><strong>Override: </strong><span t-field="step.override_reason"/></div>
+</td></tr>
+<tr t-if="not o.approval_line_ids" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><td colspan="4" class="eps-muted" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:1px solid #e0e7eb !important;">No approval steps recorded.</td></tr>
+</tbody>
+<tbody t-else="" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
+<tr t-foreach="legacy_steps" t-as="step" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;">
+<td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:1px solid #e0e7eb !important;"><strong t-out="step[0]"/></td>
+<td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:1px solid #e0e7eb !important;"><span class="eps-step-status" t-out="'Approved' if step[2] else ('Pending' if o.state == step[1] else 'Not recorded')"/></td>
+<td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:1px solid #e0e7eb !important;"><span t-out="step[2].name or '-'"/></td>
+<td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:1px solid #e0e7eb !important;"><span t-if="step[3]" t-out="context_timestamp(step[3]).strftime('%d/%m/%Y %H:%M')"/><span t-else="" class="eps-muted">No decision recorded</span><div class="eps-note" t-if="step[4]" t-out="step[4]"/></td>
+</tr>
+<tr t-if="o.state == 'rejected'" style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;"><td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:1px solid #e0e7eb !important;"><strong>Request rejected</strong></td><td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:1px solid #e0e7eb !important;"><span class="eps-step-status eps-step-rejected">Rejected</span></td><td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:1px solid #e0e7eb !important;"><span t-field="o.rejected_by"/></td><td style=";border:0 !important; outline:0 !important; box-shadow:none !important; background:#fff !important;border-bottom:1px solid #e0e7eb !important;"><div class="eps-note" t-if="o.get_rejection_reason()" t-out="o.get_rejection_reason()"/><div class="eps-muted">Last updated: <span t-field="o.write_date"/></div></td></tr>
+</tbody></table>
+</div></template>
+</odoo>
