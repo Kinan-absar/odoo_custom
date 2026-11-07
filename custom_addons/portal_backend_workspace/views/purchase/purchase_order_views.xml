@@ -1,0 +1,37 @@
+<odoo>
+ <record id="purchase__purchase_order_form_portal_review" model="ir.ui.view">
+  <field name="name">purchase.order.form.portal.review</field><field name="model">purchase.order</field>
+  <field name="inherit_id" ref="purchase.purchase_order_form"/>
+  <field name="priority">1000</field>
+  <field name="arch" type="xml">
+   <xpath expr="//header" position="inside">
+    <field name="pbw_portal_all_documents" invisible="1"/><field name="pbw_portal_requires_review" invisible="1"/>
+    <button name="action_pbw_portal_submit" type="object" string="Submit for Approval" class="btn-primary" groups="portal_backend_workspace.purchase__group_portal_purchase_preparer" invisible="state not in ['draft', 'sent'] or pbw_portal_review_state not in [False, 'draft', 'returned'] or (pbw_portal_preparer_id and pbw_portal_preparer_id != uid and not pbw_portal_all_documents)"/>
+    <button name="action_pbw_portal_approve" type="object" string="Approve" context="{'validate_analytic': True}" class="btn-primary" groups="portal_backend_workspace.purchase__group_portal_purchase_approver" invisible="not pbw_portal_preparer_id or pbw_portal_preparer_id == uid or pbw_portal_submitter_id == uid or pbw_portal_review_state not in ['submitted', 'approved'] or state not in ['draft', 'sent']"/>
+   </xpath>
+   <xpath expr="//sheet/notebook" position="inside"><page name="pbw_portal_purchase_review" string="Purchase Review" invisible="not pbw_portal_preparer_id"><group>
+   <field name="pbw_portal_preparer_id" readonly="1"/><field name="pbw_portal_submitter_id" readonly="1"/>
+   <field name="pbw_portal_review_state" readonly="1"/>
+   <field name="pbw_portal_reviewer_ids" widget="many2many_tags" readonly="1" options="{'no_open': True, 'no_create': True}"/>
+   <field name="pbw_portal_approver_id" readonly="1"/>
+   <field name="pbw_portal_approved_on" readonly="1"/>
+   <field name="pbw_portal_review_note" readonly="state not in ['draft', 'sent']"/>
+   <button name="action_pbw_portal_return" type="object" string="Return to Preparer" groups="portal_backend_workspace.purchase__group_portal_purchase_approver" invisible="pbw_portal_preparer_id == uid or pbw_portal_submitter_id == uid or pbw_portal_review_state not in ['submitted', 'approved'] or state not in ['draft', 'sent']"/>
+  </group></page></xpath><xpath expr="//button[@id='draft_confirm']" position="attributes"><attribute name="invisible" add="pbw_portal_requires_review" separator=" or "/></xpath><xpath expr="//button[@id='bid_confirm']" position="attributes"><attribute name="invisible" add="pbw_portal_requires_review" separator=" or "/></xpath><xpath expr="//header/button[@name='button_approve']" position="attributes"><attribute name="invisible" add="pbw_portal_requires_review" separator=" or "/></xpath></field>
+ </record>
+ <record id="purchase__purchase_order_search_portal_pending" model="ir.ui.view">
+  <field name="name">purchase.order.search.portal.pending</field><field name="model">purchase.order</field>
+  <field name="inherit_id" ref="purchase.purchase_order_view_search"/>
+  <field name="arch" type="xml"><xpath expr="//search" position="inside">
+   <filter name="pbw_portal_pending" string="Requests to Approve" domain="[('pbw_portal_preparer_id', '!=', False), ('pbw_portal_review_state', '=', 'submitted'), ('state', 'in', ['draft', 'sent'])]"/>
+  </xpath></field>
+ </record>
+ <record id="purchase__action_portal_purchase_requests" model="ir.actions.act_window">
+  <field name="name">Requests to Approve</field><field name="res_model">purchase.order</field>
+  <field name="view_mode">list,form</field><field name="view_id" ref="purchase.purchase_order_tree"/>
+  <field name="search_view_id" ref="purchase.purchase_order_view_search"/>
+  <field name="domain">[('pbw_portal_preparer_id', '!=', False), ('pbw_portal_review_state', '=', 'submitted'), ('state', 'in', ['draft', 'sent'])]</field>
+  <field name="context">{'quotation_only': True, 'create': False}</field>
+ </record>
+ <menuitem id="purchase__menu_portal_purchase_requests" name="Requests to Approve" parent="purchase.menu_procurement_management" action="purchase__action_portal_purchase_requests" sequence="5" groups="portal_backend_workspace.purchase__group_portal_purchase_approver"/>
+</odoo>

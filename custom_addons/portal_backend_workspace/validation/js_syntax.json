@@ -1,0 +1,137 @@
+[
+  {
+    "path": "static/src/purchase/record_rows.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/core/workspace_shell.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/core/portal_mobile_menu.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/core/portal_compact_lists.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/hr/batch.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/hr/form_ui.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/hr/admin.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/sales/record_rows.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/accounting/analytic_editor.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/accounting/accounting.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/accounting/draft_navigation.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/accounting/purchase_ui.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/accounting/record_rows.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/accounting/line_grid.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/sales/js/analytic_editor.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/sales/js/draft_navigation.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/sales/js/purchase_ui.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/sales/js/sales_lines.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/sales/js/portal_sales.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/sales/js/line_grid.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/purchase/js/draft_navigation.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/purchase/js/purchase_product_form.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/purchase/js/purchase_ui.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/purchase/js/purchase_directory.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/purchase/js/purchase_receipt.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/purchase/js/purchase_workspace.js",
+    "status": "PASS",
+    "error": ""
+  },
+  {
+    "path": "static/src/purchase/js/line_grid.js",
+    "status": "PASS",
+    "error": ""
+  }
+]

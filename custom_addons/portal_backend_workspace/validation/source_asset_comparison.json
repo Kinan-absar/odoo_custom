@@ -1,0 +1,207 @@
+[
+  {
+    "area": "sales",
+    "file": "static/src/mobile_cards.css",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "sales",
+    "file": "static/src/record_rows.js",
+    "status": "changed"
+  },
+  {
+    "area": "sales",
+    "file": "static/src/record_cards.css",
+    "status": "changed"
+  },
+  {
+    "area": "sales",
+    "file": "static/src/js/analytic_editor.js",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "sales",
+    "file": "static/src/js/line_grid.js",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "sales",
+    "file": "static/src/js/purchase_ui.js",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "sales",
+    "file": "static/src/js/sales_lines.js",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "sales",
+    "file": "static/src/js/draft_navigation.js",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "sales",
+    "file": "static/src/js/portal_sales.js",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "sales",
+    "file": "static/src/css/sales_lines.css",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "sales",
+    "file": "static/src/css/purchase_controls.css",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "sales",
+    "file": "static/src/css/portal_sales.css",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "sales",
+    "file": "static/src/css/line_grid.css",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "purchase",
+    "file": "static/src/mobile_cards.css",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "purchase",
+    "file": "static/src/record_rows.js",
+    "status": "changed"
+  },
+  {
+    "area": "purchase",
+    "file": "static/src/record_cards.css",
+    "status": "changed"
+  },
+  {
+    "area": "purchase",
+    "file": "static/src/js/purchase_product_form.js",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "purchase",
+    "file": "static/src/js/line_grid.js",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "purchase",
+    "file": "static/src/js/purchase_ui.js",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "purchase",
+    "file": "static/src/js/purchase_workspace.js",
+    "status": "changed"
+  },
+  {
+    "area": "purchase",
+    "file": "static/src/js/purchase_directory.js",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "purchase",
+    "file": "static/src/js/purchase_receipt.js",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "purchase",
+    "file": "static/src/js/draft_navigation.js",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "purchase",
+    "file": "static/src/css/request_control.css",
+    "status": "excluded"
+  },
+  {
+    "area": "purchase",
+    "file": "static/src/css/purchase_monitor.css",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "purchase",
+    "file": "static/src/css/line_grid.css",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "accounting",
+    "file": "static/src/mobile_cards.css",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "accounting",
+    "file": "static/src/analytic_editor.js",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "accounting",
+    "file": "static/src/purchase_controls.css",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "accounting",
+    "file": "static/src/line_grid.js",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "accounting",
+    "file": "static/src/accounting.css",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "accounting",
+    "file": "static/src/record_rows.js",
+    "status": "changed"
+  },
+  {
+    "area": "accounting",
+    "file": "static/src/record_cards.css",
+    "status": "changed"
+  },
+  {
+    "area": "accounting",
+    "file": "static/src/purchase_ui.js",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "accounting",
+    "file": "static/src/line_grid.css",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "accounting",
+    "file": "static/src/accounting.js",
+    "status": "changed"
+  },
+  {
+    "area": "accounting",
+    "file": "static/src/draft_navigation.js",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "hr",
+    "file": "static/src/admin.js",
+    "status": "changed"
+  },
+  {
+    "area": "hr",
+    "file": "static/src/batch.js",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "hr",
+    "file": "static/src/form_ui.js",
+    "status": "identical_after_namespace_mapping"
+  },
+  {
+    "area": "hr",
+    "file": "static/src/admin.css",
+    "status": "identical_after_namespace_mapping"
+  }
+]

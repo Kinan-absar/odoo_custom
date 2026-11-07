@@ -1,0 +1,33 @@
+<odoo>
+ <record id="sales__sale_order_portal_review_view" model="ir.ui.view">
+  <field name="name">sale.order.pbw.portal.review</field>
+  <field name="model">sale.order</field>
+  <field name="inherit_id" ref="sale.view_order_form"/>
+  <field name="arch" type="xml">
+   <xpath expr="//header/button[@name='action_confirm'][1]" position="attributes">
+    <attribute name="invisible" add="pbw_requires_review" separator=" or "/>
+   </xpath>
+   <xpath expr="//header/button[@name='action_confirm'][2]" position="attributes">
+    <attribute name="invisible" add="pbw_requires_review" separator=" or "/>
+   </xpath>
+   <xpath expr="//header" position="inside">
+    <field name="pbw_requires_review" invisible="1"/>
+    <field name="pbw_can_submit" invisible="1"/><field name="pbw_can_approve" invisible="1"/><field name="pbw_can_return" invisible="1"/>
+    <field name="pbw_can_request_order" invisible="1"/><field name="pbw_can_approve_order" invisible="1"/>
+    <button name="action_pbw_portal_submit" type="object" string="Submit for Approval" class="btn-primary" invisible="not pbw_can_submit"/>
+    <button name="action_pbw_portal_approve" type="object" string="Approve" class="btn-primary" invisible="not pbw_can_approve"/>
+    <button name="action_pbw_portal_return" type="object" string="Return for Correction" invisible="not pbw_can_return"/>
+    <button name="action_pbw_request_order" type="object" string="Request Sales Order Approval" class="btn-primary" invisible="not pbw_can_request_order"/>
+    <button name="action_pbw_approve_order" type="object" string="Approve" class="btn-primary" invisible="not pbw_can_approve_order"/>
+    <button name="action_pbw_return_order" type="object" string="Return" invisible="not pbw_can_approve_order"/>
+   </xpath>
+   <xpath expr="//sheet/notebook" position="inside">
+    <page string="Sales Review" invisible="not pbw_requires_review">
+     <group><group><field name="pbw_portal_creator_id" readonly="1"/><field name="pbw_portal_submitter_id" readonly="1"/><field name="pbw_portal_review_state" readonly="1"/><field name="pbw_portal_approver_id" readonly="1"/></group>
+      <group><field name="pbw_order_review_state"/><field name="pbw_order_requester_id"/><field name="pbw_order_approver_id"/></group></group>
+     <field name="pbw_portal_review_note" placeholder="Enter the reason before clicking Return." readonly="not (pbw_can_return or pbw_can_approve_order)"/>
+    </page>
+   </xpath>
+  </field>
+ </record>
+</odoo>

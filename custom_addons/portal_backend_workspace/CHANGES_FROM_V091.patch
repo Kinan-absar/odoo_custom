@@ -1,0 +1,95 @@
+--- v0.9.1/__manifest__.py
++++ v0.9.2/__manifest__.py
+@@ -1,5 +1,5 @@
+ {'name': 'Portal Backend Workspace',
+- 'version': '18.0.0.9.1',
++ 'version': '18.0.0.9.2',
+  'summary': 'Original Sales, Purchase, Accounting and HR workspaces for authorized portal accounts',
+  'category': 'Productivity',
+  'author': 'Portal Backend Workspace',
+--- v0.9.1/views/workspace_layout.xml
++++ v0.9.2/views/workspace_layout.xml
+@@ -2,10 +2,14 @@
+ <template id="workspace_layout" name="Portal Backend Workspace">
+ <t t-call="web.layout">
+ <t t-set="title">Portal Backend Workspace</t>
+-<t t-call-assets="web.assets_frontend"/><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;display=swap"/>
+-<link rel="stylesheet" href="/portal_backend_workspace/static/src/core/workspace_layout.css"/>
++<t t-set="pbw_portal_compact_desktop" t-value="True"/>
++<link rel="preconnect" href="https://fonts.googleapis.com"/>
++<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
++<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&amp;display=swap" rel="stylesheet"/>
++<t t-call-assets="web.assets_frontend"/>
++<link rel="stylesheet" href="/portal_backend_workspace/static/src/core/workspace_layout.css?v=18.0.0.9.2"/>
+ <style>body{--pbw-company-watermark:url('/web/image/res.company/<t t-out="request.env.company.id"/>/logo');}</style>
+-<link rel="stylesheet" href="/portal_backend_workspace/static/src/core/portal_compact_lists.css"/>
++<link rel="stylesheet" href="/portal_backend_workspace/static/src/core/portal_compact_lists.css?v=18.0.0.9.2"/>
+ <t t-set="pbw_areas" t-value="request.env.user._pbw_workspace_areas()"/>
+ <t t-set="pbw_extra_links" t-value="request.env.user._pbw_extra_navigation()"/>
+ <t t-set="ep_notif_summary" t-value="request.env['pbw.notification.seen']._get_notification_summary(request.env.user)"/>
+@@ -27,7 +31,9 @@
+ <div class="pbwep-desktop-top-actions"><t t-call="portal_backend_workspace.notification_bell"/></div>
+ <nav class="pbwep-navbar"><div class="pbwep-nav-links"><a href="/my/workspace">Workspace</a><t t-foreach="pbw_areas" t-as="area"><a t-att-href="area['url']" t-out="area['name']"/></t></div><div class="pbwep-nav-right"><t t-call="portal_backend_workspace.notification_bell"/><a href="/web/session/logout?redirect=/web/login"><i class="fa fa-sign-out"/></a></div></nav>
+ <div class="pbwep-mobile-topbar mobile-only"><button class="pbwep-mobile-menu-toggle" type="button" data-pbwep-menu-toggle="1" aria-controls="pbwep-shared-sidebar" aria-expanded="false"><i class="fa fa-bars"/></button><div class="pbwep-top-company" t-out="request.env.company.name"/><t t-call="portal_backend_workspace.notification_bell"/></div>
+-<main class="pbwep-portal-main"><div class="container-fluid px-3 px-md-4 py-3"><t t-out="0"/></div></main>
++<!-- Preserve the EPS shell DOM contract: the original four workspaces
++     target #wrap for full-width layout. Do not add another padded container. -->
++<main class="pbwep-portal-main"><div id="wrap" class="container mt-3 mb-5"><t t-out="0"/></div></main>
+ <nav class="pbwep-bottom-nav mobile-only basic-nav"><div class="pbwep-nav-left"/>
+ <button type="button" class="pbwep-fab-center" id="pbwFabCenterBtn" aria-label="Create a document" aria-expanded="false" aria-controls="pbwFabMenu"><div class="fab-plus"><i class="fa fa-plus"/></div></button>
+ <div class="pbwep-nav-right"><a href="/web/session/logout?redirect=/web/login" class="nav-btn"><i class="fa fa-sign-out"/><span>Exit</span></a></div></nav><div id="pbwFabMenu" class="fab-menu mobile-only">
+@@ -35,9 +41,9 @@
+ <a t-if="request.env.user.has_group('portal_backend_workspace.purchase__group_portal_purchase_preparer')" href="/my/workspace/purchase/new" class="fab-item"><i class="fa fa-shopping-cart"/><span>New Purchase Order</span></a>
+ <a t-if="request.env.user.has_group('portal_backend_workspace.accounting__group_preparer') or request.env.user.has_group('portal_backend_workspace.accounting__group_accountant')" href="/my/workspace/accounting/bills/new" class="fab-item"><i class="fa fa-file-text-o"/><span>New Vendor Bill</span></a>
+ <a t-if="request.env.user.has_group('portal_backend_workspace.hr__group_employee_admin')" href="/my/workspace/hr/employees/new" class="fab-item"><i class="fa fa-user-plus"/><span>New Employee</span></a>
+-<a href="/my/workspace/accounting/invoices/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.accounting__group_customer_invoicing')"><i class="fa fa-file-text-o"/><span>New Customer Invoice</span></a><a href="/my/workspace/accounting/refunds/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.accounting__group_preparer') or request.env.user.has_group('portal_backend_workspace.accounting__group_accountant')"><i class="fa fa-undo"/><span>New Vendor Credit Note</span></a><a href="/my/workspace/accounting/journals/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.accounting__group_preparer') or request.env.user.has_group('portal_backend_workspace.accounting__group_accountant')"><i class="fa fa-book"/><span>New Journal Entry</span></a><a href="/my/workspace/hr/attendance/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.hr__group_employee_admin')"><i class="fa fa-clock-o"/><span>New Attendance</span></a><a href="/my/workspace/hr/contracts/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.hr__group_payroll_admin')"><i class="fa fa-file-text-o"/><span>New Contract</span></a><a href="/my/workspace/hr/payslips/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.hr__group_payroll_admin')"><i class="fa fa-money"/><span>New Payslip</span></a><a href="/my/workspace/hr/batches/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.hr__group_payroll_admin')"><i class="fa fa-folder-o"/><span>New Payroll Batch</span></a></div><script src="/portal_backend_workspace/static/src/core/portal_mobile_menu.js"/>
+-<script src="/portal_backend_workspace/static/src/core/portal_compact_lists.js"/>
+-<script src="/portal_backend_workspace/static/src/core/workspace_shell.js"/>
++<a href="/my/workspace/accounting/invoices/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.accounting__group_customer_invoicing')"><i class="fa fa-file-text-o"/><span>New Customer Invoice</span></a><a href="/my/workspace/accounting/refunds/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.accounting__group_preparer') or request.env.user.has_group('portal_backend_workspace.accounting__group_accountant')"><i class="fa fa-undo"/><span>New Vendor Credit Note</span></a><a href="/my/workspace/accounting/journals/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.accounting__group_preparer') or request.env.user.has_group('portal_backend_workspace.accounting__group_accountant')"><i class="fa fa-book"/><span>New Journal Entry</span></a><a href="/my/workspace/hr/attendance/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.hr__group_employee_admin')"><i class="fa fa-clock-o"/><span>New Attendance</span></a><a href="/my/workspace/hr/contracts/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.hr__group_payroll_admin')"><i class="fa fa-file-text-o"/><span>New Contract</span></a><a href="/my/workspace/hr/payslips/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.hr__group_payroll_admin')"><i class="fa fa-money"/><span>New Payslip</span></a><a href="/my/workspace/hr/batches/new" class="fab-item" t-if="request.env.user.has_group('portal_backend_workspace.hr__group_payroll_admin')"><i class="fa fa-folder-o"/><span>New Payroll Batch</span></a></div><script src="/portal_backend_workspace/static/src/core/portal_mobile_menu.js?v=18.0.0.9.2"/>
++<script type="module" src="/portal_backend_workspace/static/src/core/portal_compact_lists.js?v=18.0.0.9.2"/>
++<script src="/portal_backend_workspace/static/src/core/workspace_shell.js?v=18.0.0.9.2"/>
+ </t></template>
+ <template id="notification_bell">
+         <div class="pbwep-bell-wrap" t-att-data-pbw-other-unread="ep_notif_unread_total">
+--- v0.9.1/views/workspace_head.xml
++++ v0.9.2/views/workspace_head.xml
+@@ -1 +1,19 @@
+-<odoo><template id="workspace_head" inherit_id="web.layout" name="Workspace display scale"><xpath expr="//head" position="inside"><t t-if="request and request.httprequest.path.startswith('/my/workspace')"><style>@media(min-width:992px){html{zoom:.8} .pbw-purchase-options[popover],.pbw-accounting-options[popover]{zoom:1.25}}</style><meta name="viewport" content="width=device-width, initial-scale=1"/></t></xpath></template></odoo>+<?xml version="1.0" encoding="utf-8"?>
++<odoo>
++    <template id="workspace_head" inherit_id="web.layout" name="Workspace display scale">
++        <xpath expr="//head" position="inside">
++            <!-- Local to this shell, never to Employee Portal Suite or backend pages. -->
++            <t t-if="pbw_portal_compact_desktop">
++                <style data-pbw-desktop-density="1">
++/* Original approved desktop compactness, applied before first paint. */
++@media screen and (min-width:769px){
++    html{zoom:.8}
++    html :is(.pbw-purchase-options[popover],.pbw-accounting-options[popover]){zoom:1.25}
++}
++@media print{html{zoom:1}}
++                </style>
++                <meta name="viewport" content="width=device-width, initial-scale=1"/>
++            </t>
++        </xpath>
++    </template>
++</odoo>
+--- v0.9.1/views/sales/portal_sales_templates.xml
++++ v0.9.2/views/sales/portal_sales_templates.xml
+@@ -34,7 +34,7 @@
+      <div class="col-md-6"><label>Customer</label><select name="partner_id" class="form-select pbw-sales-customer-select" required="required"><option value="">Select customer</option><option t-foreach="partners" t-as="p" t-att-data-commercial-id="p.commercial_partner_id.id" t-att-value="p.id" t-out="p.name"/></select></div>
+      <div class="col-md-6"><label>Quotation / Order Date</label><input type="datetime-local" name="date_order" class="form-control" step="1" required="required" t-att-value="date_order_local"/></div><div class="col-md-6"><label>Expiration Date</label><input type="date" name="validity_date" class="form-control"/></div>
+      <div class="col-md-6"><label>Project</label><select name="project_id" class="form-select pbw-sales-project-select"><option value="">No project</option><option t-foreach="projects" t-as="project" t-att-value="project.id" t-att-data-customer-id="project.partner_id.commercial_partner_id.id if project.partner_id else 0" t-out="project.name"/></select></div>
+-     <div class="col-md-6"><input type="hidden" name="kind" value="standard"/></div>
++     <div class="col-md-6"><label>Document Type</label><select name="kind" class="form-select"><option value="standard">Standard Quotation</option></select></div>
+     </div><h5>Order Lines</h5><div id="pbw-sales-line-editor" t-att-data-boot="line_boot_json" t-att-data-csrf="request.csrf_token()"/><noscript>Enable JavaScript to prepare this quotation.</noscript></div>
+    </div>
+   </t>
+@@ -56,7 +56,7 @@
+     <p t-if="order.pbw_order_review_state == 'requested'" class="alert alert-info">Awaiting approval to convert this quotation into a Sales Order.</p>
+     <div t-if="error or request.params.get('error')" class="alert alert-warning" t-out="error or 'The requested change could not be saved. Check the values and try again.'"/>
+     <div t-if="order.pbw_portal_review_note" class="alert alert-info"><strong>Reviewer note:</strong> <t t-out="order.pbw_portal_review_note"/></div>
+-    <div class="pbw-sales-panel"><h5>Quotation Details</h5><div class="row"><div class="col-md-4"><span class="text-muted">Customer</span><p t-out="order.partner_id.name"/></div><div t-if="not can_edit" class="col-md-4"><span class="text-muted">Quotation / Order Date</span><p><span t-field="order.date_order"/></p></div><div class="col-md-4"><span class="text-muted">Document type</span><p t-out="'Quotation'"/></div><div t-if="not can_edit" class="col-md-4"><span class="text-muted">Project</span><p t-out="order.pbw_project_id.name or 'Not assigned'"/></div><div t-if="not can_edit and order.validity_date" class="col-md-4"><span class="text-muted">Expiration Date</span><p><span t-field="order.validity_date"/></p></div><div class="col-md-4"><span class="text-muted">Salesperson</span><p t-out="order.user_id.name or order.pbw_portal_creator_id.name"/></div></div>
++    <div class="pbw-sales-panel"><h5>Quotation Details</h5><div class="row"><div class="col-md-4"><span class="text-muted">Customer</span><p t-out="order.partner_id.name"/></div><div t-if="not can_edit" class="col-md-4"><span class="text-muted">Quotation / Order Date</span><p><span t-field="order.date_order"/></p></div><div class="col-md-4"><span class="text-muted">Document type</span><p t-out="'Standard Quotation'"/></div><div t-if="not can_edit" class="col-md-4"><span class="text-muted">Project</span><p t-out="order.pbw_project_id.name or 'Not assigned'"/></div><div t-if="not can_edit and order.validity_date" class="col-md-4"><span class="text-muted">Expiration Date</span><p><span t-field="order.validity_date"/></p></div><div class="col-md-4"><span class="text-muted">Salesperson</span><p t-out="order.user_id.name or order.pbw_portal_creator_id.name"/></div></div>
+      <form id="pbw-sales-order-details" t-if="can_edit" t-att-action="'/my/workspace/sales/%s/save' % order.id" method="post" class="row g-3"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+       <div class="col-md-4"><label>Quotation reference (automatic)</label><input class="form-control" t-att-value="order.name" readonly="readonly"/></div>
+       <div class="col-md-4"><label>Project</label><select class="form-select pbw-sales-project-select" name="project_id"><option value="">No project</option><option t-foreach="projects" t-as="project" t-att-value="project.id" t-att-data-customer-id="project.partner_id.commercial_partner_id.id if project.partner_id else 0" t-att-selected="order.pbw_project_id.id == project.id and 'selected' or None" t-out="project.name"/></select></div><div class="col-md-4"><label>Quotation / Order Date</label><input class="form-control" type="datetime-local" name="date_order" step="1" required="required" t-att-value="date_order_local"/></div><div class="col-md-4"><label>Expiration date</label><input class="form-control" type="date" name="validity_date" t-att-value="order.validity_date or ''"/></div>

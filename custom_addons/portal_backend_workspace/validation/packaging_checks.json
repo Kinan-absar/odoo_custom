@@ -1,0 +1,10 @@
+{
+  "counts": {
+    ".py": 40,
+    ".xml": 27,
+    ".js": 27
+  },
+  "declared_data": 30,
+  "declared_assets": 40,
+  "failures": []
+}

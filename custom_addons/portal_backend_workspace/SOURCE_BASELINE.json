@@ -1,0 +1,61 @@
+{
+  "version": "18.0.0.9.2",
+  "sources": [
+    {
+      "component": "sales",
+      "source_module": "absar_portal_sales",
+      "version": "18.0.1.4.14"
+    },
+    {
+      "component": "purchase",
+      "source_module": "absar_portal_purchase_monitor",
+      "version": "18.0.1.7.4"
+    },
+    {
+      "component": "accounting",
+      "source_module": "absar_portal_accounting",
+      "version": "18.0.1.3.9"
+    },
+    {
+      "component": "hr",
+      "source_module": "absar_portal_employee_admin",
+      "version": "18.0.1.0.17"
+    },
+    {
+      "component": "portal layout reference",
+      "source_module": "employee_portal_suite",
+      "version": "18.0.1.20.125"
+    }
+  ],
+  "refactoring": "Original workspaces migrated and namespaced; unsupported custom integrations removed. Source references are provenance, not dependencies.",
+  "dependencies": [
+    "base",
+    "web",
+    "portal",
+    "mail",
+    "sale_management",
+    "sale_stock",
+    "purchase_stock",
+    "project_purchase",
+    "account",
+    "analytic",
+    "hr",
+    "hr_attendance",
+    "hr_contract",
+    "hr_work_entry",
+    "hr_payroll"
+  ],
+  "test_summary": {
+    "targeted_regression_tests_passed": 31,
+    "original_fixture_scripts_passed": 16,
+    "original_fixture_scripts_failed_or_incompatible": 12,
+    "live_odoo_installation_verified": false,
+    "source_based_browser_renders": 180,
+    "source_based_browser_interactions": 48
+  },
+  "source_archives": {
+    "ABSAR_Main_Updated_2026-11-05.zip": "b27a0dcd86aa172205fab325e7f5cfac891a7c8150e7c951937419edfeb02b71",
+    "Archive staging.zip": "2f8b27ab3c0c48334d44e368661d6e5e3adfc34f0ca9887b8e0cd67dd61c3a5c",
+    "Portal_Backend_Workspace_v0.9.zip": "df07094e7ef2474bd5f4eb2df937fc1e7b93c05bcbd2934b13ac8d7ae047db34"
+  }
+}

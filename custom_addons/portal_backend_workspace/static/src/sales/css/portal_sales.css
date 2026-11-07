@@ -1,0 +1,117 @@
+.pbw-sales-wrap{max-width:1250px!important}.pbw-sales-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}.pbw-sales-head h3{font-weight:800;color:#142f46;margin:0}.pbw-sales-panel{background:white;border:1px solid #d8e8e9;border-left:5px solid #18848b;border-radius:16px;padding:20px;margin:18px 0;box-shadow:0 3px 14px rgba(20,80,94,.05)}.pbw-sales-panel h5{font-weight:750;color:#15374b;margin-bottom:16px}.pbw-sales-form{max-width:740px;display:flex;flex-direction:column;gap:8px}.pbw-sales-form label,.pbw-sales-section label{font-weight:600;color:#37586a}.pbw-sales-status{display:inline-block;background:#edf6f7;border-radius:100px;padding:4px 10px;color:#146a70;font-size:.85em;font-weight:650}.pbw-sales-section{padding:18px 0;border-bottom:1px solid #e4eeee}.pbw-sales-section:last-child{border-bottom:0}.pbw-sales-total{text-align:right;color:#16394a;margin-top:12px}.pbw-sales-new{margin-top:20px}@media(max-width:600px){.pbw-sales-panel{padding:13px}.pbw-sales-wrap{padding-left:12px;padding-right:12px}}
+
+.pbw-sales-panel .table {width:100%;table-layout:fixed;} .pbw-sales-panel .table th{color:#17394b;font-weight:700;border-bottom:2px solid #16818a;} .pbw-sales-panel .table td{vertical-align:top;border-bottom:1px solid #dce9eb;overflow-wrap:anywhere;} .pbw-sales-panel .table td:first-child{width:44%;white-space:pre-wrap;} .pbw-sales-panel .table td.text-end{white-space:nowrap;} .pbw-sales-modal[hidden]{display:none!important}.pbw-sales-modal{position:fixed;inset:0;background:rgba(18,39,53,.52);z-index:3000;display:flex;align-items:center;justify-content:center;padding:18px}.pbw-sales-modal-content{background:#fff;border:1px solid #bddfe0;border-radius:15px;padding:24px;width:min(480px,100%);box-shadow:0 14px 40px rgba(0,0,0,.18)}
+.pbw-sales-click-row{cursor:pointer}.pbw-sales-click-row:hover td{background:#f0faf9!important}.pbw-sales-click-row:focus{outline:2px solid #16818a;outline-offset:-2px}
+.pbw-sales-status-draft{background:#f2f3f5;color:#56616c}.pbw-sales-status-submitted{background:#fff3d8;color:#91620b}.pbw-sales-status-approved{background:#d9f4e6;color:#126640}.pbw-sales-status-returned{background:#fee4e4;color:#a33333}
+.pbw-sales-add-item{padding:10px 0 4px;border-top:1px solid #dfe9eb}.pbw-sales-add-item summary{color:#087d83;font-weight:700;cursor:pointer;display:list-item;width:fit-content}.pbw-sales-add-item[open] summary{margin-bottom:14px}
+.pbw-sales-editor{border:1px solid #cbdce0;border-radius:9px;overflow:hidden;background:#fff}.pbw-sales-editor-toolbar{display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:7px;border-bottom:1px solid #dce6e8;background:#f5fafb}.pbw-sales-editor-toolbar button,.pbw-sales-editor-toolbar select{border:1px solid #c9dade;background:#fff;border-radius:5px;min-height:32px;padding:3px 9px;color:#193a4c}.pbw-sales-editor-body{min-height:130px;padding:12px 14px;outline:none;white-space:normal;overflow-wrap:anywhere}.pbw-sales-editor-body:focus{box-shadow:inset 0 0 0 2px #19848b}.pbw-sales-drag-handle{display:inline-block;cursor:grab;color:#147c83;font-weight:600;background:#eaf6f7;border-radius:6px;padding:5px 10px;margin-bottom:10px}.pbw-sales-drag-handle:active{cursor:grabbing}.pbw-sales-dragging{opacity:.6;border:2px dashed #16818a}
+
+/* Odoo-like inline order-line creation; no prominent purple action button. */
+.pbw-sales-panel .table .pbw-sales-inline-add-row td{border-bottom:0!important;padding:9px 10px 12px!important;}
+.pbw-sales-inline-add-row .pbw-sales-add-item{border:0!important;padding:0!important;}
+.pbw-sales-inline-add-row .pbw-sales-add-item summary{display:inline-block!important;list-style:none;color:#13828a;font-weight:700;cursor:pointer;}
+.pbw-sales-inline-add-row .pbw-sales-add-item summary::-webkit-details-marker{display:none;}
+.pbw-sales-inline-add-row .pbw-sales-add-item summary::marker{content:'';}
+.pbw-sales-inline-add-row .pbw-sales-add-item[open] summary{margin-bottom:10px;}
+.pbw-sales-inline-add-form{display:grid;grid-template-columns:minmax(0,3fr) minmax(95px,1fr) minmax(95px,1fr) minmax(110px,1fr);gap:10px;align-items:start;}
+.pbw-sales-inline-add-form label{display:block;color:#385b66;font-size:13px;font-weight:600;margin-bottom:4px;}
+.pbw-sales-add-actions{grid-column:1/-1;display:flex;gap:18px;align-items:center;}
+.pbw-sales-text-action{border:0!important;background:transparent!important;color:#087c83!important;font-weight:700;padding:2px 0!important;box-shadow:none!important;text-decoration:none;cursor:pointer;}
+.pbw-sales-text-action:hover{text-decoration:underline;}
+.pbw-sales-drag-handle{user-select:none;-webkit-user-select:none;touch-action:none;}
+.pbw-sales-drop-target{border-top:2px solid #16818a;}
+@media(max-width:750px){.pbw-sales-inline-add-form{grid-template-columns:repeat(2,minmax(0,1fr));}.pbw-sales-add-description{grid-column:1/-1;}}
+
+/* Active row is highlighted before navigation to the offer detail. */
+.pbw-sales-click-row.pbw-sales-row-selected td{background:#e2f2f0!important;}
+
+/* Offer directory: intentionally independent of the BOQ table styling. */
+.pbw-sales-offer-list{display:flex;flex-direction:column;gap:11px;margin-top:14px}
+.pbw-sales-offer-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(195px,auto) 26px;gap:18px;align-items:center;text-decoration:none!important;color:#183849!important;background:#fff;border:1px solid #d8e8e9;border-left:5px solid #19858c;border-radius:13px;padding:17px 19px;box-shadow:0 2px 9px rgba(14,61,69,.04);transition:border-color .15s,background .15s,transform .15s}
+.pbw-sales-offer-row:hover{background:#f4fbfa!important;border-color:#88c7c6;transform:translateY(-1px);color:#123446!important}
+.pbw-sales-offer-row:focus-visible{outline:3px solid #16818a;outline-offset:2px}
+.pbw-sales-offer-main{min-width:0;display:flex;flex-direction:column;gap:4px}
+.pbw-sales-offer-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pbw-sales-offer-number{font-size:17px;font-weight:800;color:#13364a}
+.pbw-sales-offer-type{font-size:12px;font-weight:600;color:#537078;background:#eef6f7;padding:3px 9px;border-radius:7px}
+.pbw-sales-offer-customer{font-size:15px;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
+.pbw-sales-offer-project{font-size:13px;color:#365d6a}
+.pbw-sales-offer-creator{font-size:12px;color:#6b7e86}
+.pbw-sales-offer-side{display:flex;flex-direction:column;align-items:flex-end;gap:7px;text-align:right;min-width:0}
+.pbw-sales-mini-label{font-size:12px;color:#6f8590;font-weight:600}
+.pbw-sales-offer-value{font-size:17px;font-weight:800;color:#153b51;white-space:nowrap}
+.pbw-sales-offer-arrow{font-size:24px;color:#16818a;justify-self:end}
+.pbw-sales-offer-empty{text-align:center;color:#567480;padding:30px}
+@media(max-width:700px){.pbw-sales-offer-row{grid-template-columns:minmax(0,1fr) 18px;gap:9px;padding:14px}.pbw-sales-offer-side{grid-column:1;grid-row:2;align-items:flex-start;text-align:left;margin-top:8px}.pbw-sales-offer-arrow{grid-column:2;grid-row:1/3}.pbw-sales-offer-value{font-size:15px}}
+
+/* BOQ entry is a genuine inline table row. Rules are scoped to this table only. */
+.pbw-sales-boq-panel .pbw-sales-boq-table{table-layout:fixed;width:100%;min-width:710px;border-collapse:collapse}
+.pbw-sales-boq-panel .pbw-sales-boq-table th,.pbw-sales-boq-panel .pbw-sales-boq-table td{padding:12px 9px;vertical-align:top}
+.pbw-sales-boq-panel .pbw-sales-boq-table td:first-child{width:auto;white-space:normal}
+.pbw-sales-boq-panel .pbw-sales-boq-description{white-space:pre-wrap!important;line-height:1.55}
+.pbw-sales-boq-panel .pbw-sales-boq-table .text-end{white-space:nowrap}
+.pbw-sales-boq-panel .pbw-sales-boq-remove{text-align:right}
+.pbw-sales-boq-panel .pbw-sales-boq-delete{background:transparent;border:0;color:#9b4250;font-size:23px;line-height:1;cursor:pointer;padding:0 6px}
+.pbw-sales-boq-panel .pbw-sales-boq-delete:hover{color:#d32842}
+.pbw-sales-boq-panel .pbw-sales-boq-add-link-row td{border-bottom:0!important;padding-top:12px!important;padding-bottom:10px!important}
+.pbw-sales-boq-panel .pbw-sales-boq-add-link{padding:0;background:none;border:0;color:#087f86;font-weight:700;cursor:pointer}
+.pbw-sales-boq-panel .pbw-sales-boq-add-link:hover{text-decoration:underline}
+.pbw-sales-boq-panel .pbw-sales-boq-edit-row[hidden]{display:none!important}
+.pbw-sales-boq-panel .pbw-sales-boq-edit-row td{background:#f4fafa;border-bottom:1px solid #badbdc!important}
+.pbw-sales-boq-panel .pbw-sales-boq-edit-row .form-control,.pbw-sales-boq-panel .pbw-sales-boq-edit-row .form-select{width:100%;min-width:0;padding:8px;font-size:14px}
+.pbw-sales-boq-panel .pbw-sales-boq-edit-row textarea{resize:vertical;min-height:62px}
+.pbw-sales-boq-panel .pbw-sales-boq-preview{text-align:right;white-space:nowrap;padding-top:20px!important;font-weight:650}
+.pbw-sales-boq-panel .pbw-sales-boq-edit-actions{white-space:normal;text-align:center}
+.pbw-sales-boq-panel .pbw-sales-boq-edit-actions button{display:block;margin:0 auto 9px;background:transparent;border:0;color:#087f86;font-size:13px;font-weight:700;cursor:pointer;padding:0}
+.pbw-sales-boq-panel .pbw-sales-boq-edit-actions .pbw-sales-boq-cancel{color:#6d7881}
+.pbw-sales-boq-panel .pbw-sales-boq-edit-actions button:hover{text-decoration:underline}
+
+/* Compact offer editor: show section details only when requested */
+.pbw-sales-section-compact {padding:0!important; margin:0 0 8px!important; border:1px solid #e1e9eb!important; border-radius:10px; background:#fff;}
+.pbw-sales-section-heading {list-style:none; cursor:pointer; display:flex; gap:12px; align-items:center; padding:13px 15px; color:#18394b;}
+.pbw-sales-section-heading::-webkit-details-marker {display:none;}
+.pbw-sales-section-heading:focus-visible {outline:2px solid #16818a;outline-offset:2px;}
+.pbw-sales-section-number {flex:0 0 30px; border-radius:8px; background:#e9f3f4; color:#147d86; font-weight:700; text-align:center; padding:4px;}
+.pbw-sales-section-name {flex:1;font-weight:600;overflow-wrap:anywhere;}
+.pbw-sales-section-toggle {font-size:12px;color:#147d86;white-space:nowrap;}
+.pbw-sales-section-expanded {padding:0 15px 16px;border-top:1px solid #edf1f2;}
+.pbw-sales-muted-tag {font-size:11px;background:#f4f4f4;color:#777;padding:3px 7px;border-radius:8px;}
+.pbw-sales-add-section {margin-top:12px;}
+.pbw-sales-add-section>summary {cursor:pointer;color:#147d86;font-weight:600;padding:10px 4px;}
+.pbw-sales-add-section>.pbw-sales-new {padding:12px 4px;}
+.pbw-sales-boq-description .pbw-sales-line-details summary {list-style:none;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer;overflow-wrap:anywhere;}
+.pbw-sales-boq-description .pbw-sales-line-details[open] summary {display:block;-webkit-line-clamp:unset;}
+.pbw-sales-boq-description .pbw-sales-line-details summary::-webkit-details-marker{display:none;}
+.pbw-sales-boq-panel .pbw-sales-help{font-size:12px;color:#6d8085;margin:-3px 0 12px;}
+
+/* Distinct own-offers and monitoring views */
+.pbw-sales-list-nav{display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid #dae8e9;margin-bottom:15px;padding-bottom:8px}
+.pbw-sales-list-tab{color:#456572;text-decoration:none;padding:9px 12px;border-radius:9px;font-weight:650}
+.pbw-sales-list-tab:hover,.pbw-sales-list-tab.active{background:#e7f5f4;color:#146f76;text-decoration:none}
+.pbw-sales-monitor-filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pbw-sales-monitor-filters input{flex:2 1 250px;min-width:150px}.pbw-sales-monitor-filters select{flex:1 1 160px;max-width:220px}
+.pbw-sales-result-count{font-size:12px;color:#74848a;margin:12px 0 4px}
+.pbw-sales-pagination{display:flex;justify-content:center;align-items:center;gap:20px;margin:22px 0}
+.pbw-sales-status-sales{background:#eaf2fa;color:#375a80}
+
+/* Keep the section content editor visible even when its HTML is empty. */
+.pbw-sales-editor .pbw-sales-editor-body{display:block!important;min-height:160px!important;width:100%!important;background:#fff!important;cursor:text!important;border:0!important;}
+.pbw-sales-editor .pbw-sales-editor-body[contenteditable="true"]:empty:before{content:"Type the section content here...";color:#81939a;pointer-events:none;}
+
+/* Use the fluid Employee Portal desktop workspace; retain the mobile layout. */
+@media (min-width: 769px) {
+    .pbwep-portal-main #wrap .pbw-sales-wrap {
+        width: 100%;
+        max-width: none !important;
+        padding-left: 0;
+        padding-right: 0;
+        padding-top: 0 !important;
+    }
+}
+
+.pbw-sales-workspace-header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:#fff;border:1px solid #dce7e8;border-radius:12px;padding:16px 18px 0;margin:0 0 22px;box-shadow:0 2px 8px #18384204}
+.pbw-sales-workspace-brand{display:flex;align-items:center;gap:11px}.pbw-sales-workspace-brand>div{display:flex;flex-direction:column;gap:2px}.pbw-sales-workspace-brand strong{font-size:19px;color:#203e4b}.pbw-sales-workspace-brand small{font-size:11px;color:#728790}.pbw-sales-workspace-icon{display:grid;place-items:center;background:#e8f4f3;color:#087f83;width:38px;height:38px;border-radius:11px;font-size:19px}
+.pbw-sales-workspace-header .pbw-sales-app-nav{flex-basis:100%;display:flex;flex-wrap:nowrap;gap:3px;overflow-x:auto;border:0;border-top:1px solid #edf2f3;box-shadow:none;border-radius:0;margin:0;padding:9px 0;font-size:12px;min-height:0}.pbw-sales-workspace-header .pbw-sales-app-nav a{padding:8px 10px;white-space:nowrap;border-radius:7px;color:#607984;font-size:12px}.pbw-sales-workspace-header .pbw-sales-app-nav a.active{color:#087f83;background:#e8f4f3}
+@media(max-width:600px){.pbw-sales-workspace-header{padding:12px 12px 0}.pbw-sales-workspace-brand strong{font-size:17px}}
+
+.pbw-sales-search-dialog{width:min(740px,95vw);border:1px solid #dce7e8;border-radius:14px;padding:24px;color:#203e4b}.pbw-sales-search-dialog::backdrop{background:#142b3e70}.pbw-sales-search-dialog>div:first-of-type{max-height:45vh;overflow:auto;display:flex;flex-direction:column;gap:5px;margin:14px 0}.pbw-sales-search-dialog>div:first-of-type button{text-align:left}
