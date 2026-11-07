@@ -1,0 +1,3 @@
+<odoo>
+  <function model="sale.order" name="_pbw_portal_sync_salesperson"/>
+</odoo>

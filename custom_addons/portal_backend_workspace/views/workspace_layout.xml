@@ -1,0 +1,85 @@
+<odoo>
+<template id="workspace_layout" name="Portal Backend Workspace">
+<t t-call="web.layout">
+<t t-set="title">Portal Backend Workspace</t>
+<t t-call-assets="web.assets_frontend"/><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;display=swap"/>
+<link rel="stylesheet" href="/portal_backend_workspace/static/src/core/workspace_layout.css"/>
+<style>body{--pbw-company-watermark:url('/web/image/res.company/<t t-out="request.env.company.id"/>/logo');}</style>
+<link rel="stylesheet" href="/portal_backend_workspace/static/src/core/portal_compact_lists.css"/>
+<t t-set="pbw_areas" t-value="request.env.user._pbw_workspace_areas()"/>
+<t t-set="pbw_extra_links" t-value="request.env.user._pbw_extra_navigation()"/>
+<t t-set="ep_notif_summary" t-value="request.env['pbw.notification.seen']._get_notification_summary(request.env.user)"/>
+<t t-set="ep_notif_unread_total" t-value="sum(v.get('new',0) for v in ep_notif_summary.values())"/>
+<button type="button" class="pbwep-mobile-menu-backdrop mobile-only" data-pbwep-menu-close="1" aria-label="Close navigation" hidden="hidden"/>
+<aside class="pbwep-desktop-sidebar" id="pbwep-shared-sidebar" aria-label="Workspace navigation">
+<button type="button" class="pbwep-mobile-menu-close mobile-only" data-pbwep-menu-close="1" aria-label="Close navigation"><i class="fa fa-times"/></button>
+<div class="pbwep-sidebar-brand"><img t-att-src="'/web/image/res.company/%s/logo' % request.env.company.id" alt="Company logo"/><span>Portal Backend Workspace</span></div>
+<nav class="pbwep-sidebar-nav" id="pbwep-desktop-sidebar-nav">
+<a href="/my/workspace" class="pbwep-sidebar-link"><i class="fa fa-home"/>Home</a>
+<t t-foreach="pbw_areas" t-as="area">
+<div class="pbwep-sidebar-section" t-att-id="'pbwep-section-'+area['key']"><div class="pbwep-sidebar-section-title" t-out="area['name']"/><div class="pbwep-sidebar-section-links"><t t-foreach="area['links']" t-as="nav_link"><a t-att-href="nav_link[1]" class="pbwep-sidebar-link"><i t-att-class="'fa '+nav_link[2]"/><t t-out="nav_link[0]"/></a></t></div></div>
+</t>
+<a href="/my/workspace/notifications" class="pbwep-sidebar-link"><i class="fa fa-bell-o"/>Notifications</a>
+<t t-foreach="pbw_extra_links" t-as="extra"><a t-att-href="extra['url']" class="pbwep-sidebar-link"><i t-att-class="'fa '+extra.get('icon','fa-external-link')"/><t t-out="extra['name']"/></a></t>
+</nav>
+<div class="pbwep-sidebar-bottom"><div class="pbwep-sidebar-profile"><button type="button" class="pbwep-sidebar-profile-btn" onclick="document.getElementById('pbwep-profile-menu').classList.toggle('show')"><img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)" alt="Profile"/><span><span class="pbwep-sidebar-profile-name d-block" t-out="request.env.user.name"/><span class="pbwep-sidebar-profile-role d-block">Workspace user</span></span><i class="fa fa-angle-up ms-auto"/></button><div id="pbwep-profile-menu" class="pbwep-profile-menu"><a href="/web/session/logout?redirect=/web/login"><i class="fa fa-sign-out"/>Logout</a></div></div></div>
+</aside>
+<div class="pbwep-desktop-top-actions"><t t-call="portal_backend_workspace.notification_bell"/></div>
+<nav class="pbwep-navbar"><div class="pbwep-nav-links"><a href="/my/workspace">Workspace</a><t t-foreach="pbw_areas" t-as="area"><a t-att-href="area['url']" t-out="area['name']"/></t></div><div class="pbwep-nav-right"><t t-call="portal_backend_workspace.notification_bell"/><a href="/web/session/logout?redirect=/web/login"><i class="fa fa-sign-out"/></a></div></nav>
+<div class="pbwep-mobile-topbar mobile-only"><button class="pbwep-mobile-menu-toggle" type="button" data-pbwep-menu-toggle="1" aria-controls="pbwep-shared-sidebar" aria-expanded="false"><i class="fa fa-bars"/></button><div class="pbwep-top-company" t-out="request.env.company.name"/><t t-call="portal_backend_workspace.notification_bell"/></div>
+<main class="pbwep-portal-main"><div class="container-fluid px-3 px-md-4 py-3"><t t-out="0"/></div></main>
+<nav class="pbwep-bottom-nav mobile-only basic-nav"><div class="pbwep-nav-left"/>
+<button type="button" class="pbwep-fab-center" id="pbwFabCenterBtn" aria-label="Create a document" aria-expanded="false" aria-controls="pbwFabMenu"><div class="fab-plus"><i class="fa fa-plus"/></div></button>
+<div class="pbwep-nav-right"><a href="/web/session/logout?redirect=/web/login" class="nav-btn"><i class="fa fa-sign-out"/><span>Exit</span></a></div></nav><div id="pbwFabMenu" class="fab-menu mobile-only">
+<a t-if="request.env.user.has_group('portal_backend_workspace.sales__group_portal_sales_creator')" href="/my/workspace/sales/new" class="fab-item"><i class="fa fa-file-text-o"/><span>New Quotation</span></a>
+<a t-if="request.env.user.has_group('portal_backend_workspace.purchase__group_portal_purchase_preparer')" href="/my/workspace/purchase/new" class="fab-item"><i class="fa fa-shopping-cart"/><span>New Purchase Order</span></a>
+<a t-if="request.env.user.has_group('portal_backend_workspace.accounting__group_preparer') or request.env.user.has_group('portal_backend_workspace.accounting__group_accountant')" href="/my/workspace/accounting/bills/new" class="fab-item"><i class="fa fa-file-text-o"/><span>New Vendor Bill</span></a>
+<a t-if="request.env.user.has_group('portal_backend_workspace.hr__group_employee_admin')" href="/my/workspace/hr/employees/new" class="fab-item"><i class="fa fa-user-plus"/><span>New Employee</span></a>
+</div><script src="/portal_backend_workspace/static/src/core/portal_mobile_menu.js"/>
+<script src="/portal_backend_workspace/static/src/core/portal_compact_lists.js"/>
+<script src="/portal_backend_workspace/static/src/core/workspace_shell.js"/>
+</t></template>
+<template id="notification_bell">
+        <div class="pbwep-bell-wrap" t-att-data-pbw-other-unread="ep_notif_unread_total">
+            <div t-att-class="'pbwep-bell-btn has-unread' if ep_notif_unread_total else 'pbwep-bell-btn'" onclick="togglePbwBell(event)">
+                <i class="fa fa-bell-o"/>
+                <t t-if="ep_notif_unread_total &gt; 0">
+                    <span class="pbwep-bell-dot"/>
+                </t>
+            </div>
+
+            <div class="pbwep-bell-panel">
+                <div class="pbwep-bell-panel-header">Notifications</div>
+
+                <t t-set="ep_unread_items" t-value="[(k, v) for k, v in ep_notif_summary.items() if v.get('new', 0) &gt; 0]"/>
+
+                <t t-if="ep_unread_items">
+                    <t t-foreach="ep_unread_items" t-as="ep_item">
+                        <a t-att-href="ep_item[1]['url']" t-att-data-pbw-notification-kind="ep_item[0]" class="pbwep-bell-item">
+                            <div class="pbwep-bell-item-icon">
+                                <i class="fa fa-bell"/>
+                            </div>
+                            <span class="pbwep-bell-item-label">
+                                <t t-out="ep_item[1]['label']"/>
+                            </span>
+                            <span class="pbwep-bell-item-count">
+                                <t t-out="ep_item[1]['new']"/> new
+                            </span>
+                        </a>
+                    </t>
+                </t>
+                <t t-if="not ep_unread_items">
+                    <div class="pbwep-bell-empty">You're all caught up.</div>
+                </t>
+            </div>
+        </div>
+    </template>
+    
+<template id="workspace_home" name="Workspace Home"><t t-call="portal_backend_workspace.workspace_layout">
+<div class="py-3"><h1 class="pbwep-workspace-title">My Workspace</h1><p class="text-muted">Sales, Purchase, Accounting and HR Administration</p>
+<t t-if="request.env.user.share and not request.env.user.sudo().with_company(request.env.user.company_id).employee_id"><div class="pbwep-shell-note">Ask your administrator to link this portal account to an employee under Employees / Settings / Related User before opening operational workspaces.</div></t>
+<t t-if="ep_notif_unread_total"><h4>Needs Your Attention</h4><div class="pbwep-attention-grid"><t t-foreach="ep_notif_summary.items()" t-as="notice"><a t-if="notice[1].get('new')" t-att-href="notice[1]['url']" class="pbwep-attention-item"><strong t-out="notice[1]['new']"/> <t t-out="notice[1]['label']"/></a></t></div></t>
+<div class="pbwep-workspace-grid"><t t-foreach="workspace_areas" t-as="area"><div class="pbwep-workspace-tile"><i t-att-class="'fa '+area['icon']"/><h3 t-out="area['name']"/><t t-foreach="area['links']" t-as="link"><a t-att-href="link[1]" t-out="link[0]"/></t></div></t></div><div t-if="not workspace_areas" class="pbwep-shell-note">Workspace access is enabled, but no operational roles have been assigned. Ask your administrator to assign the appropriate Sales, Purchase, Accounting or HR roles.</div></div>
+</t></template>
+<template id="notification_list" name="Workspace Notifications"><t t-call="portal_backend_workspace.workspace_layout"><h2>Notifications</h2><form action="/my/workspace/notifications/read" method="post" class="mb-3"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><button class="btn btn-outline-primary">Mark all as read</button></form><t t-foreach="notification_rows" t-as="notice"><article t-att-class="'pbwep-alert-card'+(' unread' if not notice.read_at else '')"><h5 t-out="notice.title"/><p class="text-muted" t-out="notice.body"/><small t-field="notice.create_date"/><div class="mt-2"><a class="btn btn-sm btn-primary" t-att-href="notice.url">Open document</a><form t-if="not notice.read_at" action="/my/workspace/notifications/read" method="post" class="d-inline ms-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="ident" t-att-value="notice.id"/><button class="btn btn-sm btn-light">Mark read</button></form></div></article></t><p t-if="not notification_rows" class="text-muted">No workspace notifications.</p><a t-if="page &gt; 1" t-att-href="'/my/workspace/notifications?page=%s' % (page-1)" class="btn btn-light">Previous</a><a t-if="has_next" t-att-href="'/my/workspace/notifications?page=%s' % (page+1)" class="btn btn-light ms-2">Next</a></t></template>
+</odoo>

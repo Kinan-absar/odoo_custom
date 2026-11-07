@@ -1,0 +1,52 @@
+{
+  "version": "18.0.0.9.0",
+  "sources": [
+    {
+      "component": "sales",
+      "source_module": "absar_portal_sales",
+      "version": "18.0.1.4.14"
+    },
+    {
+      "component": "purchase",
+      "source_module": "absar_portal_purchase_monitor",
+      "version": "18.0.1.7.4"
+    },
+    {
+      "component": "accounting",
+      "source_module": "absar_portal_accounting",
+      "version": "18.0.1.3.9"
+    },
+    {
+      "component": "hr",
+      "source_module": "absar_portal_employee_admin",
+      "version": "18.0.1.0.17"
+    },
+    {
+      "component": "portal layout reference",
+      "source_module": "employee_portal_suite",
+      "version": "18.0.1.20.125"
+    }
+  ],
+  "refactoring": "Original workspaces migrated and namespaced; unsupported custom integrations removed. Source references are provenance, not dependencies.",
+  "dependencies": [
+    "base",
+    "web",
+    "portal",
+    "mail",
+    "sale_management",
+    "sale_stock",
+    "purchase_stock",
+    "project_purchase",
+    "account",
+    "analytic",
+    "hr",
+    "hr_attendance",
+    "hr_contract",
+    "hr_work_entry",
+    "hr_payroll"
+  ],
+  "test_summary": {
+    "passed": 27,
+    "not_run": 5
+  }
+}
