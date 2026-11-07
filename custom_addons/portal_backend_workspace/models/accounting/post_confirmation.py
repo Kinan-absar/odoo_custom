@@ -6,7 +6,7 @@ class AccountingPostConfirmation(models.TransientModel):
     _name = 'pbw.accounting.post.confirm'
     _description = 'Native accounting posting warning confirmation'
 
-    kind = fields.Selection([('bills','Vendor Bill'),('refunds','Vendor Credit Note'),('journals','Journal Entry'),('payments','Payment Voucher'),('receipts','Receipt Voucher')], required=True, readonly=True)
+    kind = fields.Selection([('invoices','Customer Invoice'),('bills','Vendor Bill'),('refunds','Vendor Credit Note'),('journals','Journal Entry')], required=True, readonly=True)
     record_id = fields.Integer(required=True, readonly=True)
     version = fields.Char(required=True, readonly=True)
     warning = fields.Text(readonly=True)

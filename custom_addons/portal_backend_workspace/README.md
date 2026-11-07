@@ -1,8 +1,14 @@
-# Portal Backend Workspace - 18.0.0.9.0
+# Portal Backend Workspace - 18.0.0.9.1
 
-Independent Odoo 18 addon containing the migrated original Sales, Purchase,
+Independent Odoo 18 addon containing the migrated Sales, Purchase,
 Accounting and HR Administration workspaces. This release replaces the simplified
 v0.8 pages; it is not an installer for the original four addons.
+
+## This update
+
+Restores confirmed design, navigation, pending-count, Accounting dialog/posting
+and HR detail regressions. It does not replace the original editors or change
+the optional bridge. Read PARITY_AUDIT.md for exact changes and remaining gaps.
 
 ## Source baseline
 
@@ -108,13 +114,10 @@ implemented by that bridge.
 
 ## Validation status
 
-See TEST_REPORT.md. Twenty-seven adapted original frontend and workflow check
-scripts pass, along with package/reference, import-stub and routing checks. A
-network-free Chromium fixture checks original Sales markup, the extracted full
-stylesheet, and the mobile drawer. These are offline fixtures, not a successful
-Odoo installation or end-to-end workflow certification. A live Odoo 18 registry,
-database upgrade, native tax/stock/payroll engine, actual mail delivery and real
-PDF rendering were not available in this build environment.
-
-This ZIP is for the Dev installation test. Installation on your database and
-full coexistence with installed customizations remain unverified.
+See TEST_REPORT.md and PARITY_AUDIT.md. This is a targeted source-parity repair of
+v0.9, not a certification that the four original addons are fully reproduced.
+21 targeted regression checks pass; 16 of 28 adapted original fixture scripts pass.
+The other 12 harness executions are recorded and explained, not counted as passes.
+Isolated desktop/mobile Accounting dialog styles match the original in Chromium.
+Live Odoo installation, native transaction engines and full screen/workflow parity
+remain unverified. Original custom integrations remain excluded as documented.

@@ -74,7 +74,7 @@ import { openAnalyticDistribution } from "./analytic_editor";
         function ask(message, reason=false) {
             return new Promise(resolve=>{
                 const previous=document.activeElement;
-                const backdrop=el('div',{class:'pbw-accounting-dialog-backdrop'}),dialog=el('div',{class:'aca pbw-accounting-dialog',role:'dialog','aria-modal':'true','aria-label':reason?'Enter a reason':'Confirm action'});
+                const backdrop=el('div',{class:'pbw-accounting-dialog-backdrop'}),dialog=el('div',{class:'pbw-accounting pbw-accounting-dialog',role:'dialog','aria-modal':'true','aria-label':reason?'Enter a reason':'Confirm action'});
                 const finish=value=>{backdrop.remove();previous?.focus();resolve(value);};
                 dialog.append(el('h3',{text:reason?'Enter a reason':'Confirm action'}),el('p',{text:message}));
                 let input;
@@ -85,7 +85,7 @@ import { openAnalyticDistribution } from "./analytic_editor";
             });
         }
         function searchMore(resource, query, choose) {
-            const backdrop=el('div',{class:'pbw-accounting-dialog-backdrop'}),dialog=el('div',{class:'aca pbw-accounting-dialog',role:'dialog','aria-modal':'true','aria-label':'Search '+resourceTitle(resource)});
+            const backdrop=el('div',{class:'pbw-accounting-dialog-backdrop'}),dialog=el('div',{class:'pbw-accounting pbw-accounting-dialog',role:'dialog','aria-modal':'true','aria-label':'Search '+resourceTitle(resource)});
             const search=el('input',{type:'search','aria-label':'Search records',placeholder:'Search by name or reference…'});search.value=query||'';
             const list=el('div',{class:'pbw-accounting-search-results'}),pager=el('div',{class:'pbw-accounting-pager'});let offset=0,sequence=0;
             async function load(){const seq=++sequence;list.replaceChildren(el('p',{text:'Searching…'}));try{
@@ -299,7 +299,7 @@ import { openAnalyticDistribution } from "./analytic_editor";
         }
         function action(name, extra = {}) {return run('action', {id: state.id, version: state.version, action: name, ...extra});}
         function reviewDialog(returning = false) {
-            const backdrop = el('div', {class: 'pbw-accounting-dialog-backdrop'}), box = el('div', {class: 'aca pbw-accounting-dialog', role: 'dialog', 'aria-modal': 'true'});
+            const backdrop = el('div', {class: 'pbw-accounting-dialog-backdrop'}), box = el('div', {class: 'pbw-accounting pbw-accounting-dialog', role: 'dialog', 'aria-modal': 'true'});
             box.append(el('h3', {text: returning ? 'Return for correction' : state.can_post ? 'Post document' : 'Approve and post'}));
             box.append(el('p', {text: returning ? 'Explain what needs to change.' : 'This posts the document using the existing accounting workflow.'}));
             const comment = el('textarea', {'aria-label': 'Review comment'}); box.append(comment);
@@ -375,7 +375,7 @@ import { openAnalyticDistribution } from "./analytic_editor";
             return box;
         }
         function planDialog(approval = false) {
-            const backdrop = el('div', {class: 'pbw-accounting-dialog-backdrop'}), box = el('div', {class: 'aca pbw-accounting-dialog', role: 'dialog', 'aria-modal': 'true'});
+            const backdrop = el('div', {class: 'pbw-accounting-dialog-backdrop'}), box = el('div', {class: 'pbw-accounting pbw-accounting-dialog', role: 'dialog', 'aria-modal': 'true'});
             let selected, amount;
             box.append(el('h3', {text: approval ? 'Approve Payment' : 'Add to Weekly Plan'}));
             if (approval) {
@@ -445,7 +445,7 @@ import { openAnalyticDistribution } from "./analytic_editor";
                 const data=await api(productId?'product-read':'product-defaults',{id:productId});
                 const readonly=!state.editable||!data.can_edit, values={...data,name:data.name||initialName};
                 for(const key of ['categ_id','uom_id','uom_po_id','property_account_expense_id'])values[key]=data[key]?.id||false;
-                const previous=document.activeElement,backdrop=el('div',{class:'pbw-accounting-dialog-backdrop'}),dialog=el('div',{class:'aca pbw-accounting-dialog',role:'dialog','aria-modal':'true','aria-label':productId?'Product form':'Create product'});
+                const previous=document.activeElement,backdrop=el('div',{class:'pbw-accounting-dialog-backdrop'}),dialog=el('div',{class:'pbw-accounting pbw-accounting-dialog',role:'dialog','aria-modal':'true','aria-label':productId?'Product form':'Create product'});
                 const close=()=>{backdrop.remove();previous?.isConnected&&previous.focus();};
                 dialog.append(el('h3',{text:productId?'Product: '+data.name:'Create Product'}));
                 if(data.shared&&state.kind!=='invoices')dialog.append(el('p',{class:'pbw-accounting-mini',text:'General details apply across companies. The expense account is saved for the selected company.'}));
@@ -556,7 +556,7 @@ import { openAnalyticDistribution } from "./analytic_editor";
             table.append(body);decorateLineGrid(table,{editor:journal?'journal':'invoice',editable:state.editable&&!busy,entrySelector:'[data-grid-entry]',onAppend:()=>{if(isEmptyDraftLine(state.lines.at(-1)))return false;moveGrid(state.lines.length-1,journal?7:6,1);},onReorder:(from,to)=>{const [line]=state.lines.splice(from,1);if(line){state.lines.splice(to,0,line);revision++;render();schedulePreview();}}});wrap.append(table);return wrap;
         }
         function lineDetails(row,journal) {
-            const backdrop=el('div',{class:'pbw-accounting-dialog-backdrop'}),dialog=el('div',{class:'aca pbw-accounting-dialog',role:'dialog','aria-modal':'true','aria-label':'Line details'});
+            const backdrop=el('div',{class:'pbw-accounting-dialog-backdrop'}),dialog=el('div',{class:'pbw-accounting pbw-accounting-dialog',role:'dialog','aria-modal':'true','aria-label':'Line details'});
             dialog.append(el('h3',{text:journal?'Journal Item Details':'Invoice Line Details'}));
             if(journal)dialog.append(label('Foreign Amount',input('amount_currency','number',row,drawTotals)),label('Due Date',input('date_maturity','date',row)));
             else dialog.append(label('Description',input('name','text',row)),label('Unit of Measure',picker('uom',{id:row.product_uom_id,name:row.uom_name},selected=>{row.product_uom_id=selected.id;row.uom_name=selected.name;revision++;schedulePreview();})));

@@ -24,6 +24,20 @@
             const data = await response.json();
             if (!data || typeof data !== 'object' || Array.isArray(data)) return;
             lastRefresh = Date.now();
+            const badgeTypes = {
+                '/my/workspace/sales/approvals':['sales_approval','count'],
+                '/my/workspace/sales/updates':['sales_review_update','new'],
+                '/my/workspace/purchase/approvals':['purchase_approval','count'],
+                '/my/workspace/accounting':['accounting_approval','count'],
+            };
+            document.querySelectorAll('#pbwep-desktop-sidebar-nav a.pbwep-sidebar-link').forEach(link => {
+                const spec = badgeTypes[new URL(link.href,location.origin).pathname];
+                if (!spec) return;
+                const count = Math.max(0, Number(data[spec[0]]?.[spec[1]]) || 0);
+                let badge = link.querySelector('.pbw-navigation-count');
+                if (count && !badge) { badge = node('span','pbw-navigation-count'); link.append(badge); }
+                if (badge) { badge.textContent = String(count); badge.hidden = !count; }
+            });
             const items = Object.entries(data).filter(([,v]) => v && Number(v.new) > 0 && typeof v.url === 'string' && v.url.startsWith('/my/workspace'));
             document.querySelectorAll('.pbwep-bell-wrap').forEach(wrap => {
                 const btn = wrap.querySelector('.pbwep-bell-btn'), panel = wrap.querySelector('.pbwep-bell-panel');

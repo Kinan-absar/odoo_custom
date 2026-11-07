@@ -35,8 +35,11 @@ class WorkspaceUser(models.Model):
                 continue
             links = []
             if key == 'sales':
-                sales_url = '/my/workspace/sales' if any(self.has_group(PREFIX+'sales__'+g) for g in ('group_portal_sales_creator','group_portal_sales_user','group_portal_sales_approver')) else '/my/workspace/sales/monitor'
-                links.append(('Quotations & Orders', sales_url, 'fa-file-text-o'))
+                sales_label = 'Sales Workspace' if self.has_group(PREFIX + 'sales__group_portal_sales_user') else 'My Quotations'
+                if self.has_group(PREFIX + 'sales__group_portal_sales_creator'):
+                    links.append((sales_label, '/my/workspace/sales', 'fa-file-text-o'))
+                if self.has_group(PREFIX + 'sales__group_portal_sales_monitor'):
+                    links.append(('Sales Monitoring', '/my/workspace/sales/monitor', 'fa-eye'))
                 if self.has_group(PREFIX + 'sales__group_portal_sales_approver'):
                     links.append(('Sales Approvals', '/my/workspace/sales/approvals', 'fa-check-square-o'))
                 if self.has_group(PREFIX + 'sales__group_portal_sales_creator'):
@@ -56,7 +59,7 @@ class WorkspaceUser(models.Model):
                 if self.has_group(PREFIX + 'accounting__group_customer_invoicing'):
                     links.append(('Customer Invoices', '/my/workspace/accounting/invoices', 'fa-file-text-o'))
                 if any(self.has_group(PREFIX + 'accounting__group_' + g) for g in ('accountant', 'preparer', 'approver', 'monitor')):
-                    links += [('Vendor Bills', '/my/workspace/accounting/bills', 'fa-file-text-o'), ('Journal Entries', '/my/workspace/accounting/journals', 'fa-book')]
+                    links += [('Vendor Bills', '/my/workspace/accounting/bills', 'fa-file-text-o'), ('Vendor Credit Notes', '/my/workspace/accounting/refunds', 'fa-undo'), ('Journal Entries', '/my/workspace/accounting/journals', 'fa-book')]
             elif key == 'hr':
                 if self.has_group(PREFIX + 'hr__group_employee_admin'):
                     links += [('Employees', '/my/workspace/hr/employees', 'fa-users'), ('Attendance', '/my/workspace/hr/attendance', 'fa-clock-o')]
@@ -64,6 +67,34 @@ class WorkspaceUser(models.Model):
                     links += [('Contracts', '/my/workspace/hr/contracts', 'fa-file-text-o'), ('Work Entries', '/my/workspace/hr/work-entries', 'fa-calendar'), ('Payslips', '/my/workspace/hr/payslips', 'fa-money'), ('Payroll Batches', '/my/workspace/hr/batches', 'fa-folder-o')]
             result.append({'key': key, 'name': _(label), 'icon': icon, 'url': links[0][1] if links else '/my/workspace/' + key, 'links': links})
         return result
+
+    def _pbw_navigation_badge(self, summary, url):
+        """Pending approvals stay visible after a list is visited."""
+        self.ensure_one()
+        categories = {
+            '/my/workspace/sales/approvals': ('sales_approval', 'count'),
+            '/my/workspace/sales/updates': ('sales_review_update', 'new'),
+            '/my/workspace/purchase/approvals': ('purchase_approval', 'count'),
+            '/my/workspace/accounting': ('accounting_approval', 'count'),
+        }
+        category, metric = categories.get(url, ('', 'new'))
+        return max(0, int(summary.get(category, {}).get(metric, 0) or 0))
+
+    def _pbw_attention_items(self, summary):
+        self.ensure_one()
+        items = []
+        icons = {'sales_approval': 'fa-line-chart', 'purchase_approval': 'fa-shopping-cart',
+                 'accounting_approval': 'fa-calculator', 'sales_review_update': 'fa-bell-o'}
+        for key in ('sales_approval', 'purchase_approval', 'accounting_approval', 'sales_review_update'):
+            item = summary.get(key, {})
+            pending = key.endswith('_approval')
+            count = max(0, int(item.get('count' if pending else 'new', 0) or 0))
+            if not count:
+                continue
+            items.append({'key': key, 'count': count, 'label': item.get('label', key),
+                          'url': item.get('url', '/my/workspace'), 'icon': icons[key],
+                          'hint': _('Waiting for your approval') if pending else _('New review decisions')})
+        return items
 
 class WorkspaceEmployee(models.Model):
     _inherit = 'hr.employee'

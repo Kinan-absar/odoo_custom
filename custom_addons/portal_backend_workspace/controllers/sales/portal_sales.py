@@ -78,7 +78,7 @@ class PortalSales(SalesLinesMixin, http.Controller):
 
     def _partners(self, limit=500):
         return request.env['res.partner'].sudo().search([
-            '|', ('pbw_is_sales_customer','=',True), ('customer_rank','>',0), ('active','=',True),
+            ('pbw_is_sales_customer','=',True), ('active','=',True),
             '|', ('company_id','=',False), ('company_id','in',request.env.user.company_ids.ids)
         ], limit=limit, order='name')
 
@@ -182,7 +182,7 @@ class PortalSales(SalesLinesMixin, http.Controller):
         self._allowed()
         data=json.loads(post.get('payload') or '{}');kind=data.get('kind');q=str(data.get('q') or '')[:120]
         allowed=[('active','=',True),'|',('company_id','=',False),('company_id','in',request.env.user.company_ids.ids)]
-        if kind=='partner_id':model='res.partner';domain=allowed+['|',('pbw_is_sales_customer','=',True),('customer_rank','>',0)]
+        if kind=='partner_id':model='res.partner';domain=allowed+[('pbw_is_sales_customer','=',True)]
         elif kind=='project_id':
             partner=request.env['res.partner'].sudo().browse(int(data.get('partner_id') or 0)).exists()
             if not partner or partner not in self._partners(limit=None):raise Forbidden()

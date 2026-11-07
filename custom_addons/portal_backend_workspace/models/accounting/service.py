@@ -421,6 +421,10 @@ class PortalAccountingService(models.AbstractModel):
                         raise UserError(_('A bill/credit note with this vendor reference already exists: %s') % duplicate.display_name)
                 record.write({'pbw_accounting_review': 'approved' if record.pbw_accounting_review_required else 'draft', 'pbw_accounting_reviewer_id': user.id if record.pbw_accounting_review_required else False, 'pbw_accounting_comment': comment})
                 result = record.with_context(_pbw_accounting_token=_REVIEW_TOKEN, validate_analytic=True).action_post()
+                if isinstance(result, dict) and result.get('res_model') == 'account.autopost.bills.wizard' and record.state == 'posted':
+                    pass
+                elif isinstance(result, dict) and result.get('type') == 'ir.actions.act_window':
+                    raise UserError(_('An additional accounting wizard is required. Complete this operation internally.'))
                 if record.state != 'posted':
                     raise UserError(_('The accounting method did not post this document.'))
         elif action in ('reconcile', 'unreconcile'):

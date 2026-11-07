@@ -104,6 +104,11 @@ class EmployeeAdminPortal(http.Controller):
         if r and kind == 'payslips':
             tables.append(dict(title='Worked Days', headers=['Type', 'Days', 'Hours', 'Amount'], rows=[[l.name, l.number_of_days, l.number_of_hours, money(l.amount)] for l in r.worked_days_line_ids]))
             tables.append(dict(title='Salary Computation', headers=['Code', 'Rule', 'Quantity', 'Rate', 'Total'], rows=[[l.code, l.name, l.quantity, l.rate, money(l.total)] for l in r.line_ids]))
+            # The original HR screen displays these existing Studio totals, when present.
+            # These are read-only values on the already authorized payslip; no dependency is introduced.
+            for name in ('x_studio_total_deduction', 'x_studio_float_field_10f_1j131bp4a', 'x_studio_reimbursement', 'x_studio_unpaid', 'x_studio_deduct_other', 'x_studio_deduct_loan'):
+                if name in r._fields and r._fields[name].type in ('float', 'monetary', 'integer'):
+                    totals.append((r._fields[name].string, money(r[name])))
             adjustments = [dict(id=l.id, name=l.name, amount=l.amount, input_type_id=l.input_type_id.id) for l in r.input_line_ids]
         if r and kind == 'batches':
             slips = [dict(url=self._url('payslips', p.id, company_id=c.id), cells=self._cells(s, c, 'payslips', p)) for p in r.slip_ids]
@@ -236,7 +241,10 @@ class EmployeeAdminPortal(http.Controller):
             raise NotFound()
         r = s._record(c, kind, ident)
         report_env = s._env(c)
-        report = (c.pbw_hr_payslip_report_id or report_env.ref('hr_payroll.action_report_payslip')).sudo()
+        report = c.sudo().pbw_hr_payslip_report_id or report_env.ref('hr_payroll.action_report_payslip', raise_if_not_found=False)
+        if not report:
+            raise UserError(_('The standard payslip PDF report is unavailable.'))
+        report = report.sudo()
         if report.model != 'hr.payslip' or report.report_type != 'qweb-pdf':
             raise UserError(_('Select a payslip PDF report for this company.'))
         pdf, _format = report_env['ir.actions.report']._render_qweb_pdf(report.id, res_ids=[r.id])

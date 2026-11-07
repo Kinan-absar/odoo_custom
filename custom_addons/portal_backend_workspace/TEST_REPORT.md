@@ -1,72 +1,75 @@
-# Validation report - Portal Backend Workspace 18.0.0.9.0
+# Validation - 18.0.0.9.1
 
-## Results
+Tests below were executed for this build. Historical v0.9 claims are archived in
+V09_TEST_REPORT.md and are not counted as fresh evidence.
 
-- 27 adapted original frontend/workflow check scripts: PASS.
-- 5 original harness entries: not run; explanations below.
-- Internal model/XML/action/template references and asset targets: 0 audit findings.
-- Actual module/bridge import graph with Odoo and Werkzeug declaration stubs: PASS.
-  This does NOT build a real Odoo registry.
-- Python AST, XML parsing, JavaScript syntax and top-level CSS parsing: PASS.
-- Extracted EPS stylesheet completeness and desktop/mobile selectors: PASS.
-- Native-only base dependency list and one base addon manifest: PASS.
-- No new generic portal CRUD ACL on sale.order, purchase.order, account.move or
-  hr.employee; native business operations are exposed through scoped gateways.
-- Permission-specific menu and portal/internal role boundaries: offline PASS.
-- POST/CSRF boundaries and explicit deep-link routing: offline PASS.
-- Optional EPS sidebar XPath and dual-product login defaults: offline PASS.
-- Static Chromium template/layout/mobile drawer fixture: PASS. Uses mock records,
-  lightweight QWeb evaluation, inline module CSS and a small Bootstrap substitute;
-  not an Odoo-hosted browser session. Font loading and native module asset loading
-  are not established by that fixture.
+- 21 targeted actual-source regression checks: PASS (AST/mocked-method and static checks).
+- All 27 frontend JavaScript files: syntax PASS.
+- All addon Python and XML: parse PASS.
+- Declared data and asset files: exist; declared internal XML references resolve statically.
+- Isolated Chromium Accounting dialog comparison: original and repaired computed
+  styles match at 1280px and 390px; the v0.9 root-class regression is reproduced
+  at both sizes. This is NOT an Odoo-hosted page or full UI screenshot comparison.
+- 28 original standalone fixture scripts attempted after namespacing/path adapters:
+  16 PASS, 12 FAILED or incompatible and NOT counted as passes. Details follow.
+- No running Odoo registry/database, live upgrade, actual payroll/tax/stock engine,
+  mail delivery or real PDF rendering was tested.
 
-## Individual adapted checks
+## Original fixture results
 
-- accounting/quality_checks/check_journal_columns.py: PASSED
-- accounting/quality_checks/check_notifications.py: PASSED
-- accounting/quality_checks/check_print_access.py: PASSED
-- accounting/quality_checks/check_products.py: PASSED
-- accounting/quality_checks/check_submission_review.py: PASSED
-- accounting/quality_checks/design_cases.py: NOT_RUN - Fixture definitions only
-- accounting/quality_checks/frontend.mjs: PASSED
-- accounting/quality_checks/grid_frontend.mjs: PASSED
-- accounting/quality_checks/roles_cases.py: NOT_RUN - Requires a live Odoo database
-- accounting/quality_checks/runtime_cases.py: NOT_RUN - Requires a live Odoo database
-- hr/tests/check_attendance_timesheet.py: PASSED
-- hr/tests/check_batch_ui.mjs: PASSED
-- hr/tests/check_contract_selector.mjs: PASSED
-- hr/tests/check_form_ui.mjs: PASSED
-- hr/tests/check_frontend.mjs: PASSED
-- hr/tests/check_gateway.py: PASSED
-- hr/tests/check_print.py: PASSED
-- purchase/tools/check_approver_ui.py: PASSED
-- purchase/tools/check_frontend.mjs: PASSED
-- purchase/tools/check_grid_ui.mjs: PASSED
-- purchase/tools/check_logic.py: PASSED
-- purchase/tools/check_patch.py: PASSED
-- purchase/tools/check_portal.py: NOT_RUN - Original multi-addon packaging check replaced by consolidated audit
-- purchase/tools/check_product_update.py: PASSED
-- purchase/tools/check_purchase_policy.py: PASSED
-- purchase/tools/check_receipts.py: PASSED
-- purchase/tools/odoo_runtime_cases.py: NOT_RUN - Requires a live Odoo database
-- sales/tools/check_frontend.mjs: PASSED
-- sales/tools/check_print_approval.py: PASSED
-- sales/tools/check_sales_grid.mjs: PASSED
-- sales/tools/check_sales_lines.py: PASSED
-- sales/tools/check_sales_review.py: PASSED
+| Workspace | Script | Result / qualification |
+|---|---|---|
+| sales | `check_frontend.mjs` | PASS; isolated source/DOM/ORM-shaped fixture, not a live Odoo workflow. |
+| sales | `check_print_approval.py` | FAILED / not validated: Original harness also fails against the unmodified original: its fake row omits the current _can_print_for helper. |
+| sales | `check_sales_grid.mjs` | PASS; isolated source/DOM/ORM-shaped fixture, not a live Odoo workflow. |
+| sales | `check_sales_lines.py` | PASS; isolated source/DOM/ORM-shaped fixture, not a live Odoo workflow. |
+| sales | `check_sales_review.py` | FAILED / not validated: Original harness also fails against the unmodified original: it expects approver edits to invalidate review; current original explicitly permits approver edits. |
+| purchase | `check_approver_ui.py` | PASS; isolated source/DOM/ORM-shaped fixture, not a live Odoo workflow. |
+| purchase | `check_frontend.mjs` | PASS; isolated source/DOM/ORM-shaped fixture, not a live Odoo workflow. |
+| purchase | `check_grid_ui.mjs` | PASS; isolated source/DOM/ORM-shaped fixture, not a live Odoo workflow. |
+| purchase | `check_logic.py` | FAILED / not validated: Harness expects the excluded custom amount_paid / payment-voucher metric. Native billed/due/settled calculations differ from that custom metric. |
+| purchase | `check_patch.py` | FAILED / not validated: Harness includes Material Request lookups; this base intentionally has no EPS request model. |
+| purchase | `check_portal.py` | FAILED / not validated: Multi-addon packaging assertion expects the original manifest in each component, not a consolidated addon. |
+| purchase | `check_product_update.py` | PASS; isolated source/DOM/ORM-shaped fixture, not a live Odoo workflow. |
+| purchase | `check_purchase_policy.py` | PASS; isolated source/DOM/ORM-shaped fixture, not a live Odoo workflow. |
+| purchase | `check_receipts.py` | PASS; isolated source/DOM/ORM-shaped fixture, not a live Odoo workflow. |
+| accounting | `check_journal_columns.py` | FAILED / not validated: Original harness also fails against the unmodified original: its fake _journal method does not accept the current kind keyword. |
+| accounting | `check_notifications.py` | FAILED / not validated: Harness expects EPS Attendance-Only exclusion and does not model the new independent notification emitter. Independent PBW role policy needs a separate complete fixture. |
+| accounting | `check_print_access.py` | FAILED / not validated: Harness models the old external custom JV report lookup; the standalone report uses an independent report reference. |
+| accounting | `check_products.py` | PASS; isolated source/DOM/ORM-shaped fixture, not a live Odoo workflow. |
+| accounting | `check_submission_review.py` | FAILED / not validated: Harness still addresses the old helper name, which has been namespaced for consolidation; this complete script was not successfully adapted. |
+| accounting | `frontend.mjs` | PASS; isolated source/DOM/ORM-shaped fixture, not a live Odoo workflow. |
+| accounting | `grid_frontend.mjs` | PASS; isolated source/DOM/ORM-shaped fixture, not a live Odoo workflow. |
+| hr | `check_attendance_timesheet.py` | FAILED / not validated: Most native cases pass; original EPS parent-role/Attendance-Only checks and the per-addon manifest assertion are not valid for the independent product. |
+| hr | `check_batch_ui.mjs` | PASS; isolated source/DOM/ORM-shaped fixture, not a live Odoo workflow. |
+| hr | `check_contract_selector.mjs` | PASS; isolated source/DOM/ORM-shaped fixture, not a live Odoo workflow. |
+| hr | `check_form_ui.mjs` | PASS; isolated source/DOM/ORM-shaped fixture, not a live Odoo workflow. |
+| hr | `check_frontend.mjs` | PASS; isolated source/DOM/ORM-shaped fixture, not a live Odoo workflow. |
+| hr | `check_gateway.py` | FAILED / not validated: 29 of 31 individual tests pass. Remaining cases target the EPS parent-role matrix and excluded EPS salary report scope. |
+| hr | `check_print.py` | FAILED / not validated: Harness contains the excluded EPS salary report endpoint and old company report-field stubs. Full current print path remains unverified. |
 
-The original checks were adapted for renamed identifiers and routes, independent
-roles and the deliberate removal of optional custom integrations. Assertions for
-unavailable voucher, salary-estimator and technical-proposal integrations are not
-claimed as coverage of those excluded features. Some original tests substitute
-recordsets, mail, browser DOM and accounting engines.
+The adapter changes technical namespaces, URL paths, data attributes, and template
+IDs. One expected Accounting error message was updated to match the current
+original source; the no-network-request and validation assertions were retained.
+No failing assertion is silently counted as a pass. Some old original harnesses
+also fail on the original modules; those results are recorded separately.
 
-## Not verified
+## Re-run the targeted regression suite
 
-A real Odoo installation/update and registry startup; actual PostgreSQL migrations;
-real QWeb view inheritance against the deployed native/custom stack; end-to-end
-native pricing/tax, receipt/backorder and payroll computation; notification delivery;
-real report rendering; true cross-product coexistence in a running database.
+Install Python with lxml, then run from the addon directory:
 
-Passing offline fixtures does not establish production readiness. The source and
-actual files have been consolidated, but those integration checks still require Dev.
+```sh
+python validation/check_parity_repairs.py .
+```
+
+The archived fixture logs and reference adapters explain the separate original
+fixture run. They need the original source modules and audit folder layout to
+reproduce; they are not installation dependencies or Odoo test registrations.
+
+## Remaining acceptance tests
+
+Install/upgrade in the actual Dev database; render every original screen; compare
+all editable/read-only roles, company boundaries, multi-stage approval transitions,
+partial receipt/backorder quantities, taxes/analytics, payroll results, QWeb PDF
+reports, notifications and dual-product coexistence. This update does not assert
+that complete source-to-source or live functional parity is established.

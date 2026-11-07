@@ -172,7 +172,7 @@ class EmployeeAdminGateway(models.AbstractModel):
             return str(value).lower() in ('1', 'true', 'on')
         if field.type in ('many2one', 'many2many'):
             if field.type == 'many2one':
-                return self._relation(company, field.comodel_name, value).id
+                return self._relation(company, field.comodel_name, value).id or False
             if not isinstance(value, list) or len(value) > 500:
                 raise ValidationError(_('Invalid selection.'))
             ids = [self._relation(company, field.comodel_name, v).id for v in value if v]
@@ -212,7 +212,7 @@ class EmployeeAdminGateway(models.AbstractModel):
         if field.type == 'html':
             return '<p>' + str(escape(str(value or '')[:10000])).replace('\n', '<br/>') + '</p>'
         if field.type in ('char', 'text'):
-            return str(value or '')[:10000]
+            return str(value or '')[:10000] or False
         raise AccessError(_('Unsupported field.'))
 
     def _editable(self, kind, rec):
@@ -554,7 +554,7 @@ class EmployeeAdminGateway(models.AbstractModel):
                     upper = self._value(company, field, str(end + timedelta(days=1)) + 'T00:00:00')
                     domain.append((first, '<', upper))
             else:
-                first, last = ('date_from', 'date_to') if kind in ('payslips') else ('date_start', 'date_end')
+                first, last = ('date_from', 'date_to') if kind == 'payslips' else ('date_start', 'date_end')
                 if end:
                     domain.append((first, '<=', end))
                 if start:

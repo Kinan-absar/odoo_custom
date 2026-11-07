@@ -37,6 +37,7 @@ class Workspace(http.Controller):
         summary = request.env['pbw.notification.seen']._get_notification_summary(user)
         return request.render('portal_backend_workspace.workspace_home', {
             'workspace_areas': user._pbw_workspace_areas(),
+            'workspace_attention': user._pbw_attention_items(summary),
             'ep_notif_summary': summary,
             'ep_notif_unread_total': sum(v.get('new', 0) for v in summary.values()),
         })

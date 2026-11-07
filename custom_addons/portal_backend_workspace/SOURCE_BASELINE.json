@@ -1,5 +1,5 @@
 {
-  "version": "18.0.0.9.0",
+  "version": "18.0.0.9.1",
   "sources": [
     {
       "component": "sales",
@@ -46,7 +46,14 @@
     "hr_payroll"
   ],
   "test_summary": {
-    "passed": 27,
-    "not_run": 5
+    "targeted_regression_tests_passed": 21,
+    "original_fixture_scripts_passed": 16,
+    "original_fixture_scripts_failed_or_incompatible": 12,
+    "live_odoo_installation_verified": false
+  },
+  "source_archives": {
+    "ABSAR_Main_Updated_2026-11-05.zip": "b27a0dcd86aa172205fab325e7f5cfac891a7c8150e7c951937419edfeb02b71",
+    "Archive staging.zip": "2f8b27ab3c0c48334d44e368661d6e5e3adfc34f0ca9887b8e0cd67dd61c3a5c",
+    "Portal_Backend_Workspace_v0.9.zip": "df07094e7ef2474bd5f4eb2df937fc1e7b93c05bcbd2934b13ac8d7ae047db34"
   }
 }

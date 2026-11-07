@@ -1,3 +1,15 @@
+# 18.0.0.9.1
+
+- Repair six Accounting modal root classes to restore original styles.
+- Restore distinct Sales Monitoring and Accounting credit-note navigation.
+- Restore original portal customer-flag filtering and Purchase header role condition.
+- Restore source-style pending attention component and persistent approval counts.
+- Add missing role-gated native mobile create shortcuts.
+- Restore native posting wizard response handling and Customer Invoice warnings.
+- Restore conditional native payslip optional totals, empty-field clearing and report lookup safeguards.
+- Keep the original migrated editors/workflows, routing hooks and custom-dependency policy.
+- Add explicit source parity and fresh validation reports, including unresolved checks.
+
 # 18.0.0.9.0
 
 - Replace v0.8 simplified workspaces with original migrated Sales, Purchase,
