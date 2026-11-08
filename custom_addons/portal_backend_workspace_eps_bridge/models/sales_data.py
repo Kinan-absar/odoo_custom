@@ -22,6 +22,15 @@ class SalesCustomerDataBridge(models.Model):
         return domain
 
 
+    @api.model
+    def _pbw_sales_customer_source_labels(self):
+        labels = list(super()._pbw_sales_customer_source_labels())
+        field = self._fields.get('absar_is_sales_customer')
+        if field and field.type == 'boolean':
+            labels.append(_('Customer / Client (original Sales)'))
+        return labels
+
+
 class SalesProjectDataBridge(models.Model):
     _inherit = 'sale.order'
 

@@ -1,6 +1,7 @@
 {'name': 'Portal Backend Workspace',
- 'version': '18.0.0.9.5',
- 'summary': 'Original Sales, Purchase, Accounting and HR workspaces for authorized portal accounts',
+ 'version': '18.0.0.9.6',
+ 'summary': 'Original Sales, Purchase, Accounting and HR workspaces for '
+            'authorized portal accounts',
  'category': 'Productivity',
  'author': 'Portal Backend Workspace',
  'license': 'OPL-1',

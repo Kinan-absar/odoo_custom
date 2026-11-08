@@ -1,4 +1,4 @@
-from odoo import api, fields, models
+from odoo import api, fields, models, _
 from odoo.osv import expression
 
 
@@ -7,7 +7,7 @@ class ResPartner(models.Model):
 
     pbw_is_sales_customer = fields.Boolean(
         string='Workspace Customer / Client',
-        help='Include this contact in the standalone Sales workspace. Existing Sales customer flags can be connected by the optional Sales Data Bridge.',
+        help='Include this contact in the standalone Sales workspace. The optional Employee Portal bridge connects the original Sales customer checkbox.',
         index=True,
     )
 
@@ -20,6 +20,11 @@ class ResPartner(models.Model):
     def _pbw_sales_customer_domain(self, company):
         return expression.AND([
             [('active', '=', True), '|', ('company_id', '=', False),
-             ('company_id', '=', company.id)],
+             ('company_id', 'in', company.ids)],
             self._pbw_sales_customer_eligibility_domain(),
         ])
+
+    @api.model
+    def _pbw_sales_customer_source_labels(self):
+        """Readable provider status for the empty-selector message; no contact data."""
+        return [_('Workspace Customer / Client')]

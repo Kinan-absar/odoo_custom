@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<odoo>
+  <template id="proposal_document_detail" inherit_id="portal_backend_workspace.sales__document_detail_extra">
+    <xpath expr="." position="inside">
+      <t t-if="order._pbw_sales_document_type() == 'technical'">
+     <div class="pbw-sales-panel"><h5>Technical Proposal Template</h5>
+      <form t-if="can_edit" method="post" t-att-action="'/my/workspace/sales/%s/template' % order.id" class="row g-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><div class="col-md-8"><select name="template_id" class="form-select" required="required"><option value="">Choose a template</option><option t-foreach="templates" t-as="t" t-att-value="t.id" t-out="t.name"/></select></div><div class="col-md-4"><button class="btn btn-outline-primary" data-pbw-sales-confirm="Replace existing proposal sections and milestones with the selected template?">Load / Replace Template</button></div></form>
+      <p t-if="not can_edit" class="text-muted" t-out="order.absar_proposal_template_id.name or 'Custom proposal'"/>
+     </div>
+     <div class="pbw-sales-panel"><h5>Technical Sections</h5><p t-if="can_edit" class="text-muted small">Set the Order number and save to move a section to that position.</p><div class="pbw-sales-sortable" t-att-data-reorder-url="'/my/workspace/sales/%s/sections/reorder' % order.id" t-att-data-csrf="request.csrf_token()"><details t-foreach="order.absar_proposal_section_ids.sorted(key=lambda s:(s.sequence,s.id))" t-as="s" class="pbw-sales-section pbw-sales-section-compact" t-att-data-section-id="s.id"><summary class="pbw-sales-section-heading"><span class="pbw-sales-section-number" t-out="s_index + 1"/><span class="pbw-sales-section-name" t-out="s.name"/><span t-if="not s.include_in_report" class="pbw-sales-muted-tag">Hidden from PDF</span><span class="pbw-sales-section-toggle">Edit / View</span></summary><div class="pbw-sales-section-expanded">
+      
+      <form t-att-action="'/my/workspace/sales/%s/section/%s/save' % (order.id,s.id)" method="post"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+       <div class="d-flex align-items-center gap-2 mb-2"><label class="mb-0" for="pbw-sales-section-order">Order</label><input type="number" name="position" min="1" t-att-max="len(order.absar_proposal_section_ids)" t-att-value="s_index + 1" class="form-control form-control-sm" style="width:85px" t-att-readonly="not can_edit and 'readonly' or None"/><span class="text-muted small">Set the position, then Save Section</span></div><label>Section type</label><select name="section_type" class="form-select" t-att-disabled="not can_edit and 'disabled' or None"><option t-foreach="s._fields['section_type'].selection" t-as="opt" t-att-value="opt[0]" t-att-selected="s.section_type == opt[0] and 'selected' or None" t-out="opt[1]"/></select>
+       <label class="mt-2">Section title</label><input class="form-control" name="name" t-att-value="s.name" t-att-readonly="not can_edit and 'readonly' or None"/>
+       <label class="mt-2">Content</label>
+       <div class="pbw-sales-editor" t-att-data-editable="can_edit and '1' or '0'">
+        <div t-if="can_edit" class="pbw-sales-editor-toolbar" role="toolbar" aria-label="Format text"><button type="button" data-pbw-sales-format="bold" title="Bold"><b>B</b></button><button type="button" data-pbw-sales-format="italic" title="Italic"><i>I</i></button><button type="button" data-pbw-sales-format="underline" title="Underline"><u>U</u></button><select aria-label="Text size" class="pbw-sales-font-size"><option value="">Text size</option><option value="2">Small</option><option value="3">Normal</option><option value="4">Large</option><option value="5">Extra large</option></select><button type="button" data-pbw-sales-format="insertUnorderedList" title="Bullet list">• List</button></div>
+        <div class="pbw-sales-editor-body" t-att-contenteditable="can_edit and 'true' or 'false'" role="textbox" aria-multiline="true" aria-label="Section content"><t t-if="s.content"><span t-field="s.content"/></t></div>
+        <textarea name="content" hidden="hidden" t-out="s.content or ''"/>
+       </div>
+       <div t-if="can_edit" class="d-flex gap-3 align-items-center mt-2"><label><input type="checkbox" name="include" value="1" t-att-checked="s.include_in_report and 'checked' or None"/> Include in PDF</label><label><input type="checkbox" name="page_break" value="1" t-att-checked="s.page_break_before and 'checked' or None"/> New PDF page</label><button class="btn btn-sm btn-outline-primary">Save Section</button></div>
+      </form>
+      <form t-if="can_edit" method="post" t-att-action="'/my/workspace/sales/%s/section/%s/delete' % (order.id,s.id)" class="mt-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><button class="btn btn-sm btn-outline-danger" data-pbw-sales-confirm="Remove this section?">Delete Section</button></form>
+     </div></details>
+     </div><details t-if="can_edit" class="pbw-sales-add-section"><summary>+ Add Section</summary><form method="post" t-att-action="'/my/workspace/sales/%s/section/add' % order.id" class="pbw-sales-new row g-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><div class="col-md-3"><select class="form-select" name="section_type"><option t-foreach="order.env['absar.proposal.section']._fields['section_type'].selection" t-as="opt" t-att-value="opt[0]" t-out="opt[1]"/></select></div><div class="col-md-4"><input class="form-control" name="name" placeholder="New section title" required="required"/></div><div class="col-md-5"><textarea class="form-control" rows="2" name="content" placeholder="Initial text (can be formatted after adding)"/></div><div class="col-12 d-flex gap-3 align-items-center"><label>Order <input type="number" class="form-control form-control-sm" style="width:85px" name="position" min="1" t-att-max="len(order.absar_proposal_section_ids) + 1" t-att-value="len(order.absar_proposal_section_ids) + 1" t-att-readonly="not can_edit and 'readonly' or None"/></label><label><input type="checkbox" name="page_break" value="1"/> Start on new PDF page</label><button class="btn btn-outline-primary">Save New Section</button></div></form></details>
+     </div>
+     <div class="pbw-sales-panel"><h5>Payment Milestones</h5><div class="table-responsive"><table class="table"><thead><tr><th>Milestone</th><th>%</th><th>Due condition</th><th/></tr></thead><tbody><tr t-foreach="order.absar_proposal_payment_ids" t-as="p"><td t-out="p.name"/><td t-out="p.percentage"/><td t-out="p.due_condition"/><td><form t-if="can_edit" method="post" t-att-action="'/my/workspace/sales/%s/milestone/%s/delete' % (order.id,p.id)"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><button class="btn btn-sm btn-outline-danger">Remove</button></form></td></tr></tbody></table></div>
+      <form t-if="can_edit" method="post" t-att-action="'/my/workspace/sales/%s/milestone/add' % order.id" class="row g-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><div class="col-md-4"><input class="form-control" name="name" placeholder="Milestone" required="required"/></div><div class="col-md-2"><input class="form-control" name="percentage" type="number" step="0.01" min="0" max="100" placeholder="%" required="required"/></div><div class="col-md-4"><input class="form-control" name="due_condition" placeholder="Payment due condition"/></div><div class="col-md-2"><button class="btn btn-outline-primary">Add</button></div></form>
+     </div>
+    </t>
+    </xpath>
+  </template>
+  <template id="proposal_document_header" inherit_id="portal_backend_workspace.sales__document_header_extra">
+    <xpath expr="." position="inside">
+      <div t-if="order._pbw_sales_document_type() == 'technical'" class="col-md-4">
+        <label>Proposal title</label>
+        <input class="form-control" name="title" t-att-value="order.absar_proposal_title or ''"/>
+      </div>
+    </xpath>
+  </template>
+</odoo>

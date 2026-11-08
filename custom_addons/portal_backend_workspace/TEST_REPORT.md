@@ -1,90 +1,102 @@
-# Portal Backend Workspace 18.0.0.9.5 - Sales corrections
+# Portal Backend Workspace and existing EPS Bridge 18.0.0.9.6
 
-## Files and scope
+## Scope
+A targeted Sales selector/proposal correction built from the supplied main v0.9.5
+and the already-merged EPS bridge v0.9.5. It does NOT introduce a third addon.
+The user screenshots show an empty customer dropdown and only Standard Quotation.
+There is no access to the user's live contact records, registry or installed-version
+state; the screenshots alone do not prove why a particular contact was excluded.
 
-Base: portal_backend_workspace, upgraded from the uploaded 18.0.0.9.4 package.
-Optional companion: portal_backend_workspace_sales_data_bridge 18.0.0.9.5.
-The EPS notification/navigation bridge is unchanged and stays at 18.0.0.9.4.
+## Confirmed source issues and changes
 
-## Confirmed source causes
+1. Customer lookup in main v0.9.5 narrowed contacts to user.company_id. The original
+   Sales module searched the user's allowed companies. Initial options and Search
+   More now use that allowed-company scope through the same domain provider. Active
+   contacts must still have the explicit workspace flag, or the original Sales
+   flag accepted by the existing bridge. No unflagged/customer_rank fallback.
+2. Creation now selects an authorized company consistently: a company-specific
+   customer uses its own company; a shared customer uses the active request
+   company, falling back to the user's authorized default if the website company
+   is not assigned. Arbitrary browser-supplied company IDs are not accepted.
+   Project selection and search validate company/customer compatibility. Product,
+   account, tax and analytic validation remains company-scoped. Preview responses
+   update the displayed currency/company. The form explains an empty selector and
+   names the customer flags actually recognized by its installed provider.
+3. Document Type was hard-coded to Standard Quotation in both XML and server-side
+   create validation. Main now has native-independent document-provider hooks.
+4. The EXISTING EPS bridge now adapts the original installed Technical & Financial
+   Proposal engine. It detects the known model/field contract before exposing the
+   technical option, saves the real absar_proposal_type, and reads the actual saved
+   document type instead of displaying a constant Standard Quotation label.
+5. Original saved-proposal template selection/load, title editing, rich-text
+   sections, positions/reordering, include/page-break flags, and payment milestones
+   are restored through that same bridge. Markup comes from the original Sales
+   18.0.1.4.14 module, with PBW routes and CSS namespace. Native proposal fields are
+   not copied or redefined. The original installed report is used for proposal PDFs;
+   payment percentages and current print permissions are checked.
+6. Mutations require the existing PBW role/record/company checks and editing
+   permission before and after the parent lock. Child IDs are restricted to their
+   own quotation, HTML stays in the existing sanitized HTML field, and parent
+   One2many commands preserve content-review invalidation. Child write versions
+   also participate in line-editor stale-save detection. Standard quotation
+   printing, ownership restrictions and own-quotation Approver confirmation remain.
 
-1. The old can_submit check treated All Company Documents as an ownership override.
-   The server submission method repeated that exception.
-2. The line-save API enrolled a native quotation under the editor's UID. This could
-   turn an unrelated all-documents editor into the stored preparer.
-3. Approver implies Prepare, while the old confirmation guard prohibited all managed
-   quotations from native confirmation without independent conversion review.
-4. The standalone customer selector read pbw_is_sales_customer only. The original
-   published Sales module uses absar_is_sales_customer, with the same old UI label.
-5. The workspace read pbw_project_id. The supplied backend screenshot shows
-   construction_project_id, which the original Construction addon actually defines.
+## No-engine behavior
+Main still works without EPS or the original proposal addon. In that case only
+Standard Quotation is offered. Installing this bridge does NOT install the original
+proposal engine. A technical option without its corresponding engine is rejected
+on the server, not offered as a non-working dropdown item. The bridge's only declared
+dependencies remain portal_backend_workspace and employee_portal_suite.
 
-## Implemented behavior
+## Source preservation
+Purchase, Accounting, HR, all stylesheets, the main notification implementation,
+workspace shell/layout, and the existing bridge's notifications, navigation and
+login routing files are byte-for-byte unchanged from the supplied v0.9.5 inputs.
+Sales changed only in its provider/controller/template/JavaScript files plus the
+main manifest. Existing groups, flags and historical records are not bulk rewritten.
 
-- Ownership comes from the original create_uid, not salesperson, last editor or
-  stale preparer-enrollment metadata. All-documents users may still access/edit
-  permitted drafts, but can submit/request conversion only for their own quotations.
-- An active, company-authorized Sales Approver can directly confirm their own draft
-  or sent quotation. An unlinked portal account is denied. Preparers still submit;
-  other people's submitted quotations still require independent review.
-- The portal action, model method and native PBW button enforce the same checks.
-  Native action_confirm remains the business operation. Empty/nonpositive lines,
-  native validation failures, cross-company operations, forged approval metadata,
-  raw portal RPC and repeated confirmation are tested rejection paths.
-- Directly Confirmed has its own audit marker and author; it is not fabricated as
-  an independent approval. Unsaved header/line edits disable the confirmation button.
-- Initial customer options, Search More and validation use one active/company-scoped
-  provider. Without a bridge, the explicit Workspace Customer / Client flag applies.
-  With the Sales Data Bridge, the original Sales flag also qualifies a customer.
-- With that bridge, project display/selection/search/save use the actual construction
-  field. Existing PBW-only selections survive as a fallback when that field is empty.
-  Explicitly saving/clearing does not leave a stale fallback that reappears later.
-- The data bridge has no mandatory custom dependency other than the workspace. It
-  inspects only known field names/types. Missing integrations retain standalone mode.
-- If the original Sales guard is installed, only authorized PBW confirmation calls
-  receive its private guard context; native business validation is not skipped.
-  This is NOT a complete bidirectional merger of two independent approval workflows.
-
-## Executed checks
+## Checks executed for this release
 
 | Check | Result | Limits |
-| --- | --- | --- |
-| Targeted Sales policy/controller/data tests | 64 passed | Actual shipped Python methods with controlled ORM fixtures; not an Odoo registry |
-| Chromium editor interactions | 18 passed | Actual shipped editor at 1440/390px; mocked save/preview HTTP; not live Odoo |
-| Retained narrow parity tests | 21 passed | Earlier controls/role/style contracts, with customer-domain test updated for the provider hook |
-| Retained layout contract tests | 10 passed | Original layout/CSS contracts remain |
-| Source preservation | Passed | Purchase, Accounting, HR, common shell/bell assets and generic notification model byte-identical to v0.9.4 |
-| Python, XML, JavaScript syntax; manifest paths | Passed | Source/schema syntax and file presence only |
+|---|---:|---|
+| Retained Sales ownership/permissions/data suite | 64 passed | Actual methods with controlled ORM fixtures |
+| New customer/company/proposal/security suite | 37 passed | Actual methods with controlled ORM fixtures |
+| Existing notification/security suite | 41 passed | Controlled ORM fixtures, not delivered notices |
+| Retained actual-editor browser checks | 18 passed | Chromium 1440/390, mocked HTTP |
+| New dropdown/proposal-editor DOM checks | 40 passed | Shipped QWeb markup via a limited local renderer, actual JS/CSS, mocked HTTP |
+| Shared layout contract checks | 10 passed | Static assertions |
+| Previous targeted parity checks | 21 passed | Scoped local checks, not full original-module parity |
+| Python/XML/JavaScript syntax and manifest paths | Passed | Source parsing/file existence |
+| Changed-file and ZIP integrity checks | Passed | Preservation, safe archive paths and single addon roots |
 
-**113 targeted local checks passed.** Six optional real-registry tests were added
-under tests/test_sales_policy.py but were NOT executed. The original guard snippets
-were executed in both inheritance orders for the PBW-initiated own-confirm action;
-this does not prove complete coexistence of all native buttons from both products.
+231 focused local checks passed. The fixture renderer is NOT Odoo QWeb and these
+are NOT 231 live Odoo transactions. The original Sales fixtures were updated only
+for company recordset .ids, the intended allowed-company domain, and the dynamic
+Document Type selector. Permission-denial assertions were retained. New cases cover
+unassigned website companies, foreign/archived/unflagged contacts, missing proposal
+engines, invalid/cross-company templates and foreign/duplicate section IDs.
+Historical v0.9.x reports and test scripts remain historical evidence; previous
+full-suite limitations are not erased by this targeted release.
 
-## Not tested / not claimed
+## Not executed
+No live Odoo registry load, installation/upgrade, real-user browser session, native
+pricing/tax computation, procurement, report PDF generation, or notification
+transport was executed. Database-specific customer checkbox values and installed
+module versions could not be inspected. Full parity of all four original modules
+is not claimed by this focused patch.
 
-No live Odoo installation/upgrade, database schema load, stock procurement, invoice
-creation, tax engine, mail delivery or real-user workflow was run. This patch does
-not constitute a fresh full-parity validation of all four original workspaces. The
-previous documented custom-integration exclusions and historical test limitations
-remain in the package. Browser fixtures are local tests, not screenshots of the
-user's website and not replacements for the product interface.
+## Upgrade
+Deploy BOTH folders using their unchanged technical names. Upgrade
+portal_backend_workspace first, then portal_backend_workspace_eps_bridge, and
+hard-refresh/reopen the Sales page. The manifest version for both is 18.0.0.9.6.
+Do not uninstall either product, mark all contacts as customers, copy checkbox
+values, or install the superseded separate Sales Data Bridge.
 
-## Install and focused Dev acceptance
+On this user's integrated database, the original Customer / Client checkbox should
+qualify a shared/allowed-company active contact. The technical option is expected
+only when the original Technical Proposal engine is installed. If the selector
+remains empty, the new inline message identifies the recognized flags; this is
+more useful than assuming every empty selector has the same root cause.
 
-Replace and upgrade the base addon first. Then install Sales Data Bridge on the
-shown database to connect its original customer flag and construction project.
-Keep the existing EPS bridge installed; it does not need updating for these fixes.
-Refresh the portal after the build/upgrade.
-
-- As All Company Documents, open/save someone else's draft: no Submit or conversion
-  request should become available. Verify the original creator is unchanged.
-- As an Approver, create/save a quotation with valid lines: Confirm Sales Order
-  should be available without submission; it must not confirm someone else's draft.
-- As a Preparer, select an existing originally flagged customer after bridge install.
-- Check an existing construction-linked quotation in the list, detail and search;
-  save a changed project and verify the same backend construction field is updated.
-
-Changed runtime source files are recorded in validation/sales_v095/packaging_checks.json
-and CHANGES_FROM_V094.patch. No user role memberships are bulk assigned or removed,
-and no historical customer/project data is bulk rewritten.
+Official implementation reference consulted: Odoo 18 ORM API
+https://www.odoo.com/documentation/18.0/developer/reference/backend/orm.html

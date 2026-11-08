@@ -41,7 +41,7 @@ class LayoutContractTests(unittest.TestCase):
  def test_original_document_type_field_remains(self):
   root=etree.parse(str(ROOT/'views/sales/portal_sales_templates.xml'))
   node=root.xpath("//template[@id='sales__sales_new']//select[@name='kind']")
-  self.assertEqual(len(node),1);self.assertEqual(node[0].xpath('./option/@value'),['standard'])
+  self.assertEqual(len(node),1);self.assertEqual(node[0].xpath('./option/@t-foreach'),['document_types']);self.assertEqual(node[0].xpath('./option/@t-att-value'),['document_type[0]'])
  def test_purchase_list_columns_match_real_cells(self):
   root=etree.parse(str(ROOT/'views/purchase/portal_purchase_approval_list.xml'))
   cols=len(root.xpath("//div[contains(@class,'pbw-list-header')]/span"))

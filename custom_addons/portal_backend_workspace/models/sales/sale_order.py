@@ -72,6 +72,40 @@ class SaleOrder(models.Model):
     def _pbw_sales_project_search_domain(self, query):
         return [(self._pbw_sales_project_field() + '.name', 'ilike', query)]
 
+    @api.model
+    def _pbw_sales_document_types(self):
+        """A bridge may expose types implemented by an installed document engine."""
+        return [('standard', _('Standard Quotation'))]
+
+    def _pbw_sales_document_type(self):
+        self.ensure_one()
+        return 'standard'
+
+    def _pbw_sales_document_label(self):
+        return dict(self._pbw_sales_document_types()).get(
+            self._pbw_sales_document_type(), _('Standard Quotation'))
+
+    @api.model
+    def _pbw_sales_document_values(self, kind, header=None, company=None):
+        if kind != 'standard':
+            raise ValidationError(_('This document type is not available.'))
+        return {}
+
+    def _pbw_sales_document_header_values(self, header):
+        self.ensure_one()
+        return {}
+
+    def _pbw_sales_document_version(self):
+        """Bridge-owned child data participates in optimistic editor locking."""
+        return []
+
+    @api.model
+    def _pbw_sales_extra_content_fields(self):
+        return set()
+
+    def _pbw_sales_after_document_create(self):
+        return True
+
     def _pbw_native_confirmation_context(self):
         """Bridge extension point, called only after operation authorization."""
         self.ensure_one()
@@ -391,7 +425,7 @@ class SaleOrder(models.Model):
             raise AccessError(_('Sales approval metadata can only be changed through the review actions.'))
         content={'date_order','partner_id','company_id','currency_id','pricelist_id','payment_term_id','validity_date','order_line','note',
                  'pbw_project_id', self._pbw_sales_project_field()}
-        if content.intersection(vals):self._pbw_portal_invalidate_review()
+        if (content | self._pbw_sales_extra_content_fields()).intersection(vals):self._pbw_portal_invalidate_review()
         return super().write(vals)
 
     def action_draft(self):

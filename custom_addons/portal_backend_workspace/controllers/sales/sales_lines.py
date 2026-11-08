@@ -15,23 +15,25 @@ class SalesLinesMixin:
         partner=False
         if header.get('partner_id'):
             partner=request.env['res.partner'].sudo().browse(self._line_id(header['partner_id'])).exists()
-            if not partner or partner not in self._partners(limit=None) or (partner.company_id and partner.company_id!=user.company_id):
+            if not partner or partner not in self._partners(limit=None):
                 raise ValidationError(_('Select an available customer for this company.'))
         if required and not partner:raise ValidationError(_('Select a customer.'))
         if required and not header.get('date_order'):raise ValidationError(_('Set the quotation/order date.'))
+        company=self._sales_company(partner)
         project=False
         if header.get('project_id'):
             project=request.env['project.project'].sudo().browse(self._line_id(header['project_id'])).exists()
-            if not partner or not project or project not in self._customer_projects(partner) or (project.company_id and project.company_id!=user.company_id):
+            if not partner or not project or project not in self._customer_projects(partner) or (project.company_id and project.company_id!=company):
                 raise ValidationError(_('Select a project assigned to this customer and company.'))
         kind=header.get('kind') or 'standard'
-        if kind not in ('standard',):raise ValidationError(_('Invalid quotation type.'))
-        vals=dict(partner_id=partner.id if partner else False,company_id=user.company_id.id,user_id=user.id,
+        vals=dict(partner_id=partner.id if partner else False,company_id=company.id,user_id=user.id,
             pbw_portal_creator_id=user.id,
             date_order=self._sales_date_utc(header['date_order']) if header.get('date_order') else fields.Datetime.now(),
             validity_date=fields.Date.to_date(header['validity_date']) if header.get('validity_date') else False)
-        vals.update(request.env['sale.order']._pbw_sales_project_values(project))
-        return request.env['sale.order'].sudo().with_company(user.company_id).new(vals),vals
+        model=request.env['sale.order'].sudo().with_company(company)
+        vals.update(model._pbw_sales_project_values(project))
+        vals.update(model._pbw_sales_document_values(kind, header=header, company=company))
+        return model.new(vals),vals
 
     def _line_header_values(self, order, header):
         if not isinstance(header,dict):raise ValidationError(_('Invalid quotation details.'))
@@ -43,6 +45,7 @@ class SalesLinesMixin:
         vals=dict(date_order=self._sales_date_utc(header.get('date_order')),
             validity_date=fields.Date.to_date(header['validity_date']) if header.get('validity_date') else False)
         vals.update(order._pbw_sales_project_values(project))
+        vals.update(order._pbw_sales_document_header_values(header))
         return vals
 
     def _line_pricing_values(self, order, data):
@@ -89,7 +92,7 @@ class SalesLinesMixin:
         return record
 
     def _line_version(self, order):
-        return json.dumps([str(order.write_date),[(l.id,str(l.write_date)) for l in order.order_line.sorted('id')]],separators=(',',':'))
+        return json.dumps([str(order.write_date),[(l.id,str(l.write_date)) for l in order.order_line.sorted('id')], order._pbw_sales_document_version()],separators=(',',':'))
 
     def _line_analytic(self, order, raw):
         if not isinstance(raw,dict) or len(raw)>100:
@@ -255,7 +258,10 @@ class SalesLinesMixin:
                     virtual=self._line_env(order)['sale.order'].new(dict(self._line_pricing_values(order,data),
                         order_line=[Command.create(dict(vals,sequence=(i+1)*10)) for i,vals in enumerate(values)]))
                     result={'untaxed':virtual.amount_untaxed,'tax':virtual.amount_tax,'total':virtual.amount_total,
-                            'line_amounts':[l.price_subtotal for l in virtual.order_line]}
+                            'line_amounts':[l.price_subtotal for l in virtual.order_line],
+                            'company_id':order.company_id.id,'company_name':order.company_id.name,
+                            'currency':virtual.currency_id.name,
+                            'default_taxes':[{'id':t.id,'label':t.display_name} for t in order.company_id.account_sale_tax_id]}
                 elif operation=='create':
                     if order_id:raise AccessError(_('Use Save Lines for an existing quotation.'))
                     virtual,vals=self._line_new_order(data,required=True)
@@ -266,6 +272,7 @@ class SalesLinesMixin:
                         if not isinstance(row,dict) or row.get('id'):raise ValidationError(_('Invalid new quotation line.'))
                         commands.append(Command.create(dict(self._line_values(virtual,row),sequence=(index+1)*10)))
                     order=self._line_env(virtual)['sale.order'].create(dict(vals,order_line=commands))
+                    order._pbw_sales_after_document_create()
                     result=dict(self._line_boot(order),redirect='/my/workspace/sales/%s'%order.id)
                 elif operation=='save':
                     if not order_id:raise AccessError(_('Save the new quotation first.'))

@@ -77,10 +77,28 @@ class PortalSales(SalesLinesMixin, http.Controller):
             raise UserError(_('%s must be a nonnegative finite number.') % field)
         return result
 
+    def _sales_company(self, partner=None):
+        """Use an allowed contact's company, otherwise the active request company.
+
+        Never accept an arbitrary browser company ID or silently create a record
+        in the user's default company when its customer belongs to another one.
+        """
+        user = request.env.user
+        if partner and partner.company_id:
+            company = partner.company_id
+        else:
+            company = request.env.company
+            # A website's default company need not be assigned to the portal user.
+            if company not in user.company_ids:
+                company = user.company_id
+        if not company or company not in user.company_ids:
+            raise Forbidden(_('The quotation company is not available to this user.'))
+        return company
+
     def _partners(self, limit=500):
         partner_model = request.env['res.partner'].sudo()
         return partner_model.search(
-            partner_model._pbw_sales_customer_domain(request.env.user.company_id),
+            partner_model._pbw_sales_customer_domain(request.env.user.company_ids),
             limit=limit, order='name,id')
 
     def _projects(self, limit=500):
@@ -96,8 +114,10 @@ class PortalSales(SalesLinesMixin, http.Controller):
         customer link was subsequently changed. New choices remain filtered.
         """
         customer = partner.commercial_partner_id
+        company = order.company_id if order is not None else self._sales_company(partner)
         projects = self._projects(limit=None).filtered(
             lambda p: p.partner_id and p.partner_id.commercial_partner_id == customer
+            and (not p.company_id or p.company_id == company)
         )
         if order is not None:
             current = order._pbw_sales_project()
@@ -114,6 +134,10 @@ class PortalSales(SalesLinesMixin, http.Controller):
 
     def _render(self, template, **kw):
         kw.setdefault('error', False)
+        kw.setdefault('document_types', request.env['sale.order']._pbw_sales_document_types())
+        if template == 'portal_backend_workspace.sales__sales_new':
+            kw.setdefault('customer_source_labels', request.env['res.partner']._pbw_sales_customer_source_labels())
+            kw.setdefault('quotation_company', self._sales_company())
         if template == 'portal_backend_workspace.sales__sales_detail' and kw.get('order'):
             kw['date_order_local']=self._sales_date_local(kw['order'].date_order)
             kw['line_boot_json'] = json.dumps(self._line_boot(kw['order']))
@@ -197,11 +221,17 @@ class PortalSales(SalesLinesMixin, http.Controller):
         allowed=[('active','=',True),'|',('company_id','=',False),('company_id','in',request.env.user.company_ids.ids)]
         if kind=='partner_id':
             model='res.partner'
-            domain=request.env[model].sudo()._pbw_sales_customer_domain(request.env.user.company_id)
+            domain=request.env[model].sudo()._pbw_sales_customer_domain(request.env.user.company_ids)
         elif kind=='project_id':
             partner=request.env['res.partner'].sudo().browse(int(data.get('partner_id') or 0)).exists()
             if not partner or partner not in self._partners(limit=None):raise Forbidden()
-            model='project.project';domain=allowed+[('partner_id.commercial_partner_id','=',partner.commercial_partner_id.id)]
+            model='project.project';company=self._sales_company(partner)
+            if data.get('order_id'):
+                order=self._order(self._line_id(data['order_id']))
+                if order.partner_id != partner:raise Forbidden()
+                company=order.company_id
+            domain=[('active','=',True), '|', ('company_id','=',False), ('company_id','=',company.id),
+                    ('partner_id.commercial_partner_id','=',partner.commercial_partner_id.id)]
         elif kind=='uom_id':model='uom.uom';domain=[('active','=',True)]
         elif kind=='template_id':raise Forbidden()
         else:raise Forbidden()
@@ -209,7 +239,9 @@ class PortalSales(SalesLinesMixin, http.Controller):
         offset=max(0,min(int(data.get('offset') or 0),100000))
         records=request.env[model].sudo().search(domain,order='name,id',offset=offset,limit=31)
         return request.make_json_response({'items':[{'id':r.id,'name':r.display_name,
-            'customer_id':r.commercial_partner_id.id if kind=='partner_id' else r.partner_id.commercial_partner_id.id if kind=='project_id' else 0} for r in records[:30]],'more':len(records)>30})
+            'customer_id':r.commercial_partner_id.id if kind=='partner_id' else r.partner_id.commercial_partner_id.id if kind=='project_id' else 0,
+            'company_id':r.company_id.id if kind in ('partner_id','project_id') else 0,
+            'company_name':r.company_id.name if kind=='partner_id' and r.company_id else ''} for r in records[:30]],'more':len(records)>30})
 
     @http.route(BASE, type='http', auth='user', website=True)
     def list_orders(self, **kw):
@@ -245,26 +277,14 @@ class PortalSales(SalesLinesMixin, http.Controller):
     def create_order(self, **post):
         user = self._allowed()
         try:
-            partner = request.env['res.partner'].sudo().browse(int(post.get('partner_id') or 0)).exists()
-            if not partner or partner not in self._partners(limit=None):
-                raise UserError(_('Select an available customer.'))
-            kind = post.get('kind')
-            if kind not in ('standard',):
-                raise UserError(_('Invalid document type.'))
-            project_id = int(post.get('project_id') or 0)
-            project = request.env['project.project'].sudo().browse(project_id).exists() if project_id else False
-            if project_id and (not project or project not in self._customer_projects(partner)):
-                raise UserError(_('Select an available project.'))
-            vals = {
-                'partner_id':partner.id, 'company_id':user.company_id.id, 'user_id':user.id,
-                'pbw_portal_creator_id':user.id,
-                'pbw_portal_review_state':'draft',
-            }
-            vals.update(request.env['sale.order']._pbw_sales_project_values(project))
-            if post.get('validity_date'):
-                vals['validity_date'] = fields.Date.to_date(post['validity_date'])
-            order = request.env['sale.order'].sudo().with_company(user.company_id).create(vals)
-            return request.redirect('%s/%s' % (BASE, order.id))
+            with request.env.cr.savepoint():
+                partner = request.env['res.partner'].sudo().browse(int(post.get('partner_id') or 0)).exists()
+                if not partner or partner not in self._partners(limit=None):
+                    raise UserError(_('Select an available customer.'))
+                virtual, vals = self._line_new_order({'header': post}, required=True)
+                order = self._line_env(virtual)['sale.order'].create(vals)
+                order._pbw_sales_after_document_create()
+                return request.redirect('%s/%s' % (BASE, order.id))
         except (ValueError, TypeError, UserError, ValidationError) as exc:
             return self._render('portal_backend_workspace.sales__sales_new',date_order_local=self._sales_date_local(fields.Datetime.now()),line_boot_json=json.dumps(self._line_boot(self._line_new_order({})[0])),partners=self._partners(),projects=self._projects(),templates=self._templates(),units=self._units(),error=str(exc))
 
@@ -291,15 +311,8 @@ class PortalSales(SalesLinesMixin, http.Controller):
     @http.route(BASE + '/<int:order_id>/save', type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def save_order(self, order_id, **post):
         order=self._order(order_id); self._editable(order)
-        vals={'user_id':(order.user_id or order.pbw_portal_creator_id or request.env.user).id}
-        project_id = int(post.get('project_id') or 0)
-        project = request.env['project.project'].sudo().browse(project_id).exists() if project_id else False
-        if project_id and (not project or project not in self._customer_projects(order.partner_id, order=order)):
-            raise Forbidden()
-        vals.update(order._pbw_sales_project_values(project))
         try:
-            vals['date_order']=self._sales_date_utc(post.get('date_order'))
-            vals['validity_date']=fields.Date.to_date(post['validity_date']) if post.get('validity_date') else False
+            vals=self._line_header_values(order,post)
             order.sudo().write(vals)
         except (ValueError,ValidationError) as exc:
             return self._render('portal_backend_workspace.sales__sales_detail',order=order,can_edit=True,can_review=False,error=str(exc),templates=self._templates(),projects=self._customer_projects(order.partner_id, order=order),units=self._units())

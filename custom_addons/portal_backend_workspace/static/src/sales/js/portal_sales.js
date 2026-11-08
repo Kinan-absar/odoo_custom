@@ -192,7 +192,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const customerId = customer.selectedOptions[0]?.dataset.commercialId || '';
     Array.from(select.options).forEach(option => {
       if (!option.value) return;
-      const matches = Boolean(customerId) && option.dataset.customerId === customerId;
+      const defaultCompany = document.getElementById('pbw-sales-new-details')?.dataset.defaultCompanyId || '';
+      const customerCompany = customer.selectedOptions[0]?.dataset.companyId;
+      const companyId = customerCompany && customerCompany !== '0' ? customerCompany : defaultCompany;
+      const matches = Boolean(customerId) && option.dataset.customerId === customerId
+        && (!option.dataset.companyId || option.dataset.companyId === '0' || option.dataset.companyId === companyId);
       option.hidden = !matches;
       option.disabled = !matches;
       if (!matches && option.selected) select.value = '';
@@ -215,12 +219,26 @@ document.addEventListener('DOMContentLoaded',()=>{
    const btn=(text,run)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.className='btn btn-light';b.addEventListener('click',run);return b;};
    async function load(){const seq=++sequence;rows.textContent='Searching…';try{
     const partner=document.querySelector('[name="partner_id"]');
-    const result=await fetch('/my/workspace/sales/search-more',{method:'POST',credentials:'same-origin',body:new URLSearchParams({csrf_token:(select.closest('form')?.querySelector('[name="csrf_token"]')?.value||document.getElementById('pbw-sales-line-editor')?.dataset.csrf),payload:JSON.stringify({kind:select.name,q:input.value,offset,partner_id:partner?.value||document.querySelector('[data-sales-partner]')?.dataset.salesPartner})})});
+    const result=await fetch('/my/workspace/sales/search-more',{method:'POST',credentials:'same-origin',body:new URLSearchParams({csrf_token:(select.closest('form')?.querySelector('[name="csrf_token"]')?.value||document.getElementById('pbw-sales-line-editor')?.dataset.csrf),payload:JSON.stringify({kind:select.name,q:input.value,offset,order_id:(JSON.parse(document.getElementById('pbw-sales-line-editor')?.dataset.boot||'{}').order_id||0),partner_id:partner?.value||document.querySelector('[data-sales-partner]')?.dataset.salesPartner})})});
     if(!result.ok)throw new Error('Search is unavailable for this selection.');const data=await result.json();if(seq!==sequence)return;rows.replaceChildren();
-    for(const item of data.items)rows.append(btn(item.name,()=>{let option=Array.from(select.options).find(o=>o.value===String(item.id));if(!option){option=document.createElement('option');option.value=item.id;select.append(option);}option.textContent=item.name;option.dataset.commercialId=item.customer_id;option.dataset.customerId=item.customer_id;option.disabled=false;option.hidden=false;select.value=item.id;select.dispatchEvent(new Event('change',{bubbles:true}));dialog.close();}));
+    for(const item of data.items)rows.append(btn(item.name,()=>{let option=Array.from(select.options).find(o=>o.value===String(item.id));if(!option){option=document.createElement('option');option.value=item.id;select.append(option);}option.textContent=item.name;option.dataset.commercialId=item.customer_id;option.dataset.customerId=item.customer_id;option.dataset.companyId=item.company_id||0;option.dataset.companyName=item.company_name||'';option.disabled=false;option.hidden=false;select.value=item.id;select.dispatchEvent(new Event('change',{bubbles:true}));dialog.close();}));
     if(!data.items.length)rows.textContent='No matching records';pager.replaceChildren();if(offset)pager.append(btn('Previous',()=>{offset=Math.max(0,offset-30);load();}));if(data.more)pager.append(btn('Next',()=>{offset+=30;load();}));
    }catch(error){rows.textContent=error.message;}}
    input.addEventListener('input',()=>{offset=0;load();});dialog.append(title,input,rows,pager,btn('Close',()=>dialog.close()));dialog.addEventListener('close',()=>dialog.remove());document.body.append(dialog);dialog.showModal();load();input.focus();
   });
  }
+});
+
+// Explain the quotation company when selecting a customer from another allowed
+// company. The server independently selects/validates the same company.
+document.addEventListener('DOMContentLoaded', () => {
+  const header = document.getElementById('pbw-sales-new-details');
+  const customer = header?.querySelector('[name="partner_id"]');
+  if (!customer) return;
+  const sync = () => {
+    const option = customer.selectedOptions[0];
+    const name = option?.dataset.companyName || header.dataset.defaultCompanyName || '';
+    header.querySelectorAll('[data-sales-company-name]').forEach(node => { node.textContent = name; });
+  };
+  customer.addEventListener('change', sync); sync();
 });

@@ -1,0 +1,162 @@
+[
+  {
+    "name": "1440 customer options have actual choices",
+    "passed": true
+  },
+  {
+    "name": "1440 document types include technical",
+    "passed": true
+  },
+  {
+    "name": "1440 quotation company follows customer",
+    "passed": true
+  },
+  {
+    "name": "1440 wrong-customer project disabled",
+    "passed": true
+  },
+  {
+    "name": "1440 correct company project selectable",
+    "passed": true
+  },
+  {
+    "name": "1440 technical document type reaches save",
+    "passed": true
+  },
+  {
+    "name": "1440 chosen customer and project reach save",
+    "passed": true
+  },
+  {
+    "name": "1440 search more uses live lookup",
+    "passed": true
+  },
+  {
+    "name": "1440 search result retains company metadata",
+    "passed": true
+  },
+  {
+    "name": "1440 no JS errors",
+    "passed": true
+  },
+  {
+    "name": "1440 standalone only exposes working standard type",
+    "passed": true
+  },
+  {
+    "name": "1440 empty-customer reason is displayed",
+    "passed": true
+  },
+  {
+    "name": "390 customer options have actual choices",
+    "passed": true
+  },
+  {
+    "name": "390 document types include technical",
+    "passed": true
+  },
+  {
+    "name": "390 quotation company follows customer",
+    "passed": true
+  },
+  {
+    "name": "390 wrong-customer project disabled",
+    "passed": true
+  },
+  {
+    "name": "390 correct company project selectable",
+    "passed": true
+  },
+  {
+    "name": "390 technical document type reaches save",
+    "passed": true
+  },
+  {
+    "name": "390 chosen customer and project reach save",
+    "passed": true
+  },
+  {
+    "name": "390 search more uses live lookup",
+    "passed": true
+  },
+  {
+    "name": "390 search result retains company metadata",
+    "passed": true
+  },
+  {
+    "name": "390 no JS errors",
+    "passed": true
+  },
+  {
+    "name": "390 standalone only exposes working standard type",
+    "passed": true
+  },
+  {
+    "name": "390 empty-customer reason is displayed",
+    "passed": true
+  },
+  {
+    "name": "1440 saved proposal label not standard",
+    "passed": true
+  },
+  {
+    "name": "1440 original template control present",
+    "passed": true
+  },
+  {
+    "name": "1440 proposal title editable",
+    "passed": true
+  },
+  {
+    "name": "1440 section rich text control expands",
+    "passed": true
+  },
+  {
+    "name": "1440 content syncs to posted field",
+    "passed": true
+  },
+  {
+    "name": "1440 milestones retain controls",
+    "passed": true
+  },
+  {
+    "name": "1440 section writes route to PBW not EPS",
+    "passed": true
+  },
+  {
+    "name": "1440 no detail JS errors",
+    "passed": true
+  },
+  {
+    "name": "390 saved proposal label not standard",
+    "passed": true
+  },
+  {
+    "name": "390 original template control present",
+    "passed": true
+  },
+  {
+    "name": "390 proposal title editable",
+    "passed": true
+  },
+  {
+    "name": "390 section rich text control expands",
+    "passed": true
+  },
+  {
+    "name": "390 content syncs to posted field",
+    "passed": true
+  },
+  {
+    "name": "390 milestones retain controls",
+    "passed": true
+  },
+  {
+    "name": "390 section writes route to PBW not EPS",
+    "passed": true
+  },
+  {
+    "name": "390 no detail JS errors",
+    "passed": true
+  }
+]

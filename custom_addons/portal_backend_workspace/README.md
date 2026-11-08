@@ -1,37 +1,28 @@
-# Portal Backend Workspace - 18.0.0.9.5
+# Portal Backend Workspace 18.0.0.9.6
 
-Standalone Odoo 18 Sales, Purchase, Accounting and HR workspaces.
+## This update
+Customer selection uses all explicitly authorized companies (matching the original
+Sales selector), with consistent company validation on creation. The existing EPS
+bridge recognizes the original Customer / Client flag; standalone mode continues
+using Workspace Customer / Client. An empty dropdown now identifies which flags
+are connected. No customer-rank fallback or bulk update is applied.
 
-## This release: targeted Sales corrections
+Document Type is supplied through safe extension hooks rather than a hard-coded
+option. With the updated existing EPS bridge and an installed original Technical
+Proposal engine, the technical document type, sections, templates, milestones and
+original PDF are available. Without that engine, Standard Quotation remains the
+only available type. No external engine is bundled or required by this base.
 
-**All Company Documents** controls visibility/edit scope, not ownership. Only the
-original creator may submit a quotation or request its conversion approval.
-**Sales Approvers** can directly confirm their own saved draft/sent quotations.
-Approver + Prepare still has this direct-confirm authority for their own documents;
-other people's quotations keep independent review. The confirmation uses the native
-Odoo action and records a separate Directly Confirmed audit status.
+The own-quotation Approver confirmation and original-creator submission rules from
+v0.9.5 are retained, as are notifications and the previous layout/menu fixes.
+Purchase, Accounting and HR code and every stylesheet are unchanged.
 
-The original Sales layouts and line editors are retained. The action is disabled
-until unsaved changes have been saved. The other three workspaces, shell CSS,
-notification bell and EPS routing integration are not replaced.
-
-The customer selector now has a shared domain provider. The standalone checkbox is
-labelled **Workspace Customer / Client** to distinguish it from an older Sales
-addon's checkbox. The optional **Sales Data Bridge** accepts the existing original
-Sales checkbox and reads/writes the construction project field through explicit
-hooks; no custom addon is mandatory for the base.
-
-## Upgrade this patch
-
-Replace the complete `portal_backend_workspace` folder, upgrade the existing addon,
-and refresh the portal. Do not uninstall. Install the separately supplied Sales Data
-Bridge on a database using the original Sales checkbox or construction project field.
-The existing EPS bridge 18.0.0.9.4 does not need replacing for this patch.
-
-The independent/shared notification bell from v0.9.4 and the previous Settings-menu
-removal and width/layout fixes are retained. A live Odoo installation and real-user
-workflow session have not been executed for this patch. See TEST_REPORT.md for exact
-executed checks and limitations, and CHANGELOG_v0.9.5.md for implementation details.
+## Upgrade
+Deploy this folder and the companion **existing EPS bridge v0.9.6**. Keep both
+technical module names unchanged. Upgrade portal_backend_workspace first and then
+portal_backend_workspace_eps_bridge; refresh the browser after the upgrade.
+Do not uninstall either addon. There is NO additional Sales Data Bridge to install.
+The EPS bridge is only used where EPS and PBW are both installed.
 
 ## Source baseline
 
@@ -112,35 +103,13 @@ Direct Posting, Approver and Payroll remain separately assigned permissions.
   desktop sidebar, mobile drawer and create menu, independent notification bell,
   per-workspace permissions, and company-scoped access checks.
 
-## Deliberately not in the base addon
+## Optional integrations
+The existing EPS bridge connects navigation, notification bell, the original Sales
+customer checkbox, construction-project mapping and the original technical proposal
+engine when present. It does not add MR/ER or custom-voucher workflows.
+No Employee Portal Suite source is changed by these packages.
 
-Material/Employee Requests and MR/ER Admin Control, vendor-submission review,
-custom payment/receipt vouchers and payment plans, construction IPCs, technical
-proposals, EPS salary estimators, custom direct printing and proprietary signing
-integrations require separate bridges. Their controls and hard references were
-removed from this base. Native invoices, bills, journal entries and receipts
-remain; missing custom features are not replaced with fake generic screens.
-
-## Employee Portal Suite coexistence
-
-Base URLs and assets use PBW-specific namespaces. The base does not import EPS,
-change `/my/employee`, or grant EPS roles. Explicit deep links are preserved.
-
-The separately supplied `portal_backend_workspace_eps_bridge` coordinates
-navigation and login landing when BOTH products are installed: employee-linked
-portal users keep the EPS default `/my/employee`; authorized users can still
-open `/my/workspace` and see cross-product links. Install the optional bridge
-only with both products; it is NOT required for this addon to operate alone.
-
-That bridge is navigation/routing only. MR/ER transaction integrations are not
-implemented by that bridge.
-
-## Validation status
-
-See TEST_REPORT.md and PARITY_AUDIT.md. This is a targeted source-parity repair of
-v0.9, not a certification that the four original addons are fully reproduced.
-21 targeted regression checks pass; 16 of 28 adapted original fixture scripts pass.
-The other 12 harness executions are recorded and explained, not counted as passes.
-Isolated desktop/mobile Accounting dialog styles match the original in Chromium.
-Live Odoo installation, native transaction engines and full screen/workflow parity
-remain unverified. Original custom integrations remain excluded as documented.
+## Validation
+See TEST_REPORT.md for executed checks and limits. This patch has local fixture,
+DOM and syntax verification, not a live Odoo installation or full workflow-parity
+certification. Historical reports in validation/ refer to earlier versions only.
