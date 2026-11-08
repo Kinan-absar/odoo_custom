@@ -31,7 +31,8 @@ class LayoutContractTests(unittest.TestCase):
   root=etree.parse(str(ROOT/'views/workspace_layout.xml'))
   for src in root.xpath('//script/@src | //link/@href'):
    if '/static/src/core/' in src:
-    expected = '18.0.0.9.4' if 'workspace_shell.js' in src else '18.0.0.9.2'
+    expected = ('18.0.0.9.10' if 'workspace_navigation.css' in src else
+                '18.0.0.9.4' if 'workspace_shell.js' in src else '18.0.0.9.2')
     self.assertIn('?v='+expected,src)
  def test_all_local_js_imports_resolve(self):
   for file in (ROOT/'static/src').rglob('*.js'):

@@ -1,3 +1,17 @@
+# Portal Backend Workspace UI update 18.0.0.9.10
+
+Current update: Accounting-style home tiles, notification-history menu cleanup,
+and separate arrow-style portal switch controls. Use main v0.9.10 and the SAME
+EPS bridge v0.9.10 for integrated installations. Upgrade the main addon first,
+then the bridge; do not uninstall. Standalone Workspace needs only the main addon.
+
+The business workflows, shared bell and previous proposal/customer fixes are
+preserved. See TEST_REPORT_v0.9.10.md for the precise change list and local checks.
+A live Odoo install/upgrade has not been run.
+
+---
+## Previous release documentation (historical)
+
 # Portal Backend Workspace 18.0.0.9.7
 
 ## Current correction

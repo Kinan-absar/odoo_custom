@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&amp;display=swap" rel="stylesheet"/>
 <t t-call-assets="web.assets_frontend"/>
 <link rel="stylesheet" href="/portal_backend_workspace/static/src/core/workspace_layout.css?v=18.0.0.9.2"/>
+<link rel="stylesheet" href="/portal_backend_workspace/static/src/core/workspace_navigation.css?v=18.0.0.9.10"/>
 <style>body{--pbw-company-watermark:url('/web/image/res.company/<t t-out="request.env.company.id"/>/logo');}</style>
 <link rel="stylesheet" href="/portal_backend_workspace/static/src/core/portal_compact_lists.css?v=18.0.0.9.2"/>
 <t t-set="pbw_areas" t-value="request.env.user._pbw_workspace_areas()"/>
@@ -20,13 +21,19 @@
 <aside class="pbwep-desktop-sidebar" id="pbwep-shared-sidebar" aria-label="Workspace navigation">
 <button type="button" class="pbwep-mobile-menu-close mobile-only" data-pbwep-menu-close="1" aria-label="Close navigation"><i class="fa fa-times"/></button>
 <div class="pbwep-sidebar-brand"><img t-att-src="'/web/image/res.company/%s/logo' % request.env.company.id" alt="Company logo"/><span>Portal Backend Workspace</span></div>
+<!-- Cross-product navigation stays outside the operational menu. The bridge
+     supplies authorized links; standalone users see no switch control. -->
+<t t-foreach="pbw_extra_links" t-as="extra">
+    <t t-call="portal_backend_workspace.portal_switcher">
+        <t t-set="pbw_switch_url" t-value="extra['url']"/>
+        <t t-set="pbw_switch_name" t-value="extra['name']"/>
+    </t>
+</t>
 <nav class="pbwep-sidebar-nav" id="pbwep-desktop-sidebar-nav">
 <a href="/my/workspace" class="pbwep-sidebar-link"><i class="fa fa-home"/>Home</a>
 <t t-foreach="pbw_areas" t-as="area">
 <div class="pbwep-sidebar-section" t-att-id="'pbwep-section-'+area['key']"><div class="pbwep-sidebar-section-title" t-out="area['name']"/><div class="pbwep-sidebar-section-links"><t t-foreach="area['links']" t-as="nav_link"><a t-att-href="nav_link[1]" class="pbwep-sidebar-link"><i t-att-class="'fa '+nav_link[2]"/><t t-out="nav_link[0]"/><t t-set="pbw_nav_count" t-value="request.env.user._pbw_navigation_badge(ep_notif_summary, nav_link[1])"/><span class="pbw-navigation-count" t-if="pbw_nav_count" t-out="pbw_nav_count" t-att-data-pbw-count-url="nav_link[1]"/></a></t></div></div>
 </t>
-<a href="/my/workspace/notifications" class="pbwep-sidebar-link"><i class="fa fa-bell-o"/>Notifications</a>
-<t t-foreach="pbw_extra_links" t-as="extra"><a t-att-href="extra['url']" class="pbwep-sidebar-link"><i t-att-class="'fa '+extra.get('icon','fa-external-link')"/><t t-out="extra['name']"/></a></t>
 </nav>
 <div class="pbwep-sidebar-bottom"><div class="pbwep-sidebar-profile"><button type="button" class="pbwep-sidebar-profile-btn" onclick="document.getElementById('pbwep-profile-menu').classList.toggle('show')"><img t-att-src="image_data_uri(request.env.user.partner_id.avatar_128)" alt="Profile"/><span><span class="pbwep-sidebar-profile-name d-block" t-out="request.env.user.name"/><span class="pbwep-sidebar-profile-role d-block">Workspace user</span></span><i class="fa fa-angle-up ms-auto"/></button><div id="pbwep-profile-menu" class="pbwep-profile-menu"><a href="/web/session/logout?redirect=/web/login"><i class="fa fa-sign-out"/>Logout</a></div></div></div>
 </aside>
@@ -47,6 +54,14 @@
 <script type="module" src="/portal_backend_workspace/static/src/core/portal_compact_lists.js?v=18.0.0.9.2"/>
 <script src="/portal_backend_workspace/static/src/core/workspace_shell.js?v=18.0.0.9.4"/>
 </t></template>
+<template id="portal_switcher" name="Separate portal switch">
+    <div class="pbw-portal-switcher">
+        <a class="pbw-portal-switch-link" t-att-href="pbw_switch_url" t-att-aria-label="'Go to ' + pbw_switch_name">
+            <span class="pbw-portal-switch-copy"><span class="pbw-portal-switch-kicker">Go to</span><span class="pbw-portal-switch-name" t-out="pbw_switch_name"/></span>
+            <svg class="pbw-portal-switch-arrow" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+    </div>
+</template>
 <template id="notification_bell" name="Workspace and integrated notification bell">
     <div t-if="pbw_bell_data" class="pbw-notification-bell" data-pbw-bell="1"
          t-att-data-csrf="request.csrf_token()"
@@ -88,7 +103,19 @@
 <section class="pbw-needs-attention mb-4" aria-labelledby="pbw-attention-title">
 <div class="pbw-attention-head"><div><div class="pbw-attention-kicker">NEEDS YOUR ATTENTION</div><h3 id="pbw-attention-title" class="pbw-attention-title">Things waiting for you</h3></div><div class="pbw-attention-total"><t t-out="sum(item['count'] for item in workspace_attention)"/> pending / new</div></div>
 <div class="pbw-attention-grid"><a t-foreach="workspace_attention" t-as="item" t-att-href="item['url']" class="pbw-attention-item"><span class="pbw-attention-icon warning"><i t-att-class="'fa '+item['icon']"/></span><span><strong><t t-out="item['count']"/> <t t-out="item['label']"/></strong><small t-out="item['hint']"/></span><i class="fa fa-angle-right ms-auto"/></a><div t-if="not workspace_attention" class="pbw-attention-clear"><i class="fa fa-check-circle"/><div><strong>You're all caught up</strong><small>No pending approvals or new review decisions.</small></div></div></div>
-</section><div class="pbwep-workspace-grid"><t t-foreach="workspace_areas" t-as="area"><div class="pbwep-workspace-tile"><i t-att-class="'fa '+area['icon']"/><h3 t-out="area['name']"/><t t-foreach="area['links']" t-as="link"><a t-att-href="link[1]" t-out="link[0]"/></t></div></t></div><div t-if="not workspace_areas" class="pbwep-shell-note">Workspace access is enabled, but no operational roles have been assigned. Ask your administrator to assign the appropriate Sales, Purchase, Accounting or HR roles.</div></div>
+</section><!-- Reuse the Accounting overview card component, not a second card design. -->
+<div class="pbw-accounting-cards pbw-workspace-home-cards" role="navigation" aria-label="Business workspaces">
+    <a t-foreach="workspace_areas" t-as="area" class="pbw-accounting-card"
+       t-att-data-area="area['key']" t-att-style="'--card-order:%s' % area_index"
+       t-att-href="area['url']" t-att-aria-label="area['name']">
+        <div class="pbw-accounting-card-top">
+            <span class="pbw-accounting-card-icon" aria-hidden="true"><i t-att-class="'fa '+area['icon']"/></span>
+            <span class="pbw-accounting-card-arrow" aria-hidden="true">&#8599;</span>
+        </div>
+        <span class="pbw-accounting-card-name" t-out="area['name']"/>
+        <div class="pbw-accounting-card-bottom"><span class="pbw-accounting-card-open">Open workspace <span aria-hidden="true">&#8594;</span></span></div>
+    </a>
+</div><div t-if="not workspace_areas" class="pbwep-shell-note">Workspace access is enabled, but no operational roles have been assigned. Ask your administrator to assign the appropriate Sales, Purchase, Accounting or HR roles.</div></div>
 </t></template>
-<template id="notification_list" name="Workspace Notifications"><t t-call="portal_backend_workspace.workspace_layout"><h2>Notifications</h2><form action="/my/workspace/notifications/read" method="post" class="mb-3"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input t-if="notification_watermark" type="hidden" name="upto_id" t-att-value="notification_watermark"/><button class="btn btn-outline-primary" t-att-disabled="not notification_rows">Mark workspace updates read</button></form><t t-foreach="notification_rows" t-as="notice"><article t-att-class="'pbwep-alert-card'+(' unread' if not notice.read_at else '')"><h5 t-out="notice.title"/><p class="text-muted" t-out="notice.body"/><small t-field="notice.create_date"/><div class="mt-2"><a class="btn btn-sm btn-primary" t-att-href="'/my/workspace/notifications/%s/open' % notice.id">Open document</a><form t-if="not notice.read_at" action="/my/workspace/notifications/read" method="post" class="d-inline ms-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="ident" t-att-value="notice.id"/><button class="btn btn-sm btn-light">Mark read</button></form></div></article></t><p t-if="not notification_rows" class="text-muted">No workspace notifications.</p><a t-if="page &gt; 1" t-att-href="'/my/workspace/notifications?page=%s' % (page-1)" class="btn btn-light">Previous</a><a t-if="has_next" t-att-href="'/my/workspace/notifications?page=%s' % (page+1)" class="btn btn-light ms-2">Next</a></t></template>
+<template id="notification_list" name="Workspace Notification History"><t t-call="portal_backend_workspace.workspace_layout"><h2>Notification history</h2><p class="text-muted">Previously received workspace updates, including those already read.</p><form action="/my/workspace/notifications/read" method="post" class="mb-3"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input t-if="notification_watermark" type="hidden" name="upto_id" t-att-value="notification_watermark"/><button class="btn btn-outline-primary" t-att-disabled="not notification_rows">Mark workspace updates read</button></form><t t-foreach="notification_rows" t-as="notice"><article t-att-class="'pbwep-alert-card'+(' unread' if not notice.read_at else '')"><h5 t-out="notice.title"/><p class="text-muted" t-out="notice.body"/><small t-field="notice.create_date"/><div class="mt-2"><a class="btn btn-sm btn-primary" t-att-href="'/my/workspace/notifications/%s/open' % notice.id">Open document</a><form t-if="not notice.read_at" action="/my/workspace/notifications/read" method="post" class="d-inline ms-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="ident" t-att-value="notice.id"/><button class="btn btn-sm btn-light">Mark read</button></form></div></article></t><p t-if="not notification_rows" class="text-muted">No workspace notifications.</p><a t-if="page &gt; 1" t-att-href="'/my/workspace/notifications?page=%s' % (page-1)" class="btn btn-light">Previous</a><a t-if="has_next" t-att-href="'/my/workspace/notifications?page=%s' % (page+1)" class="btn btn-light ms-2">Next</a></t></template>
 </odoo>

@@ -1,5 +1,5 @@
 {'name': 'Portal Backend Workspace - Employee Portal Bridge',
- 'version': '18.0.0.9.9',
+ 'version': '18.0.0.9.10',
  'summary': 'Shared bell, navigation, existing customer/project mapping and '
             'optional technical proposal editing',
  'category': 'Productivity',
