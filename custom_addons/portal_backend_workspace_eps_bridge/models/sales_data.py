@@ -10,25 +10,8 @@ from odoo.exceptions import AccessError, UserError
 from odoo.osv import expression
 
 
-class SalesCustomerDataBridge(models.Model):
-    _inherit = 'res.partner'
-
-    @api.model
-    def _pbw_sales_customer_eligibility_domain(self):
-        domain = super()._pbw_sales_customer_eligibility_domain()
-        field = self._fields.get('absar_is_sales_customer')
-        if field and field.type == 'boolean':
-            domain = expression.OR([domain, [('absar_is_sales_customer', '=', True)]])
-        return domain
-
-
-    @api.model
-    def _pbw_sales_customer_source_labels(self):
-        labels = list(super()._pbw_sales_customer_source_labels())
-        field = self._fields.get('absar_is_sales_customer')
-        if field and field.type == 'boolean':
-            labels.append(_('Customer / Client (original Sales)'))
-        return labels
+# Customer classification is now owned by the main addon's original field
+# contract. No bridge OR-domain or second checkbox is needed.
 
 
 class SalesProjectDataBridge(models.Model):

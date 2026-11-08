@@ -1,0 +1,48 @@
+{
+  "header": {
+    "partner_id": "11",
+    "project_id": "",
+    "date_order": "2026-11-08T12:30",
+    "validity_date": "",
+    "kind": "technical",
+    "title": "Loaded Technical Proposal",
+    "template_id": "10",
+    "reference": "REF-KEEP-1",
+    "proposal_payload": "{\"sections\":[{\"section_type\":\"confirmation\",\"name\":\"Confirmation\",\"content\":\"<p>Confirm the order</p>\",\"include_in_report\":true,\"page_break_before\":true},{\"section_type\":\"executive\",\"name\":\"Edited Scope\",\"content\":\"<p>User edited rich content</p>\",\"include_in_report\":true,\"page_break_before\":false}],\"payments\":[{\"name\":\"Advance\",\"percentage\":\"70\",\"due_condition\":\"On order\"},{\"name\":\"Handover\",\"percentage\":\"30\",\"due_condition\":\"At handover\"}]}",
+    "signatory": "",
+    "signatory_title": "",
+    "customer_signatory": "",
+    "customer_signatory_title": ""
+  },
+  "proposal": {
+    "sections": [
+      {
+        "section_type": "confirmation",
+        "name": "Confirmation",
+        "content": "<p>Confirm the order</p>",
+        "include_in_report": true,
+        "page_break_before": true
+      },
+      {
+        "section_type": "executive",
+        "name": "Edited Scope",
+        "content": "<p>User edited rich content</p>",
+        "include_in_report": true,
+        "page_break_before": false
+      }
+    ],
+    "payments": [
+      {
+        "name": "Advance",
+        "percentage": "70",
+        "due_condition": "On order"
+      },
+      {
+        "name": "Handover",
+        "percentage": "30",
+        "due_condition": "At handover"
+      }
+    ]
+  },
+  "errors": []
+}

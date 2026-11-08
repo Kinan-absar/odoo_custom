@@ -1,0 +1,250 @@
+[
+  {
+    "name": "1440 standard has no technical panels",
+    "passed": true
+  },
+  {
+    "name": "1440 sections appear before save",
+    "passed": true
+  },
+  {
+    "name": "1440 header title and reference available",
+    "passed": true
+  },
+  {
+    "name": "1440 no quotation created by choosing type",
+    "passed": true
+  },
+  {
+    "name": "1440 foreign template disabled",
+    "passed": true
+  },
+  {
+    "name": "1440 native template title loaded",
+    "passed": true
+  },
+  {
+    "name": "1440 native template sections loaded",
+    "passed": true
+  },
+  {
+    "name": "1440 native template milestones loaded",
+    "passed": true
+  },
+  {
+    "name": "1440 user reordering preserved",
+    "passed": true
+  },
+  {
+    "name": "1440 untaxed milestone amount shown",
+    "passed": true
+  },
+  {
+    "name": "1440 total percentage shown",
+    "passed": true
+  },
+  {
+    "name": "1440 proposal content included in same save",
+    "passed": true
+  },
+  {
+    "name": "1440 original reference reaches save",
+    "passed": true
+  },
+  {
+    "name": "1440 reordered sections and percentages saved",
+    "passed": true
+  },
+  {
+    "name": "1440 proposal child payload excluded from pricing calls",
+    "passed": true
+  },
+  {
+    "name": "1440 replacing content asks confirmation",
+    "passed": true
+  },
+  {
+    "name": "1440 cancel replacement keeps content",
+    "passed": true
+  },
+  {
+    "name": "1440 dangerous rich HTML stripped",
+    "passed": true
+  },
+  {
+    "name": "1440 no page horizontal overflow",
+    "passed": true
+  },
+  {
+    "name": "1440 standard save excludes technical fields",
+    "passed": true
+  },
+  {
+    "name": "1440 no browser JS errors",
+    "passed": true
+  },
+  {
+    "name": "390 standard has no technical panels",
+    "passed": true
+  },
+  {
+    "name": "390 sections appear before save",
+    "passed": true
+  },
+  {
+    "name": "390 header title and reference available",
+    "passed": true
+  },
+  {
+    "name": "390 no quotation created by choosing type",
+    "passed": true
+  },
+  {
+    "name": "390 foreign template disabled",
+    "passed": true
+  },
+  {
+    "name": "390 native template title loaded",
+    "passed": true
+  },
+  {
+    "name": "390 native template sections loaded",
+    "passed": true
+  },
+  {
+    "name": "390 native template milestones loaded",
+    "passed": true
+  },
+  {
+    "name": "390 user reordering preserved",
+    "passed": true
+  },
+  {
+    "name": "390 untaxed milestone amount shown",
+    "passed": true
+  },
+  {
+    "name": "390 total percentage shown",
+    "passed": true
+  },
+  {
+    "name": "390 proposal content included in same save",
+    "passed": true
+  },
+  {
+    "name": "390 original reference reaches save",
+    "passed": true
+  },
+  {
+    "name": "390 reordered sections and percentages saved",
+    "passed": true
+  },
+  {
+    "name": "390 proposal child payload excluded from pricing calls",
+    "passed": true
+  },
+  {
+    "name": "390 replacing content asks confirmation",
+    "passed": true
+  },
+  {
+    "name": "390 cancel replacement keeps content",
+    "passed": true
+  },
+  {
+    "name": "390 dangerous rich HTML stripped",
+    "passed": true
+  },
+  {
+    "name": "390 no page horizontal overflow",
+    "passed": true
+  },
+  {
+    "name": "390 standard save excludes technical fields",
+    "passed": true
+  },
+  {
+    "name": "390 no browser JS errors",
+    "passed": true
+  },
+  {
+    "name": "1440 existing title and reference rendered",
+    "passed": true
+  },
+  {
+    "name": "1440 native template remains selected",
+    "passed": true
+  },
+  {
+    "name": "1440 original signatory fields are editable",
+    "passed": true
+  },
+  {
+    "name": "1440 saved milestone fields belong to save form",
+    "passed": true
+  },
+  {
+    "name": "1440 saved milestone uses scoped write route",
+    "passed": true
+  },
+  {
+    "name": "1440 saved milestone amount available",
+    "passed": true
+  },
+  {
+    "name": "1440 readonly proposal header retained",
+    "passed": true
+  },
+  {
+    "name": "1440 readonly proposal cannot edit milestone",
+    "passed": true
+  },
+  {
+    "name": "1440 readonly proposal cannot load template",
+    "passed": true
+  },
+  {
+    "name": "1440 no saved-page JS errors",
+    "passed": true
+  },
+  {
+    "name": "390 existing title and reference rendered",
+    "passed": true
+  },
+  {
+    "name": "390 native template remains selected",
+    "passed": true
+  },
+  {
+    "name": "390 original signatory fields are editable",
+    "passed": true
+  },
+  {
+    "name": "390 saved milestone fields belong to save form",
+    "passed": true
+  },
+  {
+    "name": "390 saved milestone uses scoped write route",
+    "passed": true
+  },
+  {
+    "name": "390 saved milestone amount available",
+    "passed": true
+  },
+  {
+    "name": "390 readonly proposal header retained",
+    "passed": true
+  },
+  {
+    "name": "390 readonly proposal cannot edit milestone",
+    "passed": true
+  },
+  {
+    "name": "390 readonly proposal cannot load template",
+    "passed": true
+  },
+  {
+    "name": "390 no saved-page JS errors",
+    "passed": true
+  }
+]

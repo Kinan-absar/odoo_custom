@@ -1,28 +1,19 @@
-# Portal Backend Workspace 18.0.0.9.6
+# Portal Backend Workspace 18.0.0.9.7
 
-## This update
-Customer selection uses all explicitly authorized companies (matching the original
-Sales selector), with consistent company validation on creation. The existing EPS
-bridge recognizes the original Customer / Client flag; standalone mode continues
-using Workspace Customer / Client. An empty dropdown now identifies which flags
-are connected. No customer-rank fallback or bulk update is applied.
+## Current correction
+Customer / Client is restored to the original stored `absar_is_sales_customer`
+field, not a renamed separate PBW checkbox. Existing original values are preserved.
+The versioned pre-upgrade migration seeds only PBW-only databases whose original
+column did not exist; it does not overwrite existing original classifications.
+The former workspace flag is retained as hidden historical data, not an OR fallback.
 
-Document Type is supplied through safe extension hooks rather than a hard-coded
-option. With the updated existing EPS bridge and an installed original Technical
-Proposal engine, the technical document type, sections, templates, milestones and
-original PDF are available. Without that engine, Standard Quotation remains the
-only available type. No external engine is bundled or required by this base.
+The existing EPS bridge v0.9.7 exposes the original proposal editor on new quotations
+immediately after choosing Technical & Financial Proposal, with full draft content
+saved together with the quotation. No additional bridge is needed. See
+TEST_REPORT_v0.9.7.md for exact changed functions and test limits.
 
-The own-quotation Approver confirmation and original-creator submission rules from
-v0.9.5 are retained, as are notifications and the previous layout/menu fixes.
-Purchase, Accounting and HR code and every stylesheet are unchanged.
-
-## Upgrade
-Deploy this folder and the companion **existing EPS bridge v0.9.6**. Keep both
-technical module names unchanged. Upgrade portal_backend_workspace first and then
-portal_backend_workspace_eps_bridge; refresh the browser after the upgrade.
-Do not uninstall either addon. There is NO additional Sales Data Bridge to install.
-The EPS bridge is only used where EPS and PBW are both installed.
+Upgrade this addon first, then the existing bridge, and refresh the portal.
+Do not uninstall. A live registry/database upgrade was not run here.
 
 ## Source baseline
 

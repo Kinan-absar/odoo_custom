@@ -272,7 +272,7 @@ class SalesLinesMixin:
                         if not isinstance(row,dict) or row.get('id'):raise ValidationError(_('Invalid new quotation line.'))
                         commands.append(Command.create(dict(self._line_values(virtual,row),sequence=(index+1)*10)))
                     order=self._line_env(virtual)['sale.order'].create(dict(vals,order_line=commands))
-                    order._pbw_sales_after_document_create()
+                    order._pbw_sales_after_document_create(header=data.get('header') or {})
                     result=dict(self._line_boot(order),redirect='/my/workspace/sales/%s'%order.id)
                 elif operation=='save':
                     if not order_id:raise AccessError(_('Save the new quotation first.'))

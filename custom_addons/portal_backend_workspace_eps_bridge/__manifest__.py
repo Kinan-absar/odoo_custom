@@ -1,7 +1,7 @@
 {'name': 'Portal Backend Workspace - Employee Portal Bridge',
- 'version': '18.0.0.9.6',
+ 'version': '18.0.0.9.7',
  'summary': 'Shared bell, navigation, existing customer/project mapping and '
-            'optional technical proposal workflows',
+            'optional technical proposal editing',
  'category': 'Productivity',
  'license': 'OPL-1',
  'depends': ['portal_backend_workspace', 'employee_portal_suite'],
@@ -10,4 +10,6 @@
           'views/proposals.xml'],
  'installable': True,
  'application': False,
- 'auto_install': True}
+ 'auto_install': True,
+ 'assets': {'web.assets_frontend': ['portal_backend_workspace_eps_bridge/static/src/proposal_draft.js',
+                                    'portal_backend_workspace_eps_bridge/static/src/proposal_draft.css']}}

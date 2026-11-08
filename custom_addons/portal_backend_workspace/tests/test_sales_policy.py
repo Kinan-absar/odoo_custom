@@ -30,7 +30,7 @@ class TestSalesPolicy(TransactionCase):
         cls.operator = portal('pbw-sales-test-all-documents', 'user')
         cls.approver = portal('pbw-sales-test-approver', 'approver')
         cls.customer = cls.env['res.partner'].create({
-            'name': 'Workspace sales policy customer', 'pbw_is_sales_customer': True,
+            'name': 'Workspace sales policy customer', 'absar_is_sales_customer': True,
         })
         cls.product = cls.env['product.product'].create({
             'name': 'Workspace sales policy service', 'type': 'service', 'list_price': 10,

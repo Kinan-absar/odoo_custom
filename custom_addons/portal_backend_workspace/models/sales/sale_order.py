@@ -103,7 +103,7 @@ class SaleOrder(models.Model):
     def _pbw_sales_extra_content_fields(self):
         return set()
 
-    def _pbw_sales_after_document_create(self):
+    def _pbw_sales_after_document_create(self, header=None):
         return True
 
     def _pbw_native_confirmation_context(self):

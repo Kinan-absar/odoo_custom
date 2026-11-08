@@ -17,7 +17,16 @@ export function mountSalesLines(root) {
     const money=v=>Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
     async function post(path,payload={}){
         const headerRoot=document.getElementById('pbw-sales-new-details')||document.getElementById('pbw-sales-order-details');
-        if(headerRoot)payload.header=Object.fromEntries(['partner_id','project_id','date_order','validity_date','kind','title','template_id'].filter(key=>headerRoot.querySelector('[name="'+key+'"]')).map(key=>[key,headerRoot.querySelector('[name="'+key+'"]')?.value||'']));
+        if(headerRoot){
+            payload.header={};
+            for(const key of ['partner_id','project_id','date_order','validity_date','kind','title','template_id']){
+                const field=headerRoot.querySelector('[name="'+key+'"]');
+                if(field&&!field.disabled)payload.header[key]=field.value||'';
+            }
+            headerRoot.querySelectorAll('[data-pbw-sales-extra-header][name]').forEach(field=>{
+                if(!field.disabled&&(!field.hasAttribute('data-pbw-sales-create-only')||path==='/create'))payload.header[field.name]=field.value||'';
+            });
+        }
         const response=await fetch((state.order_id?'/my/workspace/sales/'+state.order_id+'/line-api':'/my/workspace/sales/new-api')+path,{method:'POST',credentials:'same-origin',body:new URLSearchParams({csrf_token:csrf,payload:JSON.stringify(payload)})});
         if(response.headers?.get && !(response.headers.get('content-type')||'').includes('application/json'))throw new Error('Your session or Sales permission changed. Reload this page.');
         const data=await response.json();if(!data.ok)throw new Error(data.error||'Unable to update quotation lines.');return data.result;
@@ -42,6 +51,7 @@ export function mountSalesLines(root) {
         if(lines.some(l=>!l.display_type&&(!l.name||!l.uom_id||(!l.id&&!l.product_id)))){feedback('Choose a product and unit on each line to calculate totals.');return;}
         try{const amounts=await post('/preview',{lines});if(seq!==revision)return;
             Object.assign(state,{untaxed:amounts.untaxed,tax:amounts.tax,total:amounts.total});
+            document.dispatchEvent(new CustomEvent('pbw:sales-totals',{detail:{untaxed:amounts.untaxed,currency:amounts.currency||state.currency}}));
             if(amounts.currency)state.currency=amounts.currency;
             if(amounts.company_id)state.company_id=amounts.company_id;
             if(amounts.default_taxes)state.default_taxes=amounts.default_taxes;

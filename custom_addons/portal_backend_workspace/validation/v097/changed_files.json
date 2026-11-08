@@ -1,0 +1,29 @@
+{
+  "portal_backend_workspace": {
+    "changed": [
+      "portal_backend_workspace/__manifest__.py",
+      "portal_backend_workspace/views/sales/res_partner_views.xml",
+      "portal_backend_workspace/controllers/sales/sales_lines.py",
+      "portal_backend_workspace/controllers/sales/portal_sales.py",
+      "portal_backend_workspace/models/sales/res_partner.py",
+      "portal_backend_workspace/models/sales/sale_order.py",
+      "portal_backend_workspace/static/src/sales/js/sales_lines.js"
+    ],
+    "new": [
+      "portal_backend_workspace/migrations/18.0.0.9.7/pre-migrate.py"
+    ]
+  },
+  "portal_backend_workspace_eps_bridge": {
+    "changed": [
+      "portal_backend_workspace_eps_bridge/__manifest__.py",
+      "portal_backend_workspace_eps_bridge/models/sales_data.py",
+      "portal_backend_workspace_eps_bridge/models/proposals.py",
+      "portal_backend_workspace_eps_bridge/controllers/proposals.py",
+      "portal_backend_workspace_eps_bridge/views/proposals.xml"
+    ],
+    "new": [
+      "portal_backend_workspace_eps_bridge/static/src/proposal_draft.css",
+      "portal_backend_workspace_eps_bridge/static/src/proposal_draft.js"
+    ]
+  }
+}

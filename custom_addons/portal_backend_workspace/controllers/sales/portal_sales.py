@@ -283,7 +283,7 @@ class PortalSales(SalesLinesMixin, http.Controller):
                     raise UserError(_('Select an available customer.'))
                 virtual, vals = self._line_new_order({'header': post}, required=True)
                 order = self._line_env(virtual)['sale.order'].create(vals)
-                order._pbw_sales_after_document_create()
+                order._pbw_sales_after_document_create(header=post)
                 return request.redirect('%s/%s' % (BASE, order.id))
         except (ValueError, TypeError, UserError, ValidationError) as exc:
             return self._render('portal_backend_workspace.sales__sales_new',date_order_local=self._sales_date_local(fields.Datetime.now()),line_boot_json=json.dumps(self._line_boot(self._line_new_order({})[0])),partners=self._partners(),projects=self._projects(),templates=self._templates(),units=self._units(),error=str(exc))

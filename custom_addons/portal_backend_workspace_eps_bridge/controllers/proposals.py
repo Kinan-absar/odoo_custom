@@ -20,8 +20,15 @@ class WorkspaceSalesProposals(PortalSales):
             ('company_id', 'in', companies.ids)], order='name,id')
 
     def _render(self, template, **kw):
+        model = request.env['sale.order']
+        kw['proposal_supported'] = model._pbw_has_technical_proposals()
+        kw['proposal_header_fields'] = model._pbw_proposal_header_map() if kw['proposal_supported'] else {}
         if kw.get('order'):
             kw['templates'] = self._templates(kw['order'].company_id)
+        elif template == 'portal_backend_workspace.sales__sales_new' and kw['proposal_supported']:
+            types = model._pbw_proposal_section_types()
+            defaults = {key: model._pbw_proposal_default_section(key) for key, label in types}
+            kw['proposal_draft_boot'] = json.dumps({'types': types, 'defaults': defaults})
         return super()._render(template, **kw)
 
     def _proposal_order(self, order_id, write=False):
@@ -70,6 +77,32 @@ class WorkspaceSalesProposals(PortalSales):
             raise Forbidden()
         records = request.env['absar.proposal.template'].sudo().search(domain, order='name,id', offset=offset, limit=31)
         return request.make_json_response({'items':[{'id':r.id,'name':r.display_name} for r in records[:30]], 'more':len(records)>30})
+
+    @http.route(BASE + '/proposal-template-preview', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    def proposal_template_preview(self, **post):
+        self._allowed()
+        if not request.env['sale.order']._pbw_has_technical_proposals():
+            raise NotFound()
+        if request.httprequest.content_length and request.httprequest.content_length > 20_000:
+            raise Forbidden()
+        partner = False
+        if post.get('partner_id'):
+            partner = request.env['res.partner'].sudo().browse(self._line_id(post['partner_id'])).exists()
+            if not partner or partner not in self._partners(limit=None):
+                raise Forbidden()
+        company = self._sales_company(partner)
+        model = request.env['sale.order']
+        template = model._pbw_proposal_template(post.get('template_id'), company)
+        sections = [{'section_type': s.section_type, 'name': s.name, 'content': s.content or '',
+            'include_in_report': s.include_in_report, 'page_break_before': s.page_break_before}
+            for s in template.section_ids.sorted(key=lambda s: (s.sequence, s.id))]
+        if not any(s['section_type'] == 'confirmation' for s in sections):
+            if 'confirmation' in dict(model._pbw_proposal_section_types()):
+                sections.append(model._pbw_proposal_default_section('confirmation'))
+        return request.make_json_response({'title': template.title or 'TECHNICAL & FINANCIAL PROPOSAL',
+            'template_id': template.id, 'company_id': company.id, 'sections': sections,
+            'payments': [{'name': p.name, 'percentage': p.percentage, 'due_condition': p.due_condition or ''}
+                for p in template.payment_ids.sorted(key=lambda p: (p.sequence, p.id))]})
 
     @http.route()
     def pdf(self, order_id, **kw):
@@ -190,7 +223,7 @@ class WorkspaceSalesProposals(PortalSales):
         if rate>100: raise Forbidden()
         name=(post.get('name') or '').strip()
         if not name or len(name)>180: raise Forbidden()
-        order.write({'absar_proposal_payment_ids': [Command.create({'name':name,'percentage':rate,'due_condition':(post.get('due_condition') or '')[:255]})]})
+        order.write({'absar_proposal_payment_ids': [Command.create({'name':name,'percentage':rate,'due_condition':(post.get('due_condition') or '')[:255], 'sequence': max(order.absar_proposal_payment_ids.mapped('sequence') or [0]) + 10})]})
         return request.redirect('%s/%s' % (BASE,order.id))
 
     @http.route(BASE + '/<int:order_id>/milestone/<int:milestone_id>/delete', type='http', auth='user', website=True, methods=['POST'], csrf=True)
@@ -201,3 +234,28 @@ class WorkspaceSalesProposals(PortalSales):
         order.write({'absar_proposal_payment_ids': [Command.delete(milestone.id)]})
         return request.redirect('%s/%s' % (BASE,order.id))
 
+
+    @http.route(BASE + '/<int:order_id>/milestone/<int:milestone_id>/save', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    def save_milestone(self, order_id, milestone_id, **post):
+        order = self._proposal_order(order_id, write=True)
+        milestone = order.absar_proposal_payment_ids.filtered(lambda p: p.id == milestone_id)
+        if not milestone:
+            raise NotFound()
+        rate = self._num(post.get('percentage'), 'Percentage')
+        name = (post.get('name') or '').strip()
+        if rate > 100 or not name or len(name) > 180:
+            raise ValidationError(_('Set a milestone name and a percentage between 0 and 100.'))
+        try:
+            position = int(post.get('position') or 0)
+        except (ValueError, TypeError):
+            raise ValidationError(_('Set a valid milestone position.'))
+        milestones = list(order.absar_proposal_payment_ids.sorted(key=lambda p: (p.sequence, p.id)))
+        if position < 1 or position > len(milestones):
+            raise ValidationError(_('Set a valid milestone position.'))
+        milestones = [p for p in milestones if p.id != milestone.id]
+        milestones.insert(position - 1, milestone)
+        values = {'name': name, 'percentage': rate, 'due_condition': (post.get('due_condition') or '')[:255]}
+        commands = [Command.update(p.id, dict(values, sequence=index * 10) if p.id == milestone.id else {'sequence': index * 10})
+                    for index, p in enumerate(milestones, 1)]
+        order.write({'absar_proposal_payment_ids': commands})
+        return request.redirect('%s/%s' % (BASE, order.id))
