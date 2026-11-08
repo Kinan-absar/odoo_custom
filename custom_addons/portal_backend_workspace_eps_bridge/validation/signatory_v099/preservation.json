@@ -1,0 +1,88 @@
+{
+  "input_archive": "Portal_Backend_Workspace_EPS_Bridge_v0.9.8_Proposal_500_Fix.zip",
+  "source_sha256": "ec65000e4257323379fb4d02c452bacbe35fc01747278cb1e4fd4257e1a6330d",
+  "changed_runtime": [
+    {
+      "path": "__manifest__.py",
+      "before_sha256": "51632d209bdacea45ec4c6d7b2911e228ee243a8485d8cf103513c59eda392f7",
+      "after_sha256": "259dd93f1dfa1ff80a3a896b261afd75039efb87e58ac28b40898f3ecf063f51"
+    },
+    {
+      "path": "views/proposals.xml",
+      "before_sha256": "79755dca537247d1f62f617b650f3f81aad6895011bbf38e93841a57ea527b59",
+      "after_sha256": "4488740268939a317b4d439f30cd4a97fd67d8692102a1fbff4cf94646e980df"
+    }
+  ],
+  "unchanged_runtime": [
+    {
+      "path": "__init__.py",
+      "before_sha256": "fa84865b0b456f510a03a7c1cc9d97831923ec92d603c26a66ee1dcfd51654a4",
+      "after_sha256": "fa84865b0b456f510a03a7c1cc9d97831923ec92d603c26a66ee1dcfd51654a4"
+    },
+    {
+      "path": "controllers/__init__.py",
+      "before_sha256": "a30ed6ec4ea4f20ee50092ac3ff6cfafe98f34bfd8c596f8d38777687f684d17",
+      "after_sha256": "a30ed6ec4ea4f20ee50092ac3ff6cfafe98f34bfd8c596f8d38777687f684d17"
+    },
+    {
+      "path": "controllers/proposals.py",
+      "before_sha256": "a4632bac4657e9619b776e3290777e46129fcb06b092d5e4fcb440e6502eecc5",
+      "after_sha256": "a4632bac4657e9619b776e3290777e46129fcb06b092d5e4fcb440e6502eecc5"
+    },
+    {
+      "path": "controllers/routing.py",
+      "before_sha256": "ec940d01bf4e4e094b90420be05b387b9606ddf2d4e6e355615c9aba3ba11e36",
+      "after_sha256": "ec940d01bf4e4e094b90420be05b387b9606ddf2d4e6e355615c9aba3ba11e36"
+    },
+    {
+      "path": "models/__init__.py",
+      "before_sha256": "5f7fa3787f79b764ef4508f5ef76b1724875a3b458a8e382b74b38d7cab3197b",
+      "after_sha256": "5f7fa3787f79b764ef4508f5ef76b1724875a3b458a8e382b74b38d7cab3197b"
+    },
+    {
+      "path": "models/notifications.py",
+      "before_sha256": "5f4c5d32b79b097e468a3db24b26e941d853f82e23531e7fe50304df4e347182",
+      "after_sha256": "5f4c5d32b79b097e468a3db24b26e941d853f82e23531e7fe50304df4e347182"
+    },
+    {
+      "path": "models/proposals.py",
+      "before_sha256": "296cf9e560b95f4a4b50adde98fd98af22f91a39f9c35746e0b5c9b58d3498e3",
+      "after_sha256": "296cf9e560b95f4a4b50adde98fd98af22f91a39f9c35746e0b5c9b58d3498e3"
+    },
+    {
+      "path": "models/sales_data.py",
+      "before_sha256": "39fe0974fb58727e03d70cd2abdddd3438823f77816bbca1b0fa945e8436d360",
+      "after_sha256": "39fe0974fb58727e03d70cd2abdddd3438823f77816bbca1b0fa945e8436d360"
+    },
+    {
+      "path": "models/users.py",
+      "before_sha256": "a38fe07fc0e731c08a20fe6c1cf8eb9df6056bc3de567d184caa27926a7b1169",
+      "after_sha256": "a38fe07fc0e731c08a20fe6c1cf8eb9df6056bc3de567d184caa27926a7b1169"
+    },
+    {
+      "path": "static/src/notification_compat.js",
+      "before_sha256": "46823ef64eb9a7a50b60697b3616d2ffd2f97e801c17dd821167de250d84a58b",
+      "after_sha256": "46823ef64eb9a7a50b60697b3616d2ffd2f97e801c17dd821167de250d84a58b"
+    },
+    {
+      "path": "static/src/proposal_draft.css",
+      "before_sha256": "4e9c5783348cd4a6f26321cd90d339d7ba6916c2f3ffca84a7b25a435cf6d089",
+      "after_sha256": "4e9c5783348cd4a6f26321cd90d339d7ba6916c2f3ffca84a7b25a435cf6d089"
+    },
+    {
+      "path": "static/src/proposal_draft.js",
+      "before_sha256": "c8764f3b3bef23d818260b6fe9fe301ae8b3e0f08baeb685948aeef4fc146c7f",
+      "after_sha256": "c8764f3b3bef23d818260b6fe9fe301ae8b3e0f08baeb685948aeef4fc146c7f"
+    },
+    {
+      "path": "views/navigation.xml",
+      "before_sha256": "84b7b01aa7000cb2b0f08ce8f75d8bd61dce0e158d72cbe04220a2a5350ddc56",
+      "after_sha256": "84b7b01aa7000cb2b0f08ce8f75d8bd61dce0e158d72cbe04220a2a5350ddc56"
+    },
+    {
+      "path": "views/notifications.xml",
+      "before_sha256": "9601a6399df2c8fe1e7dd9c85d8808acf077034fef24e9112537a4a3f28b27d0",
+      "after_sha256": "9601a6399df2c8fe1e7dd9c85d8808acf077034fef24e9112537a4a3f28b27d0"
+    }
+  ]
+}

@@ -1,28 +1,19 @@
-# Portal Backend Workspace - Existing EPS Bridge 18.0.0.9.8
+# Portal Backend Workspace - Existing EPS Bridge 18.0.0.9.9
 
-## Saved technical proposal HTTP 500 hotfix
-This updates the existing `portal_backend_workspace_eps_bridge` addon. It is not
-another bridge. The main `portal_backend_workspace` stays at 18.0.0.9.7.
+## Remove added signatory controls
+The extra Authorized Signatory, Signatory Title, Customer Authorized Signatory and
+Customer Signatory Title controls no longer appear in the portal's new, saved or
+read-only proposal forms. The new-form Signatories section is also removed.
 
-The failing template is provided by `views/proposals.xml`, which inherits
-`portal_backend_workspace.sales__document_detail_extra`. Its milestone total now
-formats only the numeric value and emits the percent sign as literal markup.
-There is no escaped percent pair in that output expression, so the displayed
-percentage is not vulnerable to double-percent normalization during view loading.
+Proposal title/reference, templates, sections, milestones, report actions,
+permissions, shared notifications, routing and the v0.9.8 HTTP 500 fix are retained.
+No stored data, model field or external proposal PDF template is deleted or changed.
 
 ## Upgrade
-1. Replace the existing `portal_backend_workspace_eps_bridge` folder with this one.
-2. Deploy/rebuild using your existing process, then upgrade this SAME addon in Apps.
-3. Confirm the bridge's installed version is 18.0.0.9.8.
-4. Reopen the saved quotation, including `/my/workspace/sales/513`.
+Keep main portal_backend_workspace at 18.0.0.9.7. Replace this existing bridge
+folder, deploy/rebuild, and upgrade portal_backend_workspace_eps_bridge in Apps.
+Confirm bridge version 18.0.0.9.9, then reopen/refresh the quotation. Do not uninstall.
 
-Do not uninstall either addon. A browser refresh alone does not reload the XML view.
-No customer data, quotations, security groups, schemas or records are rewritten.
-The original template external ID is retained so a normal module upgrade updates it.
-
-Only the runtime proposal total markup and manifest version have changed. Existing
-customer/project adapters, new/saved proposal editors, notifications, routing,
-permissions, reports, and CSS/JavaScript are otherwise byte-identical to v0.9.7.
-
-See TEST_REPORT_v0.9.8.md and validation/qweb_v098/ for checks and limitations.
-Historical reports are retained as historical evidence, not current test results.
+See TEST_REPORT_v0.9.9.md and validation/signatory_v099/ for local checks and limits.
+No live Odoo installation, browser session or PDF render has been verified here.
+Historical reports are historical evidence, not rerun results.
