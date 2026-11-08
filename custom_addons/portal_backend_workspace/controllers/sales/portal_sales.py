@@ -33,24 +33,25 @@ class PortalSales(SalesLinesMixin, http.Controller):
         if not order or order.company_id not in user.company_ids:
             raise NotFound()
         creator = order.pbw_portal_creator_id
+        owner = order._pbw_sales_owner()
         is_monitor = user.has_group('portal_backend_workspace.sales__group_portal_sales_monitor')
         is_approver = user.has_group('portal_backend_workspace.sales__group_portal_sales_approver')
         if review:
-            if not creator or creator.id == user.id:
+            if not creator or user in (owner, creator):
                 raise NotFound()
-        elif not (self._operator() or (creator and user in (creator,order.pbw_portal_submitter_id,order.pbw_order_requester_id)) or (is_approver and creator) or is_monitor):
+        elif not (self._operator() or owner == user or (creator and user in (creator,order.pbw_portal_submitter_id,order.pbw_order_requester_id)) or (is_approver and creator) or is_monitor):
             raise NotFound()
         return order
 
     def _editable(self, order):
+        self._allowed()
         if not order.id:
-            self._allowed()
             return
         if order.state in ('draft','sent') and order._pbw_is_sales_approver(request.env.user):
             return
         if self._operator() and order.state in ('draft','sent') and (not order.pbw_portal_creator_id or order.pbw_portal_review_state in ('draft','returned')):
             return
-        if order.pbw_portal_creator_id.id != request.env.user.id or order.pbw_portal_review_state not in ('draft','returned') or order.state not in ('draft','sent'):
+        if order._pbw_sales_owner() != request.env.user or order.pbw_portal_review_state not in ('draft','returned') or order.state not in ('draft','sent'):
             raise Forbidden()
 
     def _sales_date_local(self, value):
@@ -77,10 +78,10 @@ class PortalSales(SalesLinesMixin, http.Controller):
         return result
 
     def _partners(self, limit=500):
-        return request.env['res.partner'].sudo().search([
-            ('pbw_is_sales_customer','=',True), ('active','=',True),
-            '|', ('company_id','=',False), ('company_id','in',request.env.user.company_ids.ids)
-        ], limit=limit, order='name')
+        partner_model = request.env['res.partner'].sudo()
+        return partner_model.search(
+            partner_model._pbw_sales_customer_domain(request.env.user.company_id),
+            limit=limit, order='name,id')
 
     def _projects(self, limit=500):
         return request.env['project.project'].sudo().search([
@@ -88,12 +89,21 @@ class PortalSales(SalesLinesMixin, http.Controller):
             ('company_id','in',request.env.user.company_ids.ids)
         ], limit=limit, order='name')
 
-    def _customer_projects(self, partner):
-        """Only company-compatible projects assigned to this customer's commercial entity."""
+    def _customer_projects(self, partner, order=None):
+        """Customer projects, plus the authorized document's existing selection.
+
+        Keep an older construction project's selection visible even if its
+        customer link was subsequently changed. New choices remain filtered.
+        """
         customer = partner.commercial_partner_id
-        return self._projects(limit=None).filtered(
+        projects = self._projects(limit=None).filtered(
             lambda p: p.partner_id and p.partner_id.commercial_partner_id == customer
         )
+        if order is not None:
+            current = order._pbw_sales_project()
+            if current and (not current.company_id or current.company_id == order.company_id):
+                projects |= current
+        return projects
 
     def _units(self):
         return request.env['uom.uom'].sudo().search([('active','=',True)],order='name')
@@ -120,14 +130,14 @@ class PortalSales(SalesLinesMixin, http.Controller):
         params = params or {}
         domain = [('company_id', 'in', user.company_ids.ids)]
         if queue:
-            domain += [('pbw_portal_creator_id','!=',False), ('pbw_portal_creator_id','!=',user.id),
+            domain += [('pbw_portal_creator_id','!=',False), ('pbw_portal_creator_id','!=',user.id), ('create_uid','!=',user.id),
                        ('pbw_portal_submitter_id','!=',user.id),('pbw_order_requester_id','!=',user.id),
                        '|',('pbw_portal_review_state','=','submitted'),('pbw_order_review_state','=','requested'), ('state','in',['draft','sent'])]
         elif updates:
             domain += [('pbw_sales_decision_at','!=',False),'|','|',
                 ('pbw_portal_creator_id','=',user.id),('pbw_portal_submitter_id','=',user.id),('pbw_order_requester_id','=',user.id)]
         elif not monitor and not self._operator():
-            domain += [('pbw_portal_creator_id','=',user.id)]
+            domain = expression.AND([domain, request.env['sale.order']._pbw_sales_owner_domain(user)])
         else:
             source = params.get('source', 'all')
             if source == 'portal':
@@ -144,13 +154,16 @@ class PortalSales(SalesLinesMixin, http.Controller):
             review = params.get('review', 'all')
             if review in ('draft','submitted','approved','returned'):
                 domain += [('pbw_portal_creator_id','!=',False),('pbw_portal_review_state','=',review)]
+            elif review == 'direct':
+                domain += [('pbw_order_review_state', '=', 'direct')]
             elif review == 'na':
                 domain += [('pbw_portal_creator_id','=',False)]
         query = (params.get('q') or '').strip()[:120]
         if query:
-            domain = expression.AND([domain, ['|','|','|',
-                ('name','ilike',query),('partner_id.name','ilike',query),
-                ('pbw_project_id.name','ilike',query),('user_id.name','ilike',query)]])
+            domain = expression.AND([domain, expression.OR([
+                [('name','ilike',query)], [('partner_id.name','ilike',query)],
+                request.env['sale.order']._pbw_sales_project_search_domain(query),
+                [('user_id.name','ilike',query)]])])
         model = request.env['sale.order'].sudo()
         count = model.search_count(domain)
         per_page = 20
@@ -160,7 +173,7 @@ class PortalSales(SalesLinesMixin, http.Controller):
             page = 1
         orders = model.search(domain, limit=per_page, offset=(page-1)*per_page, order='pbw_sales_decision_at desc, id desc' if updates else 'date_order desc, id desc')
         pending_count = model.search_count([('company_id','in',user.company_ids.ids),
-                ('pbw_portal_creator_id','!=',False),('pbw_portal_creator_id','!=',user.id),
+                ('pbw_portal_creator_id','!=',False),('pbw_portal_creator_id','!=',user.id),('create_uid','!=',user.id),
                 ('pbw_portal_submitter_id','!=',user.id),('pbw_order_requester_id','!=',user.id),
                 '|',('pbw_portal_review_state','=','submitted'),('pbw_order_review_state','=','requested'),('state','in',['draft','sent'])]) if is_approver else 0
         if queue or updates:
@@ -182,7 +195,9 @@ class PortalSales(SalesLinesMixin, http.Controller):
         self._allowed()
         data=json.loads(post.get('payload') or '{}');kind=data.get('kind');q=str(data.get('q') or '')[:120]
         allowed=[('active','=',True),'|',('company_id','=',False),('company_id','in',request.env.user.company_ids.ids)]
-        if kind=='partner_id':model='res.partner';domain=allowed+[('pbw_is_sales_customer','=',True)]
+        if kind=='partner_id':
+            model='res.partner'
+            domain=request.env[model].sudo()._pbw_sales_customer_domain(request.env.user.company_id)
         elif kind=='project_id':
             partner=request.env['res.partner'].sudo().browse(int(data.get('partner_id') or 0)).exists()
             if not partner or partner not in self._partners(limit=None):raise Forbidden()
@@ -243,8 +258,9 @@ class PortalSales(SalesLinesMixin, http.Controller):
             vals = {
                 'partner_id':partner.id, 'company_id':user.company_id.id, 'user_id':user.id,
                 'pbw_portal_creator_id':user.id,
-                'pbw_portal_review_state':'draft', 'pbw_project_id':project.id if project else False,
+                'pbw_portal_review_state':'draft',
             }
+            vals.update(request.env['sale.order']._pbw_sales_project_values(project))
             if post.get('validity_date'):
                 vals['validity_date'] = fields.Date.to_date(post['validity_date'])
             order = request.env['sale.order'].sudo().with_company(user.company_id).create(vals)
@@ -261,7 +277,7 @@ class PortalSales(SalesLinesMixin, http.Controller):
         return self._render('portal_backend_workspace.sales__sales_detail', order=order, can_confirm=order._pbw_portal_can_confirm(request.env.user),
             can_edit=can_edit,
             can_review=(request.env.user.has_group('portal_backend_workspace.sales__group_portal_sales_approver') and order.pbw_portal_review_state=='submitted' and request.env.user not in (order.pbw_portal_creator_id,order.pbw_portal_submitter_id)),
-            templates=self._templates(),projects=self._customer_projects(order.partner_id),units=self._units())
+            templates=self._templates(),projects=self._customer_projects(order.partner_id, order=order),units=self._units())
 
     @http.route(BASE+'/new-api/<string:operation>', type='http', auth='user', methods=['POST'], csrf=True)
     def new_line_api(self, operation, **post):
@@ -278,15 +294,15 @@ class PortalSales(SalesLinesMixin, http.Controller):
         vals={'user_id':(order.user_id or order.pbw_portal_creator_id or request.env.user).id}
         project_id = int(post.get('project_id') or 0)
         project = request.env['project.project'].sudo().browse(project_id).exists() if project_id else False
-        if project_id and (not project or project not in self._customer_projects(order.partner_id)):
+        if project_id and (not project or project not in self._customer_projects(order.partner_id, order=order)):
             raise Forbidden()
-        vals['pbw_project_id'] = project.id if project else False
+        vals.update(order._pbw_sales_project_values(project))
         try:
             vals['date_order']=self._sales_date_utc(post.get('date_order'))
             vals['validity_date']=fields.Date.to_date(post['validity_date']) if post.get('validity_date') else False
             order.sudo().write(vals)
         except (ValueError,ValidationError) as exc:
-            return self._render('portal_backend_workspace.sales__sales_detail',order=order,can_edit=True,can_review=False,error=str(exc),templates=self._templates(),projects=self._customer_projects(order.partner_id),units=self._units())
+            return self._render('portal_backend_workspace.sales__sales_detail',order=order,can_edit=True,can_review=False,error=str(exc),templates=self._templates(),projects=self._customer_projects(order.partner_id, order=order),units=self._units())
         return request.redirect('%s/%s' % (BASE, order.id))
 
     @http.route(BASE + '/<int:order_id>/line/add', type='http', auth='user', website=True, methods=['POST'], csrf=True)
@@ -339,7 +355,10 @@ class PortalSales(SalesLinesMixin, http.Controller):
     def workflow(self,order_id,**post):
         order=self._order(order_id)
         action=post.get('action')
-        if action=='request_order':
+        if action=='confirm_direct':
+            self._allowed(approve=True)
+            order._pbw_confirm_own_quotation()
+        elif action=='request_order':
             order.action_pbw_request_order()
         elif action=='submit':
             self._editable(order)

@@ -18,13 +18,15 @@ class SaleOrderPrintApproval(models.Model):
             return False
         if self._pbw_is_sales_approver(user):
             return True
+        if self.state in ('sale', 'done') and self.pbw_direct_confirmed_by_id:
+            return True
         required = self._pbw_review_permissions(user)['requires_review']
         if not required:
             return True
         return bool(self.pbw_portal_review_state == 'approved' and self.pbw_portal_approver_id)
 
     @api.depends_context('uid', 'company')
-    @api.depends('company_id', 'pbw_portal_creator_id', 'pbw_portal_review_state', 'pbw_portal_approver_id')
+    @api.depends('company_id', 'state', 'pbw_portal_creator_id', 'pbw_portal_review_state', 'pbw_portal_approver_id', 'pbw_direct_confirmed_by_id')
     def _compute_pbw_can_print(self):
         for order in self:
             order.pbw_can_print = order._pbw_can_print_for(self.env.user.sudo(False))

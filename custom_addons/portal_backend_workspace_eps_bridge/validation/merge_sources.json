@@ -1,0 +1,18 @@
+{
+  "unchanged_eps_runtime_files": {
+    "__init__.py": "fa84865b0b456f510a03a7c1cc9d97831923ec92d603c26a66ee1dcfd51654a4",
+    "controllers/__init__.py": "2667559aaff1d850bc6a1c20d99bea53e6764742616e60b2a99b8affbe846aec",
+    "controllers/routing.py": "ec940d01bf4e4e094b90420be05b387b9606ddf2d4e6e355615c9aba3ba11e36",
+    "models/notifications.py": "5f4c5d32b79b097e468a3db24b26e941d853f82e23531e7fe50304df4e347182",
+    "models/users.py": "a38fe07fc0e731c08a20fe6c1cf8eb9df6056bc3de567d184caa27926a7b1169",
+    "static/src/notification_compat.js": "46823ef64eb9a7a50b60697b3616d2ffd2f97e801c17dd821167de250d84a58b",
+    "views/navigation.xml": "84b7b01aa7000cb2b0f08ce8f75d8bd61dce0e158d72cbe04220a2a5350ddc56",
+    "views/notifications.xml": "9601a6399df2c8fe1e7dd9c85d8808acf077034fef24e9112537a4a3f28b27d0"
+  },
+  "sales_adapter_sha256": "23923477ab6f3d24510e6a518316c28eb10999346dfda1e5b076aa1f071850db",
+  "source_archives": {
+    "Portal_Backend_Workspace_EPS_Bridge_v0.9.4_Notifications.zip": "4bfcc9d5c09a31891b71b3267372015e6d03c87efb5b67a04c688ebc83b7aba2",
+    "Portal_Backend_Workspace_Sales_Data_Bridge_v0.9.5.zip": "e5d32d5a1fe39dc74a86a99083e2d949176dc6ba64982f079cdd45687b50f9a0",
+    "Portal_Backend_Workspace_v0.9.5_Sales_Fixes.zip": "6aeb50e4f3bb9a89da23c163173aca8c46300eec083f40be41617849c393cb69"
+  }
+}

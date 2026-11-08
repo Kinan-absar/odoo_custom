@@ -28,7 +28,12 @@ export function mountSalesLines(root) {
     function amountKey(line){return JSON.stringify([line.quantity,line.price_unit,line.discount,line.taxes_id,line.uom_id]);}
     function lineAmount(line){return line && !line.display_type && Number.isFinite(Number(line.subtotal)) ? Number(line.subtotal) : null;}
     function blank(){const taxes=state.default_taxes||[];return {id:0,name:'',product_id:0,quantity:1,price_unit:0,discount:0,taxes_id:taxes.map(t=>t.id),taxes:taxes.map(t=>({...t})),_defaultTaxes:taxes.map(t=>t.id),analytic_distribution:{}};}
-    function changed(){const review=document.querySelector('[data-pbw-sales-submit-review]');if(review)review.disabled=true;dirty=true;revision++;error='';state.lines.forEach(l=>{l._pending=true;});drawTotals();clearTimeout(timer);timer=setTimeout(preview,250);}
+    const workflowButtons = () => document.querySelectorAll('[data-pbw-sales-submit-review], [data-pbw-sales-confirm-direct]');
+    function syncWorkflowButtons(){
+        const blocked=dirty||busy||pendingComputations>0||!state.lines.some(line=>!line.display_type);
+        workflowButtons().forEach(button=>{button.disabled=blocked;button.title=dirty?'Save Draft before continuing.':'';});
+    }
+    function changed(){dirty=true;syncWorkflowButtons();revision++;error='';state.lines.forEach(l=>{l._pending=true;});drawTotals();clearTimeout(timer);timer=setTimeout(preview,250);}
     function feedback(message){error=message;const node=root.querySelector('[data-sales-status]');if(node)node.textContent=message;drawTotals();}
     async function preview(){
         const seq=revision;
@@ -168,7 +173,7 @@ export function mountSalesLines(root) {
             actions.append(button('Catalog',catalog));surface.append(actions);}
         document.querySelectorAll('[data-sales-save]').forEach(node=>{node.hidden=!state.editable;node.disabled=busy;node.textContent=busy?'Saving…':'Save Draft';});
         const totals=text('div','','pbw-sales-sales-totals');totals.setAttribute('data-sales-totals','true');surface.append(totals);drawTotals();
-        const review=document.querySelector('[data-pbw-sales-submit-review]');if(review)review.disabled=dirty||!state.lines.some(l=>!l.display_type);
+        syncWorkflowButtons();
         if(!state.editable)root.querySelectorAll('input,select').forEach(node=>{node.disabled=true;});
         if(busy)root.querySelectorAll('input,button,select').forEach(node=>{node.disabled=true;});
         if(focus){const node=focus[4]?root.querySelector('[data-sales-row="'+focus[0]+'"] .pbw-sales-sales-description'):gridControl(focus[0],focus[1]);if(node){node.dataset.suppressLookupOnce='1';restoring=true;node.focus();restoring=false;if(typeof focus[2]==='number'&&(['text','search'].includes(node.type)||node.tagName==='TEXTAREA'))node.setSelectionRange?.(focus[2],focus[3]);}}
@@ -180,9 +185,12 @@ export function mountSalesLines(root) {
         moveGrid(Number(input.closest('[data-sales-row]').dataset.salesRow),Number(input.closest('[data-sales-column]').dataset.salesColumn),-1);
     },true);
     const headerRoot=document.getElementById('pbw-sales-new-details')||document.getElementById('pbw-sales-order-details');
-    headerRoot?.addEventListener('input',()=>{dirty=true;});
+    headerRoot?.addEventListener('input',()=>{dirty=true;syncWorkflowButtons();});
     headerRoot?.addEventListener('change',event=>{changed();if(['partner_id','date_order'].includes(event.target.name)){headerSequence++;for(const line of state.lines)if(!line.display_type)reprice(line,null,event.target.name==='partner_id');}});
     headerRoot?.addEventListener('submit',event=>{event.preventDefault();save();});
+    workflowButtons().forEach(button=>button.closest('form')?.addEventListener('submit',event=>{
+        if(dirty||busy||pendingComputations>0){event.preventDefault();feedback('Save Draft before continuing.');}
+    }));
     document.querySelectorAll('[data-sales-save]').forEach(node=>node.addEventListener('click',save));
     installDraftNavigation({isDirty:()=>state.editable&&dirty,save:()=>save({navigate:false}),onError:e=>{if(!error)feedback(e.message);}});
     render();

@@ -4,10 +4,11 @@
  <field name="category_id" ref="portal_backend_workspace.module_category_workspace"/><field name="implied_ids" eval="[(4, ref('portal_backend_workspace.group_workspace_access'))]"/></record>
  <record id="sales__group_portal_sales_approver" model="res.groups">
   <field name="name">Workspace: Sales - Approve</field>
+  <field name="comment">Review other users' submitted quotations. Quotations you created can be confirmed directly; other users' quotations retain independent review.</field>
   <field name="implied_ids" eval="[(4, ref('portal_backend_workspace.sales__group_portal_sales_creator')), (4, ref('portal_backend_workspace.group_workspace_access'))]"/>
  <field name="category_id" ref="portal_backend_workspace.module_category_workspace"/></record>
  <record id="sales__group_portal_sales_monitor" model="res.groups">
   <field name="name">Workspace: Sales - Monitor (Read Only)</field>
  <field name="category_id" ref="portal_backend_workspace.module_category_workspace"/><field name="implied_ids" eval="[(4, ref('portal_backend_workspace.group_workspace_access'))]"/></record>
- <record id="sales__group_portal_sales_user" model="res.groups"><field name="name">Sales User (All Company Documents)</field><field name="implied_ids" eval="[(4, ref('sales__group_portal_sales_creator')), (4, ref('portal_backend_workspace.group_workspace_access'))]"/><field name="comment">Work on all company-compatible quotations and sales orders. Every quotation requires independent approval; this role expands document visibility only. Grants no internal accounting or sales model ACLs.</field><field name="category_id" ref="portal_backend_workspace.module_category_workspace"/></record>
+ <record id="sales__group_portal_sales_user" model="res.groups"><field name="name">Sales User (All Company Documents)</field><field name="implied_ids" eval="[(4, ref('sales__group_portal_sales_creator')), (4, ref('portal_backend_workspace.group_workspace_access'))]"/><field name="comment">Work on all company-compatible quotations and sales orders. This role expands visibility and editing scope, but does not let a user submit another creator's quotation. Sales Approvers can directly confirm only their own quotations. Grants no internal accounting or sales model ACLs.</field><field name="category_id" ref="portal_backend_workspace.module_category_workspace"/></record>
 </odoo>

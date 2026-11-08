@@ -12,6 +12,8 @@
    </xpath>
    <xpath expr="//header" position="inside">
     <field name="pbw_requires_review" invisible="1"/>
+    <field name="pbw_can_confirm_direct" invisible="1"/>
+    <button name="action_pbw_confirm_own" type="object" string="Confirm Sales Order" class="btn-primary" invisible="not pbw_can_confirm_direct"/>
     <field name="pbw_can_submit" invisible="1"/><field name="pbw_can_approve" invisible="1"/><field name="pbw_can_return" invisible="1"/>
     <field name="pbw_can_request_order" invisible="1"/><field name="pbw_can_approve_order" invisible="1"/>
     <button name="action_pbw_portal_submit" type="object" string="Submit for Approval" class="btn-primary" invisible="not pbw_can_submit"/>
@@ -24,7 +26,7 @@
    <xpath expr="//sheet/notebook" position="inside">
     <page string="Sales Review" invisible="not pbw_requires_review">
      <group><group><field name="pbw_portal_creator_id" readonly="1"/><field name="pbw_portal_submitter_id" readonly="1"/><field name="pbw_portal_review_state" readonly="1"/><field name="pbw_portal_approver_id" readonly="1"/></group>
-      <group><field name="pbw_order_review_state"/><field name="pbw_order_requester_id"/><field name="pbw_order_approver_id"/></group></group>
+      <group><field name="pbw_order_review_state"/><field name="pbw_order_requester_id"/><field name="pbw_order_approver_id"/><field name="pbw_direct_confirmed_by_id"/></group></group>
      <field name="pbw_portal_review_note" placeholder="Enter the reason before clicking Return." readonly="not (pbw_can_return or pbw_can_approve_order)"/>
     </page>
    </xpath>

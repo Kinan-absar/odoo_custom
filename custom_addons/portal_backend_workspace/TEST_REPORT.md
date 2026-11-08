@@ -1,73 +1,90 @@
-# Portal Backend Workspace 18.0.0.9.4 - notification release
+# Portal Backend Workspace 18.0.0.9.5 - Sales corrections
 
-## Scope
-Changes apply to the standalone base addon and the optional EPS bridge. The base
-starts from v0.9.3 including its menu removal and original-layout fixes. The bridge
-starts from v0.9. The four business workspaces are not replaced or redesigned.
+## Files and scope
 
-## Implemented
-- A persistent, permission-filtered workspace notification bell, desktop and mobile.
-- Existing Sales, Purchase and Accounting approval/outcome emitters feed the bell.
-- HR gateway actions and native contract/payslip/payroll-batch status changes notify
-  other authorized HR/payroll administrators. No new HR approval workflow is added.
-  Bulk payroll generation emits one batch update instead of a notice per child save.
-- Optional bridge reads the original EPS summary and replaces its existing bell with
-  the same component. It does not copy EPS events or maintain a second EPS inbox.
-- Per-user read state, individual read controls, workspace history and mark-workspace-
-  updates-read. Reading a notification neither approves a document nor clears pending
-  approval counters. EPS notifications retain the original EPS read/visit behavior.
-- Automatic refresh every 20 seconds while the page is visible, plus refresh on focus
-  or opening the bell. Tabs share only refresh signals, not notification contents.
-- Current company, role, ownership, journal and target-record access are checked before
-  displaying or opening notices. CSRF-protected acknowledgements apply only to the
-  signed-in user's eligible records. No generic portal ORM read grant is introduced.
-- One persisted row per recipient/event; bell totals do not add the same workspace
-  approval queue to its individual event count. A read watermark preserves events
-  arriving after the displayed snapshot.
-- EPS's existing Calls/Messages mounting and MR message submit guard are preserved by
-  the bridge without changing the EPS addon or restoring its competing bell poller.
+Base: portal_backend_workspace, upgraded from the uploaded 18.0.0.9.4 package.
+Optional companion: portal_backend_workspace_sales_data_bridge 18.0.0.9.5.
+The EPS notification/navigation bridge is unchanged and stays at 18.0.0.9.4.
+
+## Confirmed source causes
+
+1. The old can_submit check treated All Company Documents as an ownership override.
+   The server submission method repeated that exception.
+2. The line-save API enrolled a native quotation under the editor's UID. This could
+   turn an unrelated all-documents editor into the stored preparer.
+3. Approver implies Prepare, while the old confirmation guard prohibited all managed
+   quotations from native confirmation without independent conversion review.
+4. The standalone customer selector read pbw_is_sales_customer only. The original
+   published Sales module uses absar_is_sales_customer, with the same old UI label.
+5. The workspace read pbw_project_id. The supplied backend screenshot shows
+   construction_project_id, which the original Construction addon actually defines.
+
+## Implemented behavior
+
+- Ownership comes from the original create_uid, not salesperson, last editor or
+  stale preparer-enrollment metadata. All-documents users may still access/edit
+  permitted drafts, but can submit/request conversion only for their own quotations.
+- An active, company-authorized Sales Approver can directly confirm their own draft
+  or sent quotation. An unlinked portal account is denied. Preparers still submit;
+  other people's submitted quotations still require independent review.
+- The portal action, model method and native PBW button enforce the same checks.
+  Native action_confirm remains the business operation. Empty/nonpositive lines,
+  native validation failures, cross-company operations, forged approval metadata,
+  raw portal RPC and repeated confirmation are tested rejection paths.
+- Directly Confirmed has its own audit marker and author; it is not fabricated as
+  an independent approval. Unsaved header/line edits disable the confirmation button.
+- Initial customer options, Search More and validation use one active/company-scoped
+  provider. Without a bridge, the explicit Workspace Customer / Client flag applies.
+  With the Sales Data Bridge, the original Sales flag also qualifies a customer.
+- With that bridge, project display/selection/search/save use the actual construction
+  field. Existing PBW-only selections survive as a fallback when that field is empty.
+  Explicitly saving/clearing does not leave a stale fallback that reappears later.
+- The data bridge has no mandatory custom dependency other than the workspace. It
+  inspects only known field names/types. Missing integrations retain standalone mode.
+- If the original Sales guard is installed, only authorized PBW confirmation calls
+  receive its private guard context; native business validation is not skipped.
+  This is NOT a complete bidirectional merger of two independent approval workflows.
 
 ## Executed checks
-| Check | Result | What it establishes |
+
+| Check | Result | Limits |
 | --- | --- | --- |
-| Offline Python notification/security tests | 41 passed | Actual shipped methods with controlled ORM fixtures; scope, recipients, event deduplication, foreign read denial, revocation, HR events, EPS integration, install guard |
-| Browser fixture assertions | 84 passed | Shipped bell markup/CSS/JavaScript in Chromium; standalone/integrated/EPS-only at 1440/390px, one visible bell, read controls, counts, automatic refresh, cross-portal refresh, safe content, EPS compatibility |
-| Retained layout contract checks | 10 passed | Previously repaired shell layout contract remains |
-| Retained targeted parity checks | 21 passed | Previously repaired narrow features remain |
-| Python/XML/JavaScript/manifest/bridge inheritance checks | Passed | Source parses, declared files exist and inherited template targets match supplied source |
-| Business source preservation | Passed | Sales/Purchase/Accounting business models/controllers/views/assets unchanged; HR views/assets unchanged; existing global layout CSS and Settings-menu removal unchanged |
+| Targeted Sales policy/controller/data tests | 64 passed | Actual shipped Python methods with controlled ORM fixtures; not an Odoo registry |
+| Chromium editor interactions | 18 passed | Actual shipped editor at 1440/390px; mocked save/preview HTTP; not live Odoo |
+| Retained narrow parity tests | 21 passed | Earlier controls/role/style contracts, with customer-domain test updated for the provider hook |
+| Retained layout contract tests | 10 passed | Original layout/CSS contracts remain |
+| Source preservation | Passed | Purchase, Accounting, HR, common shell/bell assets and generic notification model byte-identical to v0.9.4 |
+| Python, XML, JavaScript syntax; manifest paths | Passed | Source/schema syntax and file presence only |
 
-The browser checks use local HTML and mocked HTTP endpoints, not the user's website.
-The opaque about:blank fixture has a test-only URL-origin adapter; shipped URL checks
-are unchanged. The browser suite checks real 20-second refresh timing. Mocked checks
-are not a substitute for Odoo registry, database, permission-rule or network tests.
+**113 targeted local checks passed.** Six optional real-registry tests were added
+under tests/test_sales_policy.py but were NOT executed. The original guard snippets
+were executed in both inheritance orders for the PBW-initiated own-confirm action;
+this does not prove complete coexistence of all native buttons from both products.
 
-## Not executed / not claimed
-A live Odoo installation/upgrade and delivery between real Odoo user sessions were
-not executed in this environment. Seven optional real-registry tests are supplied
-under tests/ with tag pbw_notifications, but were not run. The complete historical
-workflow suite and feature parity with every original addon were not revalidated;
-prior limitations remain documented in PARITY_AUDIT.md and historical test reports.
-This release adds in-app notifications; it does not implement browser/OS push or
-email delivery when the portal is closed. Existing EPS push behavior is untouched.
-Historical business actions with no saved PBW event are not reconstructed. Existing
-persisted events remain available only if the user still has document access.
+## Not tested / not claimed
 
-## Upgrade
-Replace the complete base addon folder and upgrade portal_backend_workspace first.
-For EPS integration, replace and upgrade portal_backend_workspace_eps_bridge next.
-Do not uninstall either product. Refresh open browser tabs after upgrading. Existing
-user groups and company/journal restrictions remain; the actor is not notified about
-its own action. Use a second correctly authorized user for a delivery test.
+No live Odoo installation/upgrade, database schema load, stock procurement, invoice
+creation, tax engine, mail delivery or real-user workflow was run. This patch does
+not constitute a fresh full-parity validation of all four original workspaces. The
+previous documented custom-integration exclusions and historical test limitations
+remain in the package. Browser fixtures are local tests, not screenshots of the
+user's website and not replacements for the product interface.
 
-## Recommended live acceptance checks
-1. In PBW alone, submit a quotation/PO/bill from one preparer and open a different,
-   company-authorized approver's bell. Approve or return and check the preparer's bell.
-2. With the bridge, compare unread contents on /my/employee and /my/workspace for a
-   dual-access user. Mark a PBW notice read in one and verify the other refreshes.
-3. Verify EPS-only users see only EPS notifications; PBW-only users have no unauthorized
-   document data. Revoke a workspace/journal permission and repeat the feed request.
-4. Make an HR/payroll operation with one administrator and check another permitted
-   administrator. Employee-only HR access must not expose payroll notifications.
-5. Confirm that reading an alert does not approve its document and that Calls/Messages
-   and MR message submission still behave normally within EPS.
+## Install and focused Dev acceptance
+
+Replace and upgrade the base addon first. Then install Sales Data Bridge on the
+shown database to connect its original customer flag and construction project.
+Keep the existing EPS bridge installed; it does not need updating for these fixes.
+Refresh the portal after the build/upgrade.
+
+- As All Company Documents, open/save someone else's draft: no Submit or conversion
+  request should become available. Verify the original creator is unchanged.
+- As an Approver, create/save a quotation with valid lines: Confirm Sales Order
+  should be available without submission; it must not confirm someone else's draft.
+- As a Preparer, select an existing originally flagged customer after bridge install.
+- Check an existing construction-linked quotation in the list, detail and search;
+  save a changed project and verify the same backend construction field is updated.
+
+Changed runtime source files are recorded in validation/sales_v095/packaging_checks.json
+and CHANGES_FROM_V094.patch. No user role memberships are bulk assigned or removed,
+and no historical customer/project data is bulk rewritten.

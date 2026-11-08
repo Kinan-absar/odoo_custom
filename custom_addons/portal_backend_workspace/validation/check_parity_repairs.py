@@ -82,7 +82,9 @@ class Tests(unittest.TestCase):
  def test_explicit_customer_checkbox_matches_original(self):
   s=(ROOT/'controllers/sales/portal_sales.py').read_text()
   self.assertNotIn("('customer_rank','>',0)",s)
-  self.assertIn("domain=allowed+[('pbw_is_sales_customer','=',True)]",s)
+  self.assertIn('_pbw_sales_customer_domain(request.env.user.company_id)',s)
+  p=(ROOT/'models/sales/res_partner.py').read_text()
+  self.assertIn("[('pbw_is_sales_customer', '=', True)]",p)
  def test_hr_clear_text_matches_original(self):
   fn=method('models/hr/gateway.py','EmployeeAdminGateway','_value')
   self.assertIs(fn(NS(),None,NS(type='char'),''),False)

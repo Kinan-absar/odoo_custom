@@ -27,9 +27,10 @@ class SalesLinesMixin:
         kind=header.get('kind') or 'standard'
         if kind not in ('standard',):raise ValidationError(_('Invalid quotation type.'))
         vals=dict(partner_id=partner.id if partner else False,company_id=user.company_id.id,user_id=user.id,
-            pbw_portal_creator_id=user.id,pbw_project_id=project.id if project else False,
+            pbw_portal_creator_id=user.id,
             date_order=self._sales_date_utc(header['date_order']) if header.get('date_order') else fields.Datetime.now(),
             validity_date=fields.Date.to_date(header['validity_date']) if header.get('validity_date') else False)
+        vals.update(request.env['sale.order']._pbw_sales_project_values(project))
         return request.env['sale.order'].sudo().with_company(user.company_id).new(vals),vals
 
     def _line_header_values(self, order, header):
@@ -37,11 +38,11 @@ class SalesLinesMixin:
         project=False
         if header.get('project_id'):
             project=request.env['project.project'].sudo().browse(self._line_id(header['project_id'])).exists()
-            if not project or project not in self._customer_projects(order.partner_id) or (project.company_id and project.company_id!=order.company_id):
+            if not project or project not in self._customer_projects(order.partner_id, order=order) or (project.company_id and project.company_id!=order.company_id):
                 raise ValidationError(_('Select an available project for this customer and company.'))
-        vals=dict(pbw_project_id=project.id if project else False,
-            date_order=self._sales_date_utc(header.get('date_order')),
+        vals=dict(date_order=self._sales_date_utc(header.get('date_order')),
             validity_date=fields.Date.to_date(header['validity_date']) if header.get('validity_date') else False)
+        vals.update(order._pbw_sales_project_values(project))
         return vals
 
     def _line_pricing_values(self, order, data):
@@ -290,9 +291,10 @@ class SalesLinesMixin:
                         vals['sequence']=(index+1)*10
                         commands.append(Command.update(rid,vals) if rid else Command.create(vals))
                     commands += [Command.delete(rid) for rid in existing if rid not in seen]
-                    # Enroll editable native drafts in the existing issuer workflow.
-                    if not order.pbw_portal_creator_id:
-                        order._pbw_review_write({'pbw_portal_creator_id':request.env.uid,'pbw_portal_review_state':'draft'})
+                    # Editing another person's native draft must never transfer authorship.
+                    owner = order._pbw_sales_owner()
+                    if owner and order.pbw_portal_creator_id != owner:
+                        order._pbw_review_write({'pbw_portal_creator_id': owner.id})
                     values=self._line_header_values(order,data['header']) if 'header' in data else {}
                     order.write(dict(values,order_line=commands))
                     result=self._line_boot(order)

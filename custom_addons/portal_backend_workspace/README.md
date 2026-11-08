@@ -1,34 +1,37 @@
-# Portal Backend Workspace - 18.0.0.9.4
+# Portal Backend Workspace - 18.0.0.9.5
 
 Standalone Odoo 18 Sales, Purchase, Accounting and HR workspaces.
 
-## This release: working notification components
+## This release: targeted Sales corrections
 
-The workspace now has its own desktop/mobile notification bell. Sales, Purchase and
-Accounting review/outcome events use the existing persistent inbox. HR operations
-and contract/payroll status changes notify other authorized HR/payroll administrators.
-A visible page refreshes the feed every 20 seconds and on bell open/window focus.
+**All Company Documents** controls visibility/edit scope, not ownership. Only the
+original creator may submit a quotation or request its conversion approval.
+**Sales Approvers** can directly confirm their own saved draft/sent quotations.
+Approver + Prepare still has this direct-confirm authority for their own documents;
+other people's quotations keep independent review. The confirmation uses the native
+Odoo action and records a separate Directly Confirmed audit status.
 
-Unread items can be opened or marked read individually; Workspace history retains
-older available records. Mark workspace updates read affects only the displayed
-workspace snapshot, not EPS notifications or pending approval tasks. Read state is
-per recipient and shared across portal interfaces/tabs. Company, role, document and
-journal restrictions still apply. Users do not receive their own action as an alert.
+The original Sales layouts and line editors are retained. The action is disabled
+until unsaved changes have been saved. The other three workspaces, shell CSS,
+notification bell and EPS routing integration are not replaced.
 
-When EPS is installed, upgrade the companion **portal_backend_workspace_eps_bridge**
-to 18.0.0.9.4 for one combined bell in either portal. The base has no EPS dependency.
-EPS retains its own read markers and business workflows; the bridge only reads its
-notification summary. EPS Calls/Messages and MR composer behavior are preserved.
+The customer selector now has a shared domain provider. The standalone checkbox is
+labelled **Workspace Customer / Client** to distinguish it from an older Sales
+addon's checkbox. The optional **Sales Data Bridge** accepts the existing original
+Sales checkbox and reads/writes the construction project field through explicit
+hooks; no custom addon is mandatory for the base.
 
-Replace the base addon folder, upgrade the same addon, then upgrade the bridge if
-installed and hard-refresh open tabs. Do not uninstall. v0.9.3's redundant Settings
-menu removal and v0.9.2's original-layout fixes are retained. No Sales/Purchase/
-Accounting forms, fields, workflows or global table widths were changed in this patch.
+## Upgrade this patch
 
-These are in-app notifications, not a new browser/OS push or email service. Existing
-saved notification events remain; the upgrade does not fabricate historical events.
-See TEST_REPORT.md for the 156 local checks and their exact limits. A live Odoo
-installation and real-user delivery have not been verified in this environment.
+Replace the complete `portal_backend_workspace` folder, upgrade the existing addon,
+and refresh the portal. Do not uninstall. Install the separately supplied Sales Data
+Bridge on a database using the original Sales checkbox or construction project field.
+The existing EPS bridge 18.0.0.9.4 does not need replacing for this patch.
+
+The independent/shared notification bell from v0.9.4 and the previous Settings-menu
+removal and width/layout fixes are retained. A live Odoo installation and real-user
+workflow session have not been executed for this patch. See TEST_REPORT.md for exact
+executed checks and limitations, and CHANGELOG_v0.9.5.md for implementation details.
 
 ## Source baseline
 

@@ -1,6 +1,6 @@
 {'name': 'Portal Backend Workspace - Employee Portal Bridge',
- 'version': '18.0.0.9.4',
- 'summary': 'Shared navigation, login routing and one notification bell across both portals',
+ 'version': '18.0.0.9.5',
+ 'summary': 'Shared navigation, login routing and bell, plus existing Sales customer/project mapping',
  'category': 'Productivity',
  'license': 'OPL-1',
  'depends': ['portal_backend_workspace', 'employee_portal_suite'],
