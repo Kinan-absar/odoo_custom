@@ -1,23 +1,28 @@
-# Portal Backend Workspace - Existing EPS Bridge 18.0.0.9.7
+# Portal Backend Workspace - Existing EPS Bridge 18.0.0.9.8
 
-This is an UPDATE of `portal_backend_workspace_eps_bridge`, not a new bridge.
-Dependencies remain `portal_backend_workspace` and `employee_portal_suite` only.
+## Saved technical proposal HTTP 500 hotfix
+This updates the existing `portal_backend_workspace_eps_bridge` addon. It is not
+another bridge. The main `portal_backend_workspace` stays at 18.0.0.9.7.
 
-Shared bell, navigation, permissions and login routing are preserved. The base
-addon now owns the original Customer / Client field contract; the bridge no longer
-combines two differently stored customer checkboxes.
+The failing template is provided by `views/proposals.xml`, which inherits
+`portal_backend_workspace.sales__document_detail_extra`. Its milestone total now
+formats only the numeric value and emits the percent sign as literal markup.
+There is no escaped percent pair in that output expression, so the displayed
+percentage is not vulnerable to double-percent normalization during view loading.
 
-Construction project read/write adapters and guarded original-Sales confirmation
-compatibility remain. When the original Technical & Financial Proposal engine is
-installed, the bridge exposes its actual data fields, defaults and PDF report.
-The new-quotation screen now includes title/template/reference/signatory controls,
-rich sections, include/page-break/order controls and editable payment milestones
-before saving. Existing saved proposal controls remain and milestone editing and
-native amount displays are added. Native 100% print validation is preserved.
+## Upgrade
+1. Replace the existing `portal_backend_workspace_eps_bridge` folder with this one.
+2. Deploy/rebuild using your existing process, then upgrade this SAME addon in Apps.
+3. Confirm the bridge's installed version is 18.0.0.9.8.
+4. Reopen the saved quotation, including `/my/workspace/sales/513`.
 
-Upgrade `portal_backend_workspace` to 18.0.0.9.7 first, then upgrade this SAME bridge.
-Do not install the superseded Sales Data Bridge or uninstall the existing bridge.
+Do not uninstall either addon. A browser refresh alone does not reload the XML view.
+No customer data, quotations, security groups, schemas or records are rewritten.
+The original template external ID is retained so a normal module upgrade updates it.
 
-Read TEST_REPORT_v0.9.7.md for migration behavior, executed fixture checks and
-untested live Odoo steps. This package does not claim live installation or full
-four-workspace feature parity.
+Only the runtime proposal total markup and manifest version have changed. Existing
+customer/project adapters, new/saved proposal editors, notifications, routing,
+permissions, reports, and CSS/JavaScript are otherwise byte-identical to v0.9.7.
+
+See TEST_REPORT_v0.9.8.md and validation/qweb_v098/ for checks and limitations.
+Historical reports are retained as historical evidence, not current test results.

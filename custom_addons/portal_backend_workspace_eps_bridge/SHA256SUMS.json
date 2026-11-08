@@ -3,11 +3,13 @@
   "CHANGELOG_v0.9.6.md": "daf95d55d822a52654ecc45a48c8b4d050d36380e930a5cd6710e77071010acd",
   "CHANGELOG_v0.9.7.md": "3718bec4266c288d522c6eee40c505c610d10de00870f1a5dd1510179da530f6",
   "CHANGES_FROM_V095.patch": "7cbe15ae52a0bd212e45f5b936a223fe9f39c9765912237505b64f83589e1ecd",
-  "README.md": "aba2d64c37b386e17fa2ccec1adce038842d5cd3eeede6624e67285b1027062e",
+  "CHANGES_FROM_V097.patch": "def0967ca9379d2b814ef1a1d6a844414f4a194668c11a8e14d2b4fd0f2f73fd",
+  "README.md": "477e3f20fb356626a77ede43e58be4f0d131866ce0ceeea635e5cc757de1f4e6",
   "TEST_REPORT.md": "0842103d6fb0f41252ab15c751c4ff8e52bc55ede131a0716bc73bf4f6960d66",
   "TEST_REPORT_v0.9.7.md": "0842103d6fb0f41252ab15c751c4ff8e52bc55ede131a0716bc73bf4f6960d66",
+  "TEST_REPORT_v0.9.8.md": "d976f618c58c588437c5d0b94954aa47eb575e0cf2e2556c90397f13ccc1d2f2",
   "__init__.py": "fa84865b0b456f510a03a7c1cc9d97831923ec92d603c26a66ee1dcfd51654a4",
-  "__manifest__.py": "445009fd1217f3495c81364214a2f648262aba1a5a284d95bee616824f00bc15",
+  "__manifest__.py": "51632d209bdacea45ec4c6d7b2911e228ee243a8485d8cf103513c59eda392f7",
   "controllers/__init__.py": "a30ed6ec4ea4f20ee50092ac3ff6cfafe98f34bfd8c596f8d38777687f684d17",
   "controllers/proposals.py": "a4632bac4657e9619b776e3290777e46129fcb06b092d5e4fcb440e6502eecc5",
   "controllers/routing.py": "ec940d01bf4e4e094b90420be05b387b9606ddf2d4e6e355615c9aba3ba11e36",
@@ -33,6 +35,10 @@
   "validation/notifications_v094/packaging_checks.json": "abebc5af1a2c75f83335c78981bca950903dedd76ba976aa5021464a2518f58d",
   "validation/notifications_v094/parity_checks.log": "9b8c5632c87be4ca0ecd72bafa08b6e8060951fbe1e0e11848126c43a00a964f",
   "validation/notifications_v094/unit_tests.log": "085103489a1daf50156d16e62cab5bbf4c0295f198d73fa1956fd721e9ae018b",
+  "validation/qweb_v098/preservation.json": "2de648b90d08e36e898bc30521df0b7734ea8d5152b87acfb4aee2321eec9a59",
+  "validation/qweb_v098/regression.log": "f86a74267d14d58b50bc49eea56828a474fbc5bd70a55d69e2a8a8cc18082ff3",
+  "validation/qweb_v098/retained_proposal.log": "486b205d32ce303016a5decd7f3fe7a50802631a5f4f9ff1bc8db6266e548857",
+  "validation/qweb_v098/test_percentage_render.py": "a74ecdab0ec04c5f8449fa9747224854eac7446a2c88df9bf3e4d5e414f27d22",
   "validation/sales_integration/legacy_sale_guard.py.txt": "e65f8a74985e9be73af41a203fb87d8ca884495c823fdae477157f461bdd00cc",
   "validation/sales_integration/preserved_v094_hashes.json": "81d0ba46097bde52086842c9f783ce68bcaa957a03bb35ac613d0fdfcce3e887",
   "validation/sales_integration/test_sales_fixes.py": "6fd7fca0e26f4c39cd02db8d8120c6eb4de9b57e25b2fa58545d3c3ee2b49a1e",
@@ -65,5 +71,5 @@
   "validation/v097/v097_unit.log": "5b61136a5fa5f9a8d9b0e2288f977261abd6b4bd8f636248954ab2d8d5bf5922",
   "views/navigation.xml": "84b7b01aa7000cb2b0f08ce8f75d8bd61dce0e158d72cbe04220a2a5350ddc56",
   "views/notifications.xml": "9601a6399df2c8fe1e7dd9c85d8808acf077034fef24e9112537a4a3f28b27d0",
-  "views/proposals.xml": "08dbffdf852be87feab5039a0da9e6b11b7cee6c1be5ada328f46daff36c1309"
+  "views/proposals.xml": "79755dca537247d1f62f617b650f3f81aad6895011bbf38e93841a57ea527b59"
 }
