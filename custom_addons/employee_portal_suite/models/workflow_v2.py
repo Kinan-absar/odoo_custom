@@ -490,41 +490,6 @@ class WorkflowRequestMixin(models.AbstractModel):
 
     workflow_progress_html = fields.Html(compute='_compute_workflow_progress_html', sanitize=False)
 
-    approval_status_label = fields.Char(
-        string='Status', compute='_compute_approval_status_label',
-        compute_sudo=True, store=False,
-    )
-
-    approval_status_color = fields.Integer(
-        compute='_compute_approval_status_label', compute_sudo=True, store=False,
-    )
-
-    @api.depends('state', 'current_approval_line_id', 'current_approval_line_id.name',
-                 'current_approval_line_id.sequence', 'approval_line_ids.sequence',
-                 'approval_line_ids.state', 'approval_line_ids.name')
-    def _compute_approval_status_label(self):
-        labels = dict(self._fields['state']._description_selection(self.env))
-        for rec in self:
-            label = labels.get(rec.state, rec.state or '')
-            if rec.state == 'workflow' and rec.current_approval_line_id:
-                label = rec.current_approval_line_id.name or label
-            elif rec.state == 'returned':
-                line = rec.approval_line_ids.filtered(lambda step: step.state == 'returned')[:1]
-                if line and line.name:
-                    label = _('Returned for Correction — %s') % line.name
-            rec.approval_status_label = label
-            legacy_colors = {'purchase': 1, 'store': 2, 'project_manager': 3,
-                             'director': 4, 'ceo': 5, 'manager': 1, 'hr': 2,
-                             'finance': 3, 'returned': 13, 'approved': 14, 'rejected': 15}
-            color = legacy_colors.get(rec.state, 0)
-            if rec.state == 'workflow' and rec.current_approval_line_id:
-                # Rank the snapshot sequences, including skipped steps, to keep colors stable.
-                sequences = sorted(set(rec.approval_line_ids.mapped('sequence')))
-                sequence = rec.current_approval_line_id.sequence
-                rank = sequences.index(sequence) if sequence in sequences else 0
-                color = 1 + rank % 12
-            rec.approval_status_color = color
-
     def _workflow_notify_line(self, line):
         self.ensure_one()
         users = line.sudo()._effective_users()
@@ -665,8 +630,6 @@ class WorkflowRequestMixin(models.AbstractModel):
             line = rec.approval_line_ids.sudo().filtered(lambda l: l.state == 'returned').sorted(lambda l: (l.sequence, l.id))[:1]
             if not line:
                 raise UserError(_('No returned workflow step was found.'))
-            if rec._name == 'material.request':
-                rec._check_delivery_date()
             now = fields.Datetime.now()
             sla = line.source_step_id.sla_hours if line.source_step_id else 0.0
             line.write({
@@ -763,25 +726,6 @@ class MaterialRequestWorkflowV2(models.Model):
 
     state = fields.Selection(selection_add=[('returned', 'Returned for Correction')], ondelete={'returned': 'set default'})
 
-    approval_stage = fields.Char(
-        string='Stage', compute='_compute_approval_stage', store=True,
-        index=True, copy=False, compute_sudo=True,
-        help='Current approval step for workflow requests; otherwise the request status. Used for stage grouping and searching.',
-    )
-
-    @api.depends('state', 'current_approval_line_id', 'current_approval_line_id.name',
-                 'approval_line_ids', 'approval_line_ids.state', 'approval_line_ids.name', 'approval_line_ids.sequence')
-    def _compute_approval_stage(self):
-        # Stored grouping labels must not vary with the approving user's language.
-        english = self.with_context(lang='en_US')
-        labels = dict(self._fields['state']._description_selection(english.env))
-        for rec in self:
-            if rec.state == 'workflow':
-                pending = rec.approval_line_ids.filtered(lambda line: line.state == 'pending').sorted(lambda line: (line.sequence, line.id))[:1]
-                rec.approval_stage = pending.name or 'Pending Approval'
-            else:
-                rec.approval_stage = labels.get(rec.state, rec.state or '')
-
     def _notify_workflow_line(self, line):
         return self._workflow_notify_line(line)
 
@@ -801,8 +745,6 @@ class MaterialRequestWorkflowV2(models.Model):
 
     def action_workflow_approve(self):
         for rec in self:
-            if rec.needs_clarification:
-                raise UserError(_('Wait for the requester to reply before approving.'))
             if rec.state != 'workflow':
                 raise UserError(_('This Material Request is not in configurable workflow approval.'))
             line = rec.current_approval_line_id.sudo()

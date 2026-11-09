@@ -1,4 +1,0 @@
-<odoo>
- <record id="hr__group_employee_admin" model="res.groups"><field name="name">Employee Admin: Employees &amp; Attendance</field><field name="category_id" ref="portal_backend_workspace.module_category_workspace"/><field name="comment">Portal employee and attendance administration in permitted companies. Does not grant backend HR access or payroll access.</field><field name="implied_ids" eval="[(4, ref('portal_backend_workspace.group_workspace_access'))]"/></record>
- <record id="hr__group_payroll_admin" model="res.groups"><field name="name">Employee Admin: Payroll</field><field name="category_id" ref="portal_backend_workspace.module_category_workspace"/><field name="comment">Portal contracts, work entries, payslips, batches. Does not grant backend payroll access. Assign separately from employee/attendance administration.</field><field name="implied_ids" eval="[(4, ref('portal_backend_workspace.group_workspace_access'))]"/></record>
-</odoo>

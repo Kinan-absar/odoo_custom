@@ -45,7 +45,7 @@ class MaterialRequest(models.Model):
     )
 
     worksite = fields.Char(string="Worksite", required=True)
-    delivery_date = fields.Date(string="Delivery Date", help="Required before submission; at least three days after Request Date.")
+    delivery_date = fields.Date(string="Delivery Date")
 
     line_ids = fields.One2many(
         'material.request.line',
@@ -366,12 +366,6 @@ class MaterialRequest(models.Model):
         if self.state in ("draft", "approved", "rejected"):
             return False
 
-        # Configurable workflows keep state="workflow" throughout review.
-        # Use the active approval line, including its existing delegation rules.
-        if self.state == "workflow":
-            line = self.current_approval_line_id.sudo()
-            return bool(line and line.can_user_approve(user))
-
         # Project based stages
         if self.state == "store":
             return bool(
@@ -400,11 +394,6 @@ class MaterialRequest(models.Model):
 
     def write(self, vals):
         vals = dict(vals)
-        self._check_clarification_write(vals)
-        if vals.get('state') in ('workflow', 'purchase', 'store', 'project_manager', 'director', 'ceo', 'approved'):
-            self._check_delivery_date(vals)
-        elif 'delivery_date' in vals or 'request_date' in vals:
-            self.filtered(lambda rec: rec.state not in ('draft', 'returned', 'rejected'))._check_delivery_date(vals)
         if "project_id" in vals or "employee_id" in vals:
             for rec in self:
                 employee = self.env["hr.employee"].browse(vals.get("employee_id")) if vals.get("employee_id") else rec.employee_id
@@ -414,16 +403,21 @@ class MaterialRequest(models.Model):
                 if len(self) == 1:
                     vals["work_location_id"] = location.id if location else False
 
-        return super().write(vals)
+        if "needs_clarification" in vals:
+            for rec in self:
 
-    def _write_clarification(self, values):
-        """Private transition helper; never accepts unrelated request edits."""
-        allowed = {'needs_clarification', 'clarification_stage', 'clarification_question',
-                   'clarification_reply', 'clarification_requested_by', 'clarification_requested_on',
-                   'clarification_replied_on', 'clarification_step_name'}
-        if set(values) - allowed:
-            raise UserError(_('Invalid clarification update.'))
-        return super(MaterialRequest, self).write(values)
+                if not rec._can_toggle_clarification():
+                    raise UserError(_("You are not allowed to toggle clarification at this stage."))
+
+                # When turning ON → remember stage
+                if vals.get("needs_clarification"):
+                    vals["clarification_stage"] = rec.state
+
+                # When turning OFF → clear stage
+                else:
+                    vals["clarification_stage"] = False
+
+        return super().write(vals)
 
     display_state = fields.Char(
         string="Display Status",
@@ -431,16 +425,16 @@ class MaterialRequest(models.Model):
         store=False
     )
 
-    @api.depends("state", "needs_clarification", "clarification_stage", "approval_status_label", "clarification_step_name", "clarification_question")
+    @api.depends("state", "needs_clarification", "clarification_stage")
     def _compute_display_state(self):
         stage_labels = dict(self._fields['state'].selection)
 
         for rec in self:
-            if rec.needs_clarification and rec.clarification_stage and rec.clarification_question:
-                stage_name = rec.clarification_step_name or (rec.approval_status_label if rec.clarification_stage == "workflow" else stage_labels.get(rec.clarification_stage, ""))
-                rec.display_state = _("Awaiting requester reply — %s") % stage_name
+            if rec.needs_clarification and rec.clarification_stage:
+                stage_name = stage_labels.get(rec.clarification_stage, "")
+                rec.display_state = f"🚩 Clarification — {stage_name}"
             else:
-                rec.display_state = rec.approval_status_label
+                rec.display_state = stage_labels.get(rec.state, "")
 
 
 
@@ -635,9 +629,7 @@ class MaterialRequest(models.Model):
                 location = employee._find_project_location(project) if project else False
                 vals["work_location_id"] = location.id if location else False
 
-        records = super().create(vals_list)
-        records.filtered(lambda rec: rec.state not in ('draft', 'returned', 'rejected'))._check_delivery_date()
-        return records
+        return super().create(vals_list)
 
     # ---------------------------------------------------------
     # GENERIC STATE ADVANCE
@@ -851,8 +843,6 @@ class MaterialRequest(models.Model):
         return True
 
     def _check_approval(self, required_state, required_group):
-        if self.needs_clarification:
-            raise UserError(_("Wait for the requester to reply before approving."))
         self.ensure_one()
 
        # State check
@@ -955,19 +945,7 @@ class MaterialRequest(models.Model):
     # ---------------------------------------------------------
     # ACTIONS
     # ---------------------------------------------------------
-    def _check_delivery_date(self, values=None):
-        values = values or {}
-        for rec in self:
-            delivery = fields.Date.to_date(values.get('delivery_date', rec.delivery_date))
-            requested = fields.Date.to_date(values.get('request_date', rec.request_date))
-            if not delivery:
-                raise UserError(_('Set a Delivery Date before submitting the Material Request.'))
-            if not requested or delivery < requested + timedelta(days=3):
-                raise UserError(_('Delivery Date must be at least three days after Request Date.'))
-        return True
-
     def action_submit(self):
-        self._check_delivery_date()
         for rec in self:
             if rec.state != "draft":
                 raise UserError("Only draft requests can be submitted.")
@@ -1229,8 +1207,6 @@ class MaterialRequest(models.Model):
         return data
 
     def get_readable_status(self):
-        if self.state == 'workflow':
-            return self.approval_stage or 'Pending Approval'
         mapping = {
             "workflow": "Workflow Approval",
             "purchase": "Pending Purchase",

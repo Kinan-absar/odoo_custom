@@ -1,7 +1,6 @@
 from odoo import http, fields, _
 from odoo.http import request
 import base64
-from datetime import timedelta
 from markupsafe import Markup, escape
 
 def _mr_status_badge(rec):
@@ -41,7 +40,15 @@ def _mr_status_badge(rec):
         return Markup('<span class="badge bg-danger">Rejected — %s Stage (%s)</span>') % (escape(lbl), escape(reason))
         # CLARIFICATION OVERRIDE
     if rec.needs_clarification and rec.clarification_stage:
-        return Markup('<span class="badge bg-warning text-dark">%s</span>') % escape(rec.display_state)
+        stage_labels = {
+            'purchase': 'Purchase Rep',
+            'store': 'Store Manager',
+            'project_manager': 'Project Manager',
+            'director': 'Director',
+            'ceo': 'CEO',
+        }
+        clar_label = stage_labels.get(rec.clarification_stage, rec.clarification_stage)
+        return Markup('<span class="badge bg-info text-dark">🚩 Clarification — %s</span>') % escape(clar_label)
 
     if state == 'returned':
         line = rec.approval_line_ids.filtered(lambda l: l.state == 'returned')[:1]
@@ -128,7 +135,6 @@ class EmployeePortalMaterialRequests(http.Controller):
         ])
 
         return request.render("employee_portal_suite.employee_material_request_detail_page", {
-            **rec._portal_chatter_context(request.env.user, kw.get("chatter_before")),
             "request_rec": rec,
             "attachments": attachments,     # ← ADDED
             "status_badge": _mr_status_badge,
@@ -171,19 +177,6 @@ class EmployeePortalMaterialRequests(http.Controller):
                 "projects": projects,
                 "single_project": projects[:1] if len(projects) == 1 else False,
                 "error_message": _("Please select one of the projects configured on your work location."),
-            })
-
-        # Reject invalid dates before creating the request or any material lines.
-        try:
-            delivery = fields.Date.to_date(post.get('delivery_date'))
-        except (TypeError, ValueError):
-            delivery = False
-        if not delivery or delivery < fields.Date.context_today(request.env['material.request']) + timedelta(days=3):
-            return request.render('employee_portal_suite.employee_material_request_new_form', {
-                'uoms': request.env['uom.uom'].sudo().search([]),
-                'projects': projects,
-                'single_project': projects[:1] if len(projects) == 1 else False,
-                'error_message': _('Set a Delivery Date at least three days after the Request Date.'),
             })
 
         # Create main request
@@ -341,9 +334,7 @@ class EmployeePortalMaterialRequests(http.Controller):
         ]
         approved_list = Material.search(approved_domain, order="id desc")
         dynamic_approved = Material.search([('approval_line_ids.approved_by', '=', user.id)], order='id desc')
-        # Sort the combined history, not each workflow source separately.
-        # Otherwise recent configurable approvals follow every legacy approval.
-        approved_list = Material.browse(sorted(set(approved_list.ids + dynamic_approved.ids), reverse=True))
+        approved_list = Material.browse(list(dict.fromkeys(approved_list.ids + dynamic_approved.ids)))
 
         # ---------------------------------------------------------
         # 3) REJECTED LIST — ONLY if user rejected
@@ -438,7 +429,6 @@ class EmployeePortalMaterialRequests(http.Controller):
         )
 
         return request.render("employee_portal_suite.portal_material_approval_detail", {
-            **rec._portal_chatter_context(user, kw.get("chatter_before")),
             "request_rec": rec,
             "attachments": attachments,
             "accounting_attachments": accounting_attachments,
@@ -595,8 +585,26 @@ class EmployeePortalMaterialRequests(http.Controller):
         csrf=True,
     )
     def set_clarification(self, **post):
-        # Retired toggle URL: require the question/reply flow on the current form.
-        return request.redirect("/my/employee/material/approvals")
+
+        rec = request.env["material.request"].sudo().browse(int(post.get("req_id")))
+
+        if not rec.exists():
+            return request.redirect("/my")
+
+        # Security
+        if not rec._can_toggle_clarification():
+            return request.redirect(
+                request.httprequest.referrer + "?clarify_error=1"
+            )
+
+        is_flagged = post.get("flag") == "on"
+
+        rec.write({
+            "needs_clarification": is_flagged,
+            "clarification_stage": rec.state if is_flagged else False,
+        })
+
+        return request.redirect(request.httprequest.referrer)
 
     @http.route(
         "/my/employee/material/submit_docs_to_accounting",
@@ -757,17 +765,21 @@ class EmployeePortalMaterialRequests(http.Controller):
 
     @http.route('/my/employee/material/<int:request_id>/message', type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def post_message(self, request_id, **post):
-        record = request.env['material.request'].sudo().browse(request_id).exists()
-        if not record or not record._portal_conversation_allowed(request.env.user):
-            return request.not_found()
-        own = record.employee_id.user_id == request.env.user
-        approval = post.get('view') == 'approval' and record._portal_can_view(request.env.user)
-        target = '/my/employee/material/approvals/%s' % record.id if approval or not own else '/my/employee/material/%s' % record.id
-        from odoo.exceptions import AccessError, UserError, ValidationError
-        from urllib.parse import urlencode
-        try:
-            with request.env.cr.savepoint():
-                record._post_portal_chatter_message(post.get('message'), post.get('mode') or 'comment')
-        except (AccessError, UserError, ValidationError) as exc:
-            return request.redirect(target + '?' + urlencode({'chatter_error': str(exc)}) + '#eps-mr-chatter')
-        return request.redirect(target + '#eps-mr-chatter')
+        record = request.env['material.request'].sudo().browse(request_id)
+        message = (post.get('message') or '').strip()
+
+        if not record.exists():
+            return request.redirect('/my')
+
+        if message:
+            record.message_post(
+                body=message,
+                message_type='comment',
+                subtype_xmlid='mail.mt_comment'
+            )
+
+        came_from_approval = "/material/approvals/" in (request.httprequest.referrer or "")
+
+        if came_from_approval:
+            return request.redirect(f'/my/employee/material/approvals/{request_id}')
+        return request.redirect(f'/my/employee/material/{request_id}')
