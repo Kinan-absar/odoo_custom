@@ -7,3 +7,6 @@ Version 18.0.1.1.7
 - Configuration is opened from Payroll > Configuration > Employee Accrued Salary.
 - Uses a dedicated Payroll configuration wizard, not `res.config.settings`, so opening it stays inside the Payroll app instead of switching to the Settings app.
 - The selected account is stored per company.
+
+
+Version 18.0.1.1.8: places Employee Accrued Salary directly under Payroll > Configuration without falling back to the global Settings app.
