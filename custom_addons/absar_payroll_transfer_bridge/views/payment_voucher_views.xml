@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_payment_voucher_form_payroll_transfer_bridge" model="ir.ui.view">
+        <field name="name">account.payment.voucher.form.payroll.transfer.bridge</field>
+        <field name="model">account.payment.voucher</field>
+        <field name="inherit_id" ref="internal_transfer_voucher.view_payment_voucher_form"/>
+        <field name="arch" type="xml">
+            <!-- Payroll Transfer has many employee partners, so there is no single header partner. -->
+            <xpath expr="//form//field[@name='partner_id']" position="attributes">
+                <attribute name="invisible">payment_method == 'payroll_transfer'</attribute>
+                <attribute name="required">payment_method != 'payroll_transfer'</attribute>
+            </xpath>
+
+            <xpath expr="//form//field[@name='partner_id']" position="after">
+                <field name="payroll_run_id"
+                       invisible="payment_method != 'payroll_transfer'"
+                       required="payment_method == 'payroll_transfer'"
+                       readonly="state != 'draft'"
+                       options="{'no_create': True, 'no_create_edit': True}"/>
+                <field name="payroll_employee_count"
+                       invisible="payment_method != 'payroll_transfer'"
+                       readonly="1"/>
+                <field name="payroll_outstanding_amount"
+                       invisible="payment_method != 'payroll_transfer'"
+                       readonly="1"/>
+                <field name="payroll_source_move_ids"
+                       string="Source Payroll JVs"
+                       widget="many2many_tags"
+                       invisible="payment_method != 'payroll_transfer'"
+                       readonly="1"
+                       options="{'no_create': True}"/>
+            </xpath>
+
+            <xpath expr="//form//field[@name='amount']" position="attributes">
+                <attribute name="readonly">payment_method == 'payroll_transfer' or state != 'draft'</attribute>
+            </xpath>
+
+            <xpath expr="//form//field[@name='account_id']" position="attributes">
+                <attribute name="readonly">payment_method == 'payroll_transfer' or state != 'draft'</attribute>
+            </xpath>
+
+            <xpath expr="//form//field[@name='purchase_order_ids']" position="attributes">
+                <attribute name="invisible">payment_method == 'payroll_transfer'</attribute>
+            </xpath>
+
+            <xpath expr="//form//group[@string='PO Allocation Amounts']" position="attributes">
+                <attribute name="invisible">payment_method in ('journal_transfer', 'payroll_transfer') or not is_payable_account or not purchase_order_ids</attribute>
+            </xpath>
+
+            <xpath expr="//form//button[@name='action_find_matching_bills']" position="attributes">
+                <attribute name="invisible">payment_method in ('journal_transfer', 'payroll_transfer') or not is_payable_account or bill_reconciled</attribute>
+            </xpath>
+            <xpath expr="//form//button[@name='action_reconcile_bills']" position="attributes">
+                <attribute name="invisible">state != 'posted' or payment_method in ('journal_transfer', 'payroll_transfer') or not is_payable_account or not bill_ids or bill_reconciled</attribute>
+            </xpath>
+            <xpath expr="//form//button[@name='action_unreconcile_bills']" position="attributes">
+                <attribute name="invisible">state != 'posted' or payment_method in ('journal_transfer', 'payroll_transfer') or not is_payable_account or bill_reconciliation_state not in ('partial', 'reconciled')</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_payment_voucher_search_payroll_transfer_bridge" model="ir.ui.view">
+        <field name="name">account.payment.voucher.search.payroll.transfer.bridge</field>
+        <field name="model">account.payment.voucher</field>
+        <field name="inherit_id" ref="internal_transfer_voucher.view_payment_voucher_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='journal_transfer']" position="after">
+                <filter name="payroll_transfer" string="Payroll Transfer" domain="[('payment_method','=','payroll_transfer')]"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
