@@ -7,10 +7,10 @@ class ResCompany(models.Model):
     payroll_accrued_salary_account_id = fields.Many2one(
         "account.account",
         string="Payroll Accrued Salary Account",
-        domain="[('deprecated', '=', False)]",
+        domain="[('deprecated', '=', False), ('company_ids', 'in', company_id)]",
         check_company=True,
         help=(
             "Liability account that must stay split by employee/partner inside "
-            "the single batched payroll journal entry. Example: 203003 Accrued - Salaries."
+            "the single batched payroll journal entry."
         ),
     )

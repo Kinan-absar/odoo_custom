@@ -241,11 +241,11 @@ class EmployeeAdminPortal(http.Controller):
             raise NotFound()
         r = s._record(c, kind, ident)
         report_env = s._env(c)
-        report = c.sudo().pbw_hr_payslip_report_id or report_env.ref('hr_payroll.action_report_payslip', raise_if_not_found=False)
+        report = report_env.ref('hr_payroll.action_report_payslip', raise_if_not_found=False)
         if not report:
             raise UserError(_('The standard payslip PDF report is unavailable.'))
         report = report.sudo()
         if report.model != 'hr.payslip' or report.report_type != 'qweb-pdf':
-            raise UserError(_('Select a payslip PDF report for this company.'))
+            raise UserError(_('The standard payslip PDF report is not configured correctly.'))
         pdf, _format = report_env['ir.actions.report']._render_qweb_pdf(report.id, res_ids=[r.id])
         return request.make_response(pdf, headers=[('Cache-Control', 'private, no-store'), ('Content-Type', 'application/pdf'), ('Content-Disposition', content_disposition((r.name or 'Payslip').replace('/', '-') + '.pdf')), ('X-Content-Type-Options', 'nosniff')])

@@ -1,5 +1,5 @@
 {'name': 'Portal Backend Workspace',
- 'version': '18.0.0.9.10',
+ 'version': '18.0.0.9.11',
  'summary': 'Original Sales, Purchase, Accounting and HR workspaces for '
             'authorized portal accounts',
  'category': 'Productivity',
@@ -46,7 +46,6 @@
           'security/hr/groups.xml',
           'security/hr/ir.model.access.csv',
           'security/hr/rules.xml',
-          'views/hr/company.xml',
           'views/hr/portal.xml',
           'views/hr/attendance_timesheet.xml',
           'security/compatibility_groups.xml',

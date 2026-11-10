@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Standalone configuration screen.  It deliberately does not inherit
+         the main Payroll Settings view, so it is not affected by Enterprise/
+         localization differences in that view's XML structure. -->
+    <record id="view_res_config_settings_absar_payroll_accrual_form" model="ir.ui.view">
+        <field name="name">res.config.settings.absar.payroll.accrual.form</field>
+        <field name="model">res.config.settings</field>
+        <field name="arch" type="xml">
+            <form string="Employee Accrued Salary">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Employee Accrued Salary</h1>
+                    </div>
+                    <group>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                        <field name="payroll_accrued_salary_account_id"
+                               options="{'no_create': True, 'no_create_edit': True}"/>
+                    </group>
+                    <div class="text-muted mt16">
+                        Keep Batch Account Move Lines enabled. The selected liability account
+                        remains in one payroll journal entry while its balance is split into
+                        one line per employee partner.
+                    </div>
+                </sheet>
+                <footer>
+                    <button string="Save" name="execute" type="object" class="btn-primary"/>
+                    <button string="Discard" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_absar_payroll_accrual_settings" model="ir.actions.act_window">
+        <field name="name">Employee Accrued Salary</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_res_config_settings_absar_payroll_accrual_form"/>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_absar_payroll_accrual_settings"
+              name="Employee Accrued Salary"
+              parent="hr_payroll.menu_hr_payroll_configuration"
+              action="action_absar_payroll_accrual_settings"
+              sequence="95"/>
+</odoo>

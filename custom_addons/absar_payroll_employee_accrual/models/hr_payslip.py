@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from odoo import _, fields, models
+from odoo import _, models
 from odoo.exceptions import UserError
 
 
@@ -8,17 +8,11 @@ class HrPayslip(models.Model):
     _inherit = "hr.payslip"
 
     def action_payslip_done(self):
-        """Let standard Odoo build the payroll move, then rewrite only the configured
-        accrued-salary account into one line per employee partner.
-
-        With 'Batch Account Move Lines' enabled, standard Odoo keeps one move but
-        anonymizes the liability. This hook preserves the single move while restoring
-        employee detail only on the accrued salary account.
+        """Keep standard payroll accounting, then split only the configured
+        accrued-salary account by employee partner inside the same batched move.
         """
         res = super().action_payslip_done()
 
-        # hr_payroll_account supplies move_id. Keep a defensive check so the addon
-        # fails clearly if another customization changes the payroll accounting model.
         if "move_id" not in self._fields:
             raise UserError(_(
                 "ABSAR Payroll Employee Accrual Split could not find the payroll move field (move_id). "
@@ -42,8 +36,6 @@ class HrPayslip(models.Model):
                 "must be applied while the payroll entry is still in Draft."
             ) % move.display_name)
 
-        # Get every payslip attached to this move, not only the recordset that happened
-        # to trigger the hook. This is important when Odoo batches a whole period.
         slips = self.search([
             ("move_id", "=", move.id),
             ("company_id", "=", company.id),
@@ -60,8 +52,8 @@ class HrPayslip(models.Model):
             partner = employee._get_payroll_account_partner()
             if not partner:
                 raise UserError(_(
-                    "Employee '%s' has no Payroll Accounting Partner (and no usable linked contact). "
-                    "Open the employee and set Payroll Accounting Partner before confirming payroll."
+                    "Employee '%s' has no usable linked partner/contact. "
+                    "Please link the employee to a partner before confirming payroll."
                 ) % employee.display_name)
 
             employee_records[employee.id] = (employee, partner)
@@ -75,23 +67,21 @@ class HrPayslip(models.Model):
                 if currency.is_zero(amount):
                     continue
 
-                # Signed contribution to the target liability account:
-                #   credit account -> +amount
-                #   debit account  -> -amount
-                # Negative salary-rule totals naturally reverse the side.
                 if getattr(rule, "account_credit", False) == target_account:
                     employee_amounts[employee.id] += amount
                 if getattr(rule, "account_debit", False) == target_account:
                     employee_amounts[employee.id] -= amount
 
-        # Compare our reconstructed payroll amount with what standard Odoo created
-        # before touching the move. This prevents silently changing accounting totals
-        # if another custom payroll module uses different accounting logic.
-        existing_target_lines = move.line_ids.filtered(lambda l: l.account_id == target_account)
+        existing_target_lines = move.line_ids.filtered(
+            lambda line: line.account_id == target_account
+        )
         if not existing_target_lines:
             return
 
-        existing_net_credit = sum(existing_target_lines.mapped("credit")) - sum(existing_target_lines.mapped("debit"))
+        existing_net_credit = (
+            sum(existing_target_lines.mapped("credit"))
+            - sum(existing_target_lines.mapped("debit"))
+        )
         computed_net_credit = sum(employee_amounts.values())
 
         if not currency.is_zero(existing_net_credit - computed_net_credit):
@@ -101,16 +91,30 @@ class HrPayslip(models.Model):
                 "Account: %(account)s\n"
                 "Odoo net credit: %(odoo)s\n"
                 "Computed employee net credit: %(computed)s\n\n"
-                "This safety check usually means another payroll customization/localization changes the "
-                "accounting logic. No journal lines were modified."
+                "No journal lines were modified."
             ) % {
                 "account": target_account.display_name,
                 "odoo": currency.format(existing_net_credit),
                 "computed": currency.format(computed_net_credit),
             })
 
-        # Replace only the configured accrued-salary account lines. Expense lines and
-        # every other payroll account remain exactly as standard Odoo generated them.
+        # Determine one clean label for the whole payroll batch. The Partner column
+        # already identifies the employee, so the name does not repeat the employee.
+        run_names = []
+        if "payslip_run_id" in slips._fields:
+            run_names = [name for name in slips.mapped("payslip_run_id.name") if name]
+
+        if run_names:
+            line_label = run_names[0]
+        elif move.ref:
+            line_label = move.ref
+        else:
+            first_slip = slips[:1]
+            if first_slip and first_slip.date_from:
+                line_label = first_slip.date_from.strftime("%B %Y")
+            else:
+                line_label = _("Payroll")
+
         existing_target_lines.with_context(check_move_validity=False).unlink()
 
         vals_list = []
@@ -119,20 +123,7 @@ class HrPayslip(models.Model):
             if currency.is_zero(signed_credit):
                 continue
 
-            employee, partner = employee_records[employee_id]
-
-            # The Partner column already identifies the employee, so the journal
-            # label should identify the payroll period/batch instead of repeating
-            # the employee name. Prefer the payroll batch name, then the move
-            # reference (normally e.g. 'September 2026'), then the payslip period.
-            employee_slips = slips.filtered(lambda slip: slip.employee_id.id == employee_id)
-            run_names = employee_slips.mapped("payslip_run_id.name") if "payslip_run_id" in self._fields else []
-            run_names = [name for name in run_names if name]
-            line_label = run_names[0] if run_names else (move.ref or False)
-            if not line_label:
-                dated_slip = employee_slips[:1]
-                line_label = dated_slip.name if dated_slip and dated_slip.name else _("Payroll")
-
+            _employee, partner = employee_records[employee_id]
             vals_list.append({
                 "move_id": move.id,
                 "account_id": target_account.id,
@@ -143,9 +134,10 @@ class HrPayslip(models.Model):
             })
 
         if vals_list:
-            self.env["account.move.line"].with_context(check_move_validity=False).create(vals_list)
+            self.env["account.move.line"].with_context(
+                check_move_validity=False
+            ).create(vals_list)
 
-        # Final accounting safety check.
         balance = sum(move.line_ids.mapped("debit")) - sum(move.line_ids.mapped("credit"))
         if not currency.is_zero(balance):
             raise UserError(_(
