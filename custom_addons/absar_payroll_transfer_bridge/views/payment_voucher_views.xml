@@ -43,7 +43,7 @@
                 <attribute name="invisible">payment_method == 'payroll_transfer'</attribute>
             </xpath>
 
-            <xpath expr="//form//group[@string='PO Allocation Amounts']" position="attributes">
+            <xpath expr="//form//field[@name='po_allocation_ids']/ancestor::group[1]" position="attributes">
                 <attribute name="invisible">payment_method in ('journal_transfer', 'payroll_transfer') or not is_payable_account or not purchase_order_ids</attribute>
             </xpath>
 
