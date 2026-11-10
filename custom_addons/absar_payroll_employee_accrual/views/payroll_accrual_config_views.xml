@@ -36,5 +36,10 @@
         <field name="target">current</field>
     </record>
 
-    <function model="res.config.settings" name="_absar_ensure_payroll_config_menu"/>
+    <!-- Exact Payroll > Configuration parent confirmed from this database metadata. -->
+    <menuitem id="menu_absar_payroll_accrual_settings"
+              name="Employee Accrued Salary"
+              parent="hr_work_entry_contract_enterprise.menu_hr_payroll_configuration"
+              action="action_absar_payroll_accrual_settings"
+              sequence="1"/>
 </odoo>
