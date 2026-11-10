@@ -1,16 +1,15 @@
-# ABSAR Payroll Employee Accrual Split
-
-Odoo 18 module for keeping a single batched payroll journal entry while splitting the configured accrued salary liability account into one line per employee partner.
+# ABSAR Payroll Employee Accrual Split — v18.0.1.1.11
 
 ## Configuration
+Go to **Payroll → Configuration → Settings → Accounting**.
 
-Payroll > Configuration > Employee Accrued Salary
+A new **Employee Accrued Salary** setting appears directly below **Batch Account Move Lines**. Select the accrued salary liability account there.
 
-Choose the accrued salary liability account and keep **Batch Account Move Lines** enabled.
+Keep **Batch Account Move Lines** enabled.
 
-## v18.0.1.1.10
-
-- Places the configuration menu directly under the confirmed Payroll > Configuration menu XML ID:
-  `hr_work_entry_contract_enterprise.menu_hr_payroll_configuration`.
-- Removes the previous dynamic menu-creation workaround.
-- Keeps the existing payroll split behavior unchanged.
+## Behavior
+- One batched payroll journal entry remains.
+- The configured accrued salary account is split into one journal line per employee partner.
+- Other salary expense lines remain grouped normally.
+- The accrued salary line label uses the payroll batch name when available, otherwise the journal reference/payroll period.
+- No payroll-specific partner field is added to employees; the module uses the employee's existing linked partner/contact.

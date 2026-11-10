@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_absar_payroll_accrual" model="ir.ui.view">
+        <field name="name">res.config.settings.form.absar.payroll.accrual</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="hr_payroll_account.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='batch_account_move_lines']/ancestor::setting[1]" position="after">
+                <setting id="absar_employee_accrued_salary"
+                         string="Employee Accrued Salary"
+                         help="Select the accrued salary liability account that must remain split by employee partner inside the single batched payroll journal entry.">
+                    <div class="content-group">
+                        <div class="row mt16">
+                            <label for="payroll_accrued_salary_account_id" class="col-lg-4 o_light_label"/>
+                            <field name="payroll_accrued_salary_account_id"
+                                   options="{'no_create': True, 'no_create_edit': True}"/>
+                        </div>
+                    </div>
+                </setting>
+            </xpath>
+        </field>
+    </record>
+</odoo>
