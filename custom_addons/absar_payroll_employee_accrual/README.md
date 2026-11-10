@@ -3,7 +3,7 @@
 ## Purpose
 Keep **Batch Account Move Lines** enabled so Odoo creates one payroll journal entry per payroll period, while keeping the configured accrued salary liability account separated into one journal item per employee partner.
 
-## Version 18.0.1.1.0 changes
+## Version 18.0.1.1.1 changes
 - Removed the setting from **Settings > Companies**.
 - Moved **Accrued Salary Account** to **Payroll > Configuration > Settings > Accounting**.
 - Removed the extra **Payroll Accounting Partner** field/tab from employees.
@@ -34,3 +34,7 @@ Example:
 ## Notes
 - Existing posted payroll entries are not rewritten. Test with a new draft payroll batch.
 - The module checks that the employee-by-employee total exactly matches Odoo's original accrued salary total before replacing the batched liability line.
+
+
+## 18.0.1.1.1
+- Fixed Odoo 18 Payroll Settings view inheritance. The correct Payroll settings view is `hr_payroll.res_config_settings_view_form`.
