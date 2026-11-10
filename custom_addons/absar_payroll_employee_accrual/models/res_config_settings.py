@@ -16,41 +16,23 @@ class ResConfigSettings(models.TransientModel):
 
     @api.model
     def _absar_ensure_payroll_config_menu(self):
-        """Place the addon entry directly inside Payroll > Configuration.
+        """Place the addon entry directly in Payroll > Configuration.
 
-        Odoo versions/localizations can use different XML IDs for the
-        Configuration menu itself. The Payroll root XML ID is stable, so we
-        resolve that root first and then locate its direct child named
-        Configuration. This avoids creating the entry in Settings/HR by mistake.
+        Use the exact standard Payroll Settings menu as an anchor, then attach
+        our menu to the same parent. This avoids guessing the XML ID of the
+        Configuration parent menu and works with the menu structure used by
+        this Odoo 18 database.
         """
-        Menu = self.env["ir.ui.menu"].sudo().with_context(lang="en_US")
+        Menu = self.env["ir.ui.menu"].sudo()
 
-        payroll_root = self.env.ref(
-            "hr_payroll.menu_hr_payroll_root", raise_if_not_found=False
+        settings_menu = self.env.ref(
+            "hr_payroll.menu_hr_payroll_global_settings",
+            raise_if_not_found=False,
         )
-
-        parent_menu = Menu.browse()
-        if payroll_root:
-            # Configuration is a direct top-menu child of the Payroll app.
-            parent_menu = Menu.search([
-                ("parent_id", "=", payroll_root.id),
-                ("name", "=", "Configuration"),
-            ], limit=1)
-
-            # Fallback for renamed/translatable menu labels: use the direct child
-            # that contains the standard Payroll Settings entry.
-            if not parent_menu:
-                for child in Menu.search([("parent_id", "=", payroll_root.id)]):
-                    descendants = Menu.search([("parent_id", "=", child.id)])
-                    if any((m.name or "").strip().lower() == "settings" for m in descendants):
-                        parent_menu = child
-                        break
-
-        if not parent_menu:
-            # Do not put it somewhere unrelated. If Payroll Configuration cannot
-            # be identified, leave the menu untouched instead of falling back to
-            # the global Settings app.
+        if not settings_menu or not settings_menu.parent_id:
             return True
+
+        parent_menu = settings_menu.parent_id
 
         action = self.env.ref(
             "absar_payroll_employee_accrual.action_absar_payroll_accrual_settings",
@@ -65,7 +47,8 @@ class ResConfigSettings(models.TransientModel):
             "name": "Employee Accrued Salary",
             "parent_id": parent_menu.id,
             "action": "ir.actions.act_window,%s" % action.id,
-            "sequence": 5,
+            # Settings is sequence 0 in this database; put ours immediately after it.
+            "sequence": 1,
         }
 
         if menu:
