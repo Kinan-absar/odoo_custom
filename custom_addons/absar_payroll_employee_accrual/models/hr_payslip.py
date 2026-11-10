@@ -120,11 +120,24 @@ class HrPayslip(models.Model):
                 continue
 
             employee, partner = employee_records[employee_id]
+
+            # The Partner column already identifies the employee, so the journal
+            # label should identify the payroll period/batch instead of repeating
+            # the employee name. Prefer the payroll batch name, then the move
+            # reference (normally e.g. 'September 2026'), then the payslip period.
+            employee_slips = slips.filtered(lambda slip: slip.employee_id.id == employee_id)
+            run_names = employee_slips.mapped("payslip_run_id.name") if "payslip_run_id" in self._fields else []
+            run_names = [name for name in run_names if name]
+            line_label = run_names[0] if run_names else (move.ref or False)
+            if not line_label:
+                dated_slip = employee_slips[:1]
+                line_label = dated_slip.name if dated_slip and dated_slip.name else _("Payroll")
+
             vals_list.append({
                 "move_id": move.id,
                 "account_id": target_account.id,
                 "partner_id": partner.id,
-                "name": _("Accrued Salary - %s") % employee.display_name,
+                "name": line_label,
                 "debit": abs(signed_credit) if signed_credit < 0 else 0.0,
                 "credit": signed_credit if signed_credit > 0 else 0.0,
             })

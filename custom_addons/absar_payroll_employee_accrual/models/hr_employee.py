@@ -1,25 +1,19 @@
-from odoo import fields, models
+from odoo import models
 
 
 class HrEmployee(models.Model):
     _inherit = "hr.employee"
 
-    payroll_account_partner_id = fields.Many2one(
-        "res.partner",
-        string="Payroll Accounting Partner",
-        help=(
-            "Partner used on this employee's Accrued Salaries journal line. "
-            "If empty, the module will try the employee's work contact, user partner, "
-            "then private/home address partner."
-        ),
-    )
-
     def _get_payroll_account_partner(self):
-        self.ensure_one()
-        if self.payroll_account_partner_id:
-            return self.payroll_account_partner_id
+        """Return the employee's existing linked contact/partner.
 
-        # Keep this compatible with different Odoo employee field layouts/localizations.
+        ABSAR employees already have partners, so there is intentionally no
+        extra payroll-specific partner field on the employee form.
+        """
+        self.ensure_one()
+
+        # Keep this compatible with slightly different employee layouts and
+        # localizations across Odoo Enterprise databases.
         for field_name in ("work_contact_id", "user_partner_id", "address_home_id", "private_address_id"):
             if field_name in self._fields:
                 partner = self[field_name]
