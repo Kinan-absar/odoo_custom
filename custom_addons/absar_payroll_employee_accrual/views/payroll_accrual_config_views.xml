@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Standalone configuration screen.  It deliberately does not inherit
-         the main Payroll Settings view, so it is not affected by Enterprise/
-         localization differences in that view's XML structure. -->
+    <!-- Standalone configuration screen. It deliberately does not inherit the
+         main Payroll Settings view, avoiding fragile XML/XPath dependencies. -->
     <record id="view_res_config_settings_absar_payroll_accrual_form" model="ir.ui.view">
         <field name="name">res.config.settings.absar.payroll.accrual.form</field>
         <field name="model">res.config.settings</field>
@@ -39,9 +38,7 @@
         <field name="target">new</field>
     </record>
 
-    <menuitem id="menu_absar_payroll_accrual_settings"
-              name="Employee Accrued Salary"
-              parent="hr_payroll.menu_hr_payroll_configuration"
-              action="action_absar_payroll_accrual_settings"
-              sequence="95"/>
+    <!-- Resolve the existing Payroll > Configuration menu in Python so this works
+         even when its external ID differs across Odoo 18 Enterprise databases. -->
+    <function model="res.config.settings" name="_absar_ensure_payroll_config_menu"/>
 </odoo>
