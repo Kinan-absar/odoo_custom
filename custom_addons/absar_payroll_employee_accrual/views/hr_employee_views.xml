@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_employee_form_absar_payroll_partner" model="ir.ui.view">
+        <field name="name">hr.employee.form.absar.payroll.partner</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Payroll Accounting" name="absar_payroll_accounting">
+                    <group>
+                        <field name="payroll_account_partner_id"
+                               options="{'no_create': False, 'no_create_edit': False}"/>
+                    </group>
+                    <div class="text-muted">
+                        Optional. If left empty, the module tries the employee's linked work/private contact or user partner.
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
