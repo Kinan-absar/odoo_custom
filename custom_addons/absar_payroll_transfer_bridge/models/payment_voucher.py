@@ -177,6 +177,54 @@ class AccountPaymentVoucher(models.Model):
             "partner_amounts": partner_amounts,
         }
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Persist the payroll amount even though it is readonly in the form.
+
+        Odoo does not always send onchange-only values for readonly fields when a
+        new voucher is saved. Since ``amount`` is mandatory on the base Payment
+        Voucher model, a Payroll Transfer could fail to save/post even though the
+        amount was visibly computed on screen. Recompute it server-side before
+        creation so the accounting record never depends on browser behavior.
+        """
+        prepared_vals_list = []
+        for incoming in vals_list:
+            vals = dict(incoming)
+            if (
+                vals.get("payment_method") == "payroll_transfer"
+                and vals.get("payroll_run_id")
+                and not vals.get("amount")
+            ):
+                company = self.env["res.company"].browse(
+                    vals.get("company_id") or self.env.company.id
+                )
+                run = self.env["hr.payslip.run"].browse(vals["payroll_run_id"])
+                account = company.payroll_accrued_salary_account_id
+                if account and run.exists():
+                    slips = self.env["hr.payslip"].search([
+                        ("payslip_run_id", "=", run.id),
+                        ("company_id", "=", company.id),
+                        ("state", "!=", "cancel"),
+                    ])
+                    moves = slips.mapped("move_id").filtered(lambda move: move.state == "posted")
+                    lines = moves.mapped("line_ids").filtered(
+                        lambda line: line.account_id == account
+                        and line.partner_id
+                        and line.balance < 0
+                    )
+                    total = 0.0
+                    for line in lines:
+                        if account.reconcile:
+                            total += max(-line.amount_residual, 0.0)
+                        else:
+                            total += max(-line.balance, 0.0)
+                    total = company.currency_id.round(total)
+                    if not company.currency_id.is_zero(total):
+                        vals["amount"] = total
+                    vals.setdefault("account_id", account.id)
+            prepared_vals_list.append(vals)
+        return super().create(prepared_vals_list)
+
     @api.onchange("payment_method")
     def _onchange_absar_payroll_transfer_method(self):
         if self.payment_method == "payroll_transfer":

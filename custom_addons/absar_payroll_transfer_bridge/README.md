@@ -44,3 +44,8 @@ If reconciliation is not enabled, the voucher still posts the correct partner li
 - Voucher total is taken automatically from the accrued salary lines.
 - Normal Payment Voucher methods are unchanged.
 - Payroll Transfer does not create a single-partner cash-planning line because the payment represents many employee partners.
+
+
+## 18.0.1.0.2
+- Fix mandatory Amount error on new Payroll Transfer vouchers.
+- The computed payroll amount is now force-saved by the form and recomputed server-side during create as a safety net.

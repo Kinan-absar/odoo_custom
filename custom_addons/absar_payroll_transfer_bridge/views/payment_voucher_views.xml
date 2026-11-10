@@ -33,6 +33,7 @@
 
             <xpath expr="//form//field[@name='amount']" position="attributes">
                 <attribute name="readonly">payment_method == 'payroll_transfer' or state != 'draft'</attribute>
+                <attribute name="force_save">1</attribute>
             </xpath>
 
             <xpath expr="//form//field[@name='account_id']" position="attributes">
