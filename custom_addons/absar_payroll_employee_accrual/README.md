@@ -1,15 +1,13 @@
-# ABSAR Payroll Employee Accrual Split — v18.0.1.1.11
+ABSAR Payroll Employee Accrual Split - v18.0.1.1.13
 
-## Configuration
-Go to **Payroll → Configuration → Settings → Accounting**.
+Purpose
+-------
+Keep Batch Account Move Lines enabled so payroll stays in one journal entry, while the configured accrued-salary liability account is split into one journal line per employee partner.
 
-A new **Employee Accrued Salary** setting appears directly below **Batch Account Move Lines**. Select the accrued salary liability account there.
+Configuration
+-------------
+Payroll -> Configuration -> Settings -> Payroll Accounting -> Employee Accrued Salary
 
-Keep **Batch Account Move Lines** enabled.
-
-## Behavior
-- One batched payroll journal entry remains.
-- The configured accrued salary account is split into one journal line per employee partner.
-- Other salary expense lines remain grouped normally.
-- The accrued salary line label uses the payroll batch name when available, otherwise the journal reference/payroll period.
-- No payroll-specific partner field is added to employees; the module uses the employee's existing linked partner/contact.
+Implementation note
+-------------------
+The setting is added using the same stable Odoo 18 Settings pattern used by the working Portal Backend Workspace module: inherit the application's settings view, target the Payroll app container itself, and add a dedicated block inside it. It does not target Batch Account Move Lines or any sibling inherited view.
