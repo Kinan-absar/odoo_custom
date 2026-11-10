@@ -1,7 +1,7 @@
 {
     "name": "ABSAR Payroll Employee Accrual Split",
     "summary": "Keep one batched payroll journal entry while splitting accrued salaries by employee partner",
-    "version": "18.0.1.1.6",
+    "version": "18.0.1.1.7",
     "category": "Human Resources/Payroll",
     "author": "ABSAR",
     "license": "LGPL-3",

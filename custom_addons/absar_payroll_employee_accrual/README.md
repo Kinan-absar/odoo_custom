@@ -1,11 +1,9 @@
 # ABSAR Payroll Employee Accrual Split
 
-Version 18.0.1.1.6
+Version 18.0.1.1.7
 
-- Keeps one batched payroll journal entry.
-- Splits the configured accrued salary liability account by employee partner.
-- Keeps salary expense lines grouped.
-- Uses existing employee-linked partners automatically.
-- Uses the payroll batch name as the accrued-line label when available.
-- Configuration is available from Payroll > Configuration > Employee Accrued Salary.
-- The Payroll Configuration parent menu is resolved dynamically, so no fragile Payroll menu XML ID is hard-coded.
+- Keeps Batch Account Move Lines enabled and one payroll journal entry.
+- Splits only the configured accrued salary liability account by employee partner.
+- Configuration is opened from Payroll > Configuration > Employee Accrued Salary.
+- Uses a dedicated Payroll configuration wizard, not `res.config.settings`, so opening it stays inside the Payroll app instead of switching to the Settings app.
+- The selected account is stored per company.

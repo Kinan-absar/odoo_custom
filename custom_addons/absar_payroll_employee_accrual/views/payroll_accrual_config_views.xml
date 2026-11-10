@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Standalone configuration screen. It deliberately does not inherit the
-         main Payroll Settings view, avoiding fragile XML/XPath dependencies. -->
     <record id="view_res_config_settings_absar_payroll_accrual_form" model="ir.ui.view">
-        <field name="name">res.config.settings.absar.payroll.accrual.form</field>
-        <field name="model">res.config.settings</field>
+        <field name="name">absar.payroll.accrual.config.form</field>
+        <field name="model">absar.payroll.accrual.config</field>
         <field name="arch" type="xml">
             <form string="Employee Accrued Salary">
                 <sheet>
@@ -13,7 +11,7 @@
                     </div>
                     <group>
                         <field name="company_id" groups="base.group_multi_company"/>
-                        <field name="payroll_accrued_salary_account_id"
+                        <field name="accrued_salary_account_id"
                                options="{'no_create': True, 'no_create_edit': True}"/>
                     </group>
                     <div class="text-muted mt16">
@@ -23,7 +21,7 @@
                     </div>
                 </sheet>
                 <footer>
-                    <button string="Save" name="execute" type="object" class="btn-primary"/>
+                    <button string="Save" name="action_save" type="object" class="btn-primary"/>
                     <button string="Discard" special="cancel" class="btn-secondary"/>
                 </footer>
             </form>
@@ -32,13 +30,11 @@
 
     <record id="action_absar_payroll_accrual_settings" model="ir.actions.act_window">
         <field name="name">Employee Accrued Salary</field>
-        <field name="res_model">res.config.settings</field>
+        <field name="res_model">absar.payroll.accrual.config</field>
         <field name="view_mode">form</field>
         <field name="view_id" ref="view_res_config_settings_absar_payroll_accrual_form"/>
-        <field name="target">new</field>
+        <field name="target">current</field>
     </record>
 
-    <!-- Resolve the existing Payroll > Configuration menu in Python so this works
-         even when its external ID differs across Odoo 18 Enterprise databases. -->
     <function model="res.config.settings" name="_absar_ensure_payroll_config_menu"/>
 </odoo>
