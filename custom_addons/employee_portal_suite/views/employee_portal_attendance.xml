@@ -219,6 +219,35 @@
                 color: #991B1B;
             }
 
+            .eps-offline-alert {
+                background: rgba(245,158,11,0.13);
+                color: #92400E;
+            }
+
+            .eps-sync-alert {
+                background: rgba(8,127,131,0.10);
+                color: #065F63;
+            }
+
+            .eps-attendance-sync-state {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 28px;
+                padding: 5px 10px;
+                border-radius: 999px;
+                font-size: 11px;
+                font-weight: 700;
+                background: rgba(255,255,255,0.20);
+                color: white;
+                margin-bottom: 12px;
+            }
+
+            .eps-attendance-sync-state[data-state="online"] { background: rgba(255,255,255,0.16); }
+            .eps-attendance-sync-state[data-state="offline"] { background: rgba(245,158,11,0.28); }
+            .eps-attendance-sync-state[data-state="syncing"] { background: rgba(59,130,246,0.25); }
+            .eps-attendance-sync-state[data-state="failed"] { background: rgba(239,68,68,0.28); }
+
             .section-title {
                 font-weight: 700;
                 font-size: 14px;
@@ -227,7 +256,13 @@
             }
             </style>
 
-            <div class="mt-4">
+            <div class="mt-4" data-eps-attendance-root="1"
+                 t-att-data-server-checked-in="'1' if is_checked_in else '0'"
+                 t-att-data-geo-enforce="'1' if geo_enforce else '0'"
+                 t-att-data-server-check-in-iso="server_check_in_iso or ''"
+                 t-att-data-user-id="request.env.user.id">
+
+                <div id="eps-attendance-offline-banner" class="portal-alert eps-offline-alert" hidden="hidden"></div>
 
                 <!-- SUCCESS / ERROR MESSAGES -->
                 <t t-if="success_message == 'checked_in'">
@@ -281,132 +316,52 @@
                     </div>
                 </t>
 
-                <!-- STATUS HERO CARD -->
-                <t t-if="is_checked_in">
-                    <div class="attendance-hero checked-in">
-                        <div class="status-icon">
-                            <i class="fa fa-clock-o"/>
-                        </div>
-                        <div class="status-title">You're Clocked In</div>
-                        <div class="status-sub">
-                            Since
-                            <t t-out="fmt_dt(open_attendance.check_in, '%I:%M %p')"/>
-                            ·
-                            <t t-out="fmt_dt(open_attendance.check_in, '%d %b %Y')"/>
-                        </div>
-                        <form action="/my/employee/attendance/check_out" method="post" id="checkout-form">
-                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                            <input type="hidden" id="checkout_geo_lat" name="geo_lat" value=""/>
-                            <input type="hidden" id="checkout_geo_lon" name="geo_lon" value=""/>
-                            <button type="button" id="checkout-btn" class="attendance-btn btn-checkout" t-att-data-geo-enforce="'1' if geo_enforce else '0'">
-                                <i class="fa fa-sign-out"/>
-                                Check Out
-                            </button>
-                        </form>
-                        <script>
-                        (function () {
-                            var btn   = document.getElementById('checkout-btn');
-                            var form  = document.getElementById('checkout-form');
-                            var latIn = document.getElementById('checkout_geo_lat');
-                            var lonIn = document.getElementById('checkout_geo_lon');
-                            var geoEnforce = btn.getAttribute('data-geo-enforce') === '1';
-
-                            btn.addEventListener('click', function () {
-                                if (!geoEnforce || !navigator.geolocation) {
-                                    form.submit();
-                                    return;
-                                }
-                                btn.disabled = true;
-                                navigator.geolocation.getCurrentPosition(
-                                    function (pos) {
-                                        latIn.value = pos.coords.latitude;
-                                        lonIn.value = pos.coords.longitude;
-                                        form.submit();
-                                    },
-                                    function () {
-                                        // Could not get location — submit anyway;
-                                        // server will flag as outside if coords missing
-                                        form.submit();
-                                    },
-                                    { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
-                                );
-                            });
-                        })();
-                        </script>
+                <!-- STATUS HERO CARDS -->
+                <!-- Both states remain in the cached attendance page. The offline
+                     controller toggles them locally while disconnected. -->
+                <div id="eps-attendance-checked-in" class="attendance-hero checked-in" t-att-style="'' if is_checked_in else 'display:none;'">
+                    <div class="eps-attendance-sync-state" data-state="online">Online</div>
+                    <div class="status-icon">
+                        <i class="fa fa-clock-o"/>
                     </div>
-                </t>
-
-                <t t-if="not is_checked_in">
-                    <div class="attendance-hero checked-out">
-                        <div class="status-icon" id="geo-status-icon">
-                            <i class="fa fa-user-o"/>
-                        </div>
-                        <div class="status-title">Not Checked In</div>
-                        <div class="status-sub" id="geo-status-sub">Tap below to start your work session</div>
-                        <!--
-                            geo_enforce is passed from the controller.
-                            Hidden inputs geo_lat / geo_lon are populated by JS before submit.
-                        -->
-                        <form id="checkin-form" action="/my/employee/attendance/check_in" method="post">
-                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                            <input type="hidden" id="geo_lat" name="geo_lat" value=""/>
-                            <input type="hidden" id="geo_lon" name="geo_lon" value=""/>
-                            <button id="checkin-btn" type="button" class="attendance-btn btn-checkin" t-att-data-geo-enforce="'1' if geo_enforce else '0'">
-                                <i class="fa fa-sign-in"/>
-                                Check In
-                            </button>
-                        </form>
-
-                        <script>
-                        (function () {
-                            var btn = document.getElementById('checkin-btn');
-                            var form = document.getElementById('checkin-form');
-                            var latInput = document.getElementById('geo_lat');
-                            var lonInput = document.getElementById('geo_lon');
-                            var subText  = document.getElementById('geo-status-sub');
-                            var iconEl   = document.getElementById('geo-status-icon');
-
-                            var geoEnforce = btn.getAttribute('data-geo-enforce') === '1';
-
-                            btn.addEventListener('click', function () {
-                                if (!geoEnforce) {
-                                    // No geofencing required — submit directly
-                                    form.submit();
-                                    return;
-                                }
-
-                                if (!navigator.geolocation) {
-                                    subText.textContent = 'Geolocation is not supported by your browser.';
-                                    return;
-                                }
-
-                                btn.disabled = true;
-                                subText.textContent = 'Detecting your location…';
-                                iconEl.innerHTML = '<i class="fa fa-spinner fa-spin"/>';
-
-                                navigator.geolocation.getCurrentPosition(
-                                    function (position) {
-                                        latInput.value = position.coords.latitude;
-                                        lonInput.value = position.coords.longitude;
-                                        subText.textContent = 'Location found — submitting…';
-                                        form.submit();
-                                    },
-                                    function (err) {
-                                        btn.disabled = false;
-                                        iconEl.innerHTML = '<i class="fa fa-user-o"/>';
-                                        if (err.code === err.PERMISSION_DENIED) {
-                                            subText.textContent = 'Location access denied. Please allow location and try again.';
-                                        } else {
-                                            subText.textContent = 'Could not get your location. Please try again.';
-                                        }
-                                    },
-                                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-                                );
-                            });
-                        })();
-                        </script>
+                    <div class="status-title">You're Clocked In</div>
+                    <div class="status-sub">
+                        <t t-if="is_checked_in">
+                            Since <t t-out="fmt_dt(open_attendance.check_in, '%I:%M %p')"/>
+                            · <t t-out="fmt_dt(open_attendance.check_in, '%d %b %Y')"/>
+                        </t>
+                        <t t-if="not is_checked_in">
+                            Since <span id="eps-offline-checkin-since"></span>
+                        </t>
                     </div>
-                </t>
+                    <form action="/my/employee/attendance/check_out" method="post" id="checkout-form">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <input type="hidden" name="geo_lat" value=""/>
+                        <input type="hidden" name="geo_lon" value=""/>
+                        <button type="button" id="checkout-btn" class="attendance-btn btn-checkout" t-att-data-geo-enforce="'1' if geo_enforce else '0'">
+                            <i class="fa fa-sign-out"/>
+                            Check Out
+                        </button>
+                    </form>
+                </div>
+
+                <div id="eps-attendance-checked-out" class="attendance-hero checked-out" t-att-style="'display:none;' if is_checked_in else ''">
+                    <div class="eps-attendance-sync-state" data-state="online">Online</div>
+                    <div class="status-icon">
+                        <i class="fa fa-user-o"/>
+                    </div>
+                    <div class="status-title">Not Checked In</div>
+                    <div class="status-sub">Tap below to start your work session</div>
+                    <form id="checkin-form" action="/my/employee/attendance/check_in" method="post">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <input type="hidden" name="geo_lat" value=""/>
+                        <input type="hidden" name="geo_lon" value=""/>
+                        <button id="checkin-btn" type="button" class="attendance-btn btn-checkin" t-att-data-geo-enforce="'1' if geo_enforce else '0'">
+                            <i class="fa fa-sign-in"/>
+                            Check In
+                        </button>
+                    </form>
+                </div>
 
                 <!-- TODAY STATS -->
                 <div class="today-stats">
@@ -418,7 +373,7 @@
                     </div>
                     <div class="stat-card">
                         <div class="stat-value">
-                            <t t-out="'Active' if is_checked_in else 'Inactive'"/>
+                            <span id="eps-attendance-current-status"><t t-out="'Active' if is_checked_in else 'Inactive'"/></span>
                         </div>
                         <div class="stat-label">Current Status</div>
                     </div>
