@@ -347,7 +347,7 @@
                         <input type="hidden" name="geo_lat" value=""/>
                         <input type="hidden" name="geo_lon" value=""/>
                         <input type="hidden" name="trusted_device_token" value=""/>
-                        <button type="button" id="checkout-btn" class="attendance-btn btn-checkout" t-att-data-geo-enforce="'1' if geo_enforce else '0'">
+                        <button type="submit" id="checkout-btn" class="attendance-btn btn-checkout" t-att-data-geo-enforce="'1' if geo_enforce else '0'">
                             <i class="fa fa-sign-out"/>
                             Check Out
                         </button>
@@ -366,7 +366,7 @@
                         <input type="hidden" name="geo_lat" value=""/>
                         <input type="hidden" name="geo_lon" value=""/>
                         <input type="hidden" name="trusted_device_token" value=""/>
-                        <button id="checkin-btn" type="button" class="attendance-btn btn-checkin" t-att-data-geo-enforce="'1' if geo_enforce else '0'">
+                        <button id="checkin-btn" type="submit" class="attendance-btn btn-checkin" t-att-data-geo-enforce="'1' if geo_enforce else '0'">
                             <i class="fa fa-sign-in"/>
                             Check In
                         </button>
@@ -448,6 +448,11 @@
                 </div>
 
             </div>
+
+            <!-- Load the attendance controller directly as a versioned static asset.
+                 This deliberately bypasses stale Odoo frontend bundles on PWA/mobile
+                 upgrades. The controller has its own duplicate-load guard. -->
+            <script type="text/javascript" src="/employee_portal_suite/static/src/js/attendance_offline.js?v=129"></script>
         </t>
     </template>
 

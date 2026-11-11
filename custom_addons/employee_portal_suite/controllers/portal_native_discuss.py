@@ -497,7 +497,7 @@ self.addEventListener("notificationclick", (event) => {
     @http.route('/my/employee/sw.js', type='http', auth='public', methods=['GET'], csrf=False)
     def employee_portal_service_worker(self, **kwargs):
         script = r'''
-const CACHE_NAME = "employee-portal-pwa-v48";
+const CACHE_NAME = "employee-portal-pwa-v49";
 const OFFLINE_PAGES = new Set(["/my/employee", "/my/employee/attendance"]);
 self.addEventListener("install", () => { self.skipWaiting(); });
 self.addEventListener("activate", (event) => {

@@ -394,9 +394,21 @@
     }
 
     const checkInBtn = $("checkin-btn");
-    if (checkInBtn) checkInBtn.addEventListener("click", () => onAttendanceClick("check_in", "checkin-form", checkInBtn));
+    const checkInForm = $("checkin-form");
+    if (checkInForm) {
+        checkInForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            onAttendanceClick("check_in", "checkin-form", checkInBtn);
+        });
+    }
     const checkOutBtn = $("checkout-btn");
-    if (checkOutBtn) checkOutBtn.addEventListener("click", () => onAttendanceClick("check_out", "checkout-form", checkOutBtn));
+    const checkOutForm = $("checkout-form");
+    if (checkOutForm) {
+        checkOutForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            onAttendanceClick("check_out", "checkout-form", checkOutBtn);
+        });
+    }
 
     window.addEventListener("online", async () => { await verifyDevice(); render(); syncQueue(); });
     window.addEventListener("offline", render);
