@@ -60,6 +60,13 @@ def _json_response(payload, status=200):
     )
 
 
+
+def _trusted_device(employee, token, touch=True):
+    return request.env['employee.portal.attendance.device'].sudo().validate_token(
+        employee, token, touch=touch
+    )
+
+
 class EmployeePortalAttendance(http.Controller):
 
     # ---------------------------------------------------------
@@ -145,6 +152,9 @@ class EmployeePortalAttendance(http.Controller):
         if not employee:
             return request.redirect('/my/employee')
 
+        if not _trusted_device(employee, post.get('trusted_device_token')):
+            return request.redirect('/my/employee/attendance?error=device_not_trusted')
+
         # Prevent double check-in
         existing = request.env['hr.attendance'].sudo().search([
             ('employee_id', '=', employee.id),
@@ -217,6 +227,9 @@ class EmployeePortalAttendance(http.Controller):
         if not employee:
             return request.redirect('/my/employee')
 
+        if not _trusted_device(employee, post.get('trusted_device_token')):
+            return request.redirect('/my/employee/attendance?error=device_not_trusted')
+
         open_attendance = request.env['hr.attendance'].sudo().search([
             ('employee_id', '=', employee.id),
             ('check_out', '=', False),
@@ -282,6 +295,38 @@ class EmployeePortalAttendance(http.Controller):
             return request.redirect('/my/employee/attendance?error=check_out_failed')
 
     # ---------------------------------------------------------
+    # TRUSTED ATTENDANCE DEVICE
+    # ---------------------------------------------------------
+    @http.route(
+        '/my/employee/attendance/device/status',
+        type='http', auth='user', methods=['POST'], csrf=False,
+    )
+    def portal_attendance_device_status(self, **kwargs):
+        user = request.env.user
+        if not user.share or not user.has_group('employee_portal_suite.group_portal_attendance_user'):
+            return _json_response({'error': 'forbidden'}, 403)
+        employee = user.employee_id
+        if not employee:
+            return _json_response({'error': 'employee_required'}, 403)
+        try:
+            payload = request.httprequest.get_json(silent=True) or {}
+        except Exception:
+            return _json_response({'error': 'invalid_json'}, 400)
+        token = str(payload.get('token') or '').strip()
+        label = str(payload.get('device_label') or '').strip()[:128]
+        user_agent = request.httprequest.headers.get('User-Agent', '')
+        result = request.env['employee.portal.attendance.device'].sudo().register_or_check(
+            employee, user, token, device_label=label, user_agent=user_agent,
+        )
+        state = result.get('state')
+        return _json_response({
+            'state': state,
+            'trusted': state == 'trusted',
+            'pending': state == 'pending',
+            'auto_trusted': bool(result.get('auto_trusted')),
+        })
+
+    # ---------------------------------------------------------
     # OFFLINE PWA SYNC
     # ---------------------------------------------------------
     @http.route(
@@ -314,6 +359,12 @@ class EmployeePortalAttendance(http.Controller):
             result = {'id': event_id, 'status': 'failed'}
             if not event_id or kind not in ('check_in', 'check_out'):
                 result.update(code='invalid_event', message='Invalid offline attendance event.')
+                results.append(result)
+                continue
+
+            device_token = str((raw or {}).get('device_token') or '').strip()
+            if not _trusted_device(employee, device_token):
+                result.update(code='device_not_trusted', message='This phone is not the trusted attendance device for this employee.')
                 results.append(result)
                 continue
 

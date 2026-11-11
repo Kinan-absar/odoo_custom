@@ -1,5 +1,5 @@
 {'name': 'Employee Portal Suite',
- 'version': '18.0.1.20.126',
+ 'version': '18.0.1.20.128',
  'summary': 'Employee & Material Requests, GPS Attendance, Multi-Level Approvals, Employee Portal Suite',
  'description': '\n'
                 '    Comprehensive Employee Portal Suite providing a full service system for employees, '
@@ -107,6 +107,7 @@
           'views/hr_work_location_views.xml',
           'views/employee_portal_attendance.xml',
           'views/hr_attendance_views.xml',
+          'views/attendance_trusted_device_views.xml',
           'reports/report_salary_report.xml',
           'views/hr_employee_payroll_views.xml',
           'views/attendance_salary_report_views.xml',

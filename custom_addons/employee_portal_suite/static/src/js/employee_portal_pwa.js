@@ -81,7 +81,7 @@ function enforceEmployeePortalFavicon() {
         if (!("serviceWorker" in navigator) || !window.isSecureContext) return;
         await cleanupLegacyChatsWorker();
         try {
-            const registration = await navigator.serviceWorker.register(PORTAL_SW, { scope: PORTAL_ROOT });
+            const registration = await navigator.serviceWorker.register(PORTAL_SW, { scope: `${PORTAL_ROOT}/` });
             try { await registration.update(); } catch (_) {}
         } catch (error) {
             console.warn("[Employee Portal PWA] service worker registration failed", error);

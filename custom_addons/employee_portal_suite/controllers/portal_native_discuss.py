@@ -497,7 +497,7 @@ self.addEventListener("notificationclick", (event) => {
     @http.route('/my/employee/sw.js', type='http', auth='public', methods=['GET'], csrf=False)
     def employee_portal_service_worker(self, **kwargs):
         script = r'''
-const CACHE_NAME = "employee-portal-pwa-v46";
+const CACHE_NAME = "employee-portal-pwa-v48";
 const OFFLINE_PAGES = new Set(["/my/employee", "/my/employee/attendance"]);
 self.addEventListener("install", () => { self.skipWaiting(); });
 self.addEventListener("activate", (event) => {
@@ -541,19 +541,24 @@ self.addEventListener("message", (event) => {
     const data = event.data || {};
     if (data.type !== "CACHE_ATTENDANCE_OFFLINE") return;
     event.waitUntil((async () => {
+        let pageOk = true;
         const pageUrls = ["/my/employee", "/my/employee/attendance"];
         for (const path of pageUrls) {
             try {
                 await cachePortalPage(new Request(self.location.origin + path, { credentials: "same-origin" }));
-            } catch (_) {}
+                const cached = await caches.match(new Request(self.location.origin + path, { credentials: "same-origin" }));
+                if (!cached) pageOk = false;
+            } catch (_) { pageOk = false; }
         }
-        for (const value of (data.assets || []).slice(0, 80)) {
+        let assetFailures = 0;
+        for (const value of (data.assets || []).slice(0, 120)) {
             try {
                 const url = new URL(value, self.location.origin);
                 if (url.origin !== self.location.origin) continue;
                 await cacheAsset(new Request(url.href, { credentials: "same-origin" }));
-            } catch (_) {}
+            } catch (_) { assetFailures += 1; }
         }
+        try { event.ports?.[0]?.postMessage({ok: pageOk, asset_failures: assetFailures}); } catch (_) {}
     })());
 });
 
@@ -617,7 +622,7 @@ self.addEventListener("notificationclick", (event) => {
         return request.make_response(script, headers=[
             ('Content-Type', 'application/javascript; charset=utf-8'),
             ('Cache-Control', 'no-store'),
-            ('Service-Worker-Allowed', '/my/employee'),
+            ('Service-Worker-Allowed', '/my/employee/'),
         ])
 
     @http.route('/employee_portal/discuss/people_all', type='json', auth='user')
