@@ -159,7 +159,7 @@
             } else if (!isOnline) {
                 banner.hidden = false;
                 banner.className = "portal-alert eps-offline-alert";
-                banner.innerHTML = `<i class="fa fa-wifi" aria-hidden="true"></i><span><strong>Offline mode · Trusted device.</strong> Attendance will be saved on this phone and synced automatically when internet returns.${pending.length ? ` ${pending.length} event${pending.length === 1 ? "" : "s"} waiting.` : ""}</span>`;
+                banner.innerHTML = `<i class="fa fa-wifi" aria-hidden="true"></i><span><strong>Offline.</strong> Attendance will be saved on this phone and synced automatically when internet returns.${pending.length ? ` ${pending.length} event${pending.length === 1 ? "" : "s"} waiting.` : ""}</span>`;
             } else if (failed.length) {
                 banner.hidden = false;
                 banner.className = "portal-alert error";
@@ -182,14 +182,14 @@
                 badge.textContent = "Sync attention needed";
                 badge.dataset.state = "failed";
             } else if (pending.length) {
-                badge.textContent = isOnline ? "Syncing…" : `Saved offline (${pending.length})`;
-                badge.dataset.state = isOnline ? "syncing" : "offline";
+                badge.textContent = isOnline ? "Online" : "Offline";
+                badge.dataset.state = isOnline ? "online" : "offline";
             } else {
                 if (isOnline) {
-                    badge.textContent = offlineCacheReady() ? "Offline Ready · Trusted" : "Preparing Offline…";
-                    badge.dataset.state = offlineCacheReady() ? "online" : "syncing";
+                    badge.textContent = "Online";
+                    badge.dataset.state = "online";
                 } else {
-                    badge.textContent = offlineCacheReady() ? "Offline Ready · Trusted" : "Offline · Page not cached";
+                    badge.textContent = "Offline";
                     badge.dataset.state = offlineCacheReady() ? "offline" : "failed";
                 }
             }
@@ -425,14 +425,14 @@
                     }
                 } catch (_) {}
             });
-            assetUrls.add(new URL('/employee_portal_suite/static/src/js/attendance_offline.js?v=131', window.location.origin).href);
+            assetUrls.add(new URL('/employee_portal_suite/static/src/js/attendance_offline.js?v=132', window.location.origin).href);
 
             await Promise.all(Array.from(assetUrls).slice(0, 160).map(async (url) => {
                 try { await cacheResponse(cache, url); } catch (_) {}
             }));
 
             const pageCached = Boolean(await cache.match(new Request(canonicalAttendance, {credentials: "same-origin"})));
-            const scriptCached = Boolean(await cache.match(new Request(new URL('/employee_portal_suite/static/src/js/attendance_offline.js?v=131', window.location.origin).href, {credentials: "same-origin"})));
+            const scriptCached = Boolean(await cache.match(new Request(new URL('/employee_portal_suite/static/src/js/attendance_offline.js?v=132', window.location.origin).href, {credentials: "same-origin"})));
             const ready = pageCached && scriptCached;
             setOfflineCacheReady(ready);
             render();

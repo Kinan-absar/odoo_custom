@@ -330,7 +330,7 @@
                 <!-- Both states remain in the cached attendance page. The offline
                      controller toggles them locally while disconnected. -->
                 <div id="eps-attendance-checked-in" class="attendance-hero checked-in" t-att-style="'' if is_checked_in else 'display:none;'">
-                    <div class="eps-attendance-sync-state" t-att-data-state="'syncing' if trusted_device_state == 'trusted' else 'failed'"><t t-out="'Preparing Offline…' if trusted_device_state == 'trusted' else 'Device approval needed'"/></div>
+                    <div class="eps-attendance-sync-state" t-att-data-state="'syncing' if trusted_device_state == 'trusted' else 'failed'"><t t-out="'Online' if trusted_device_state == 'trusted' else 'Device approval needed'"/></div>
                     <div class="status-icon">
                         <i class="fa fa-clock-o"/>
                     </div>
@@ -357,7 +357,7 @@
                 </div>
 
                 <div id="eps-attendance-checked-out" class="attendance-hero checked-out" t-att-style="'display:none;' if is_checked_in else ''">
-                    <div class="eps-attendance-sync-state" t-att-data-state="'syncing' if trusted_device_state == 'trusted' else 'failed'"><t t-out="'Preparing Offline…' if trusted_device_state == 'trusted' else 'Device approval needed'"/></div>
+                    <div class="eps-attendance-sync-state" t-att-data-state="'syncing' if trusted_device_state == 'trusted' else 'failed'"><t t-out="'Online' if trusted_device_state == 'trusted' else 'Device approval needed'"/></div>
                     <div class="status-icon">
                         <i class="fa fa-user-o"/>
                     </div>
@@ -454,7 +454,7 @@
             <!-- Load the attendance controller directly as a versioned static asset.
                  This deliberately bypasses stale Odoo frontend bundles on PWA/mobile
                  upgrades. The controller has its own duplicate-load guard. -->
-            <script type="text/javascript" src="/employee_portal_suite/static/src/js/attendance_offline.js?v=131"></script>
+            <script type="text/javascript" src="/employee_portal_suite/static/src/js/attendance_offline.js?v=132"></script>
         </t>
     </template>
 
