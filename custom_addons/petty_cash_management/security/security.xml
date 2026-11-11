@@ -10,7 +10,7 @@
     </record>
     <record id="group_portal_petty_cash_user" model="res.groups">
         <field name="name">Portal Petty Cash User</field>
-        <field name="category_id" ref="base.module_category_portal"/>
+        <field name="category_id" ref="base.module_category_accounting"/>
         <field name="implied_ids" eval="[(4, ref('base.group_portal'))]"/>
     </record>
     <record id="petty_cash_portal_rule" model="ir.rule">
