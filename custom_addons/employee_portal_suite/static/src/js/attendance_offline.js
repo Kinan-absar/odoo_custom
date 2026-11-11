@@ -14,7 +14,7 @@
     const QUEUE_KEY = `eps_attendance_offline_queue_v1:${userScope}`;
     const STATE_KEY = `eps_attendance_offline_state_v1:${userScope}`;
     const DEVICE_KEY = `eps_attendance_trusted_device_v1:${userScope}`;
-    const OFFLINE_READY_KEY = `eps_attendance_offline_ready_v48:${userScope}`;
+    const OFFLINE_READY_KEY = `eps_attendance_offline_ready_v50:${userScope}`;
 
     const serverState = {
         checkedIn: root.dataset.serverCheckedIn === "1",
@@ -374,33 +374,71 @@
         }
     }
 
-    async function primeOfflineCache() {
-        if (!("serviceWorker" in navigator)) return false;
+    async function ensureAttendanceWorker() {
+        if (!("serviceWorker" in navigator) || !window.isSecureContext) return null;
         try {
-            const registration = await navigator.serviceWorker.ready;
-            const worker = registration.active || registration.waiting || registration.installing;
-            if (!worker) return false;
-            const assets = performance.getEntriesByType("resource").map((entry) => entry.name).filter((value) => {
+            const registration = await navigator.serviceWorker.register("/my/employee/sw.js", {scope: "/my/employee/"});
+            try { await registration.update(); } catch (_) {}
+            await navigator.serviceWorker.ready;
+            return registration;
+        } catch (error) {
+            console.warn("[EPS Attendance] service worker registration failed", error);
+            return null;
+        }
+    }
+
+    async function cacheResponse(cache, requestUrl) {
+        const request = new Request(requestUrl, {credentials: "same-origin", cache: "reload"});
+        const response = await fetch(request);
+        if (!response.ok) throw new Error(`cache_http_${response.status}`);
+        await cache.put(new Request(requestUrl, {credentials: "same-origin"}), response.clone());
+        return true;
+    }
+
+    async function primeOfflineCache() {
+        if (!("caches" in window) || !navigator.onLine) {
+            setOfflineCacheReady(false);
+            render();
+            return false;
+        }
+        try {
+            const registration = await ensureAttendanceWorker();
+            if (!registration) throw new Error("service_worker_unavailable");
+
+            // Cache from the page itself instead of relying on a worker message.
+            // This is deliberately simple for iOS standalone PWAs.
+            const cache = await caches.open("employee-portal-pwa-v50");
+            const canonicalAttendance = `${window.location.origin}${PATH}`;
+            const canonicalHome = `${window.location.origin}/my/employee`;
+            await cacheResponse(cache, canonicalAttendance);
+            try { await cacheResponse(cache, canonicalHome); } catch (_) {}
+
+            const assetUrls = new Set();
+            document.querySelectorAll('script[src], link[rel="stylesheet"][href], link[rel="icon"][href], link[rel="apple-touch-icon"][href], img[src]').forEach((node) => {
+                const raw = node.getAttribute("src") || node.getAttribute("href");
+                if (!raw) return;
                 try {
-                    const url = new URL(value, window.location.origin);
-                    return url.origin === window.location.origin && (url.pathname.includes("/web/assets/") || url.pathname.includes("/employee_portal_suite/"));
-                } catch (_) { return false; }
+                    const url = new URL(raw, window.location.origin);
+                    if (url.origin !== window.location.origin) return;
+                    if (url.pathname.includes("/web/assets/") || url.pathname.includes("/employee_portal_suite/") || url.pathname.includes("/web/image/")) {
+                        assetUrls.add(url.href);
+                    }
+                } catch (_) {}
             });
-            const channel = new MessageChannel();
-            const result = new Promise((resolve) => {
-                const timer = window.setTimeout(() => resolve(false), 12000);
-                channel.port1.onmessage = (event) => {
-                    window.clearTimeout(timer);
-                    resolve(Boolean(event.data?.ok));
-                };
-            });
-            worker.postMessage({type: "CACHE_ATTENDANCE_OFFLINE", assets}, [channel.port2]);
-            const ready = await result;
+            assetUrls.add(new URL('/employee_portal_suite/static/src/js/attendance_offline.js?v=131', window.location.origin).href);
+
+            await Promise.all(Array.from(assetUrls).slice(0, 160).map(async (url) => {
+                try { await cacheResponse(cache, url); } catch (_) {}
+            }));
+
+            const pageCached = Boolean(await cache.match(new Request(canonicalAttendance, {credentials: "same-origin"})));
+            const scriptCached = Boolean(await cache.match(new Request(new URL('/employee_portal_suite/static/src/js/attendance_offline.js?v=131', window.location.origin).href, {credentials: "same-origin"})));
+            const ready = pageCached && scriptCached;
             setOfflineCacheReady(ready);
             render();
             return ready;
         } catch (error) {
-            console.warn("[EPS Attendance] offline cache preparation deferred", error);
+            console.warn("[EPS Attendance] offline cache preparation failed", error);
             setOfflineCacheReady(false);
             render();
             return false;
