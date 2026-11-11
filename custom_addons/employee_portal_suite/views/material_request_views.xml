@@ -385,8 +385,10 @@
                 <field name="employee_id"/>
                 <field name="project_id" string="Project"/>
                 <field name="worksite"/>
-                <field name="state"/>
+                <field name="approval_stage" string="Stage"/>
+                <field name="state" string="Workflow State"/>
                 <field name="accounting_docs_status"/>
+                <filter string="Stage" name="group_approval_stage" context="{'group_by': 'approval_stage'}"/>
                 <filter string="Project" name="group_project" context="{'group_by': 'project_id'}"/>
                 <filter string="PO Required" name="po_required" domain="[('no_po_required','=',False)]"/>
                 <filter string="No PO Required" name="no_po_required" domain="[('no_po_required','=',True)]"/>
@@ -402,6 +404,7 @@
         <field name="name">Material Requests</field>
         <field name="res_model">material.request</field>
         <field name="view_mode">list,form</field>
+        <field name="context">{}</field>
 
     </record>
 

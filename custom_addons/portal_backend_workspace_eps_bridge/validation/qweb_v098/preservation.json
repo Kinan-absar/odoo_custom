@@ -1,0 +1,31 @@
+{
+  "source_zip": "Portal_Backend_Workspace_EPS_Bridge_v0.9.7_Proposal_Editor.zip",
+  "source_zip_sha256": "020e1c81744dbd480cff4b61471acd7fc39b0bcfe47f1cf206a9188fa01da39f",
+  "changed_runtime_files": [
+    "__manifest__.py",
+    "views/proposals.xml"
+  ],
+  "preserved_bridge_runtime_files": [
+    "__init__.py",
+    "controllers/__init__.py",
+    "controllers/proposals.py",
+    "controllers/routing.py",
+    "models/__init__.py",
+    "models/notifications.py",
+    "models/proposals.py",
+    "models/sales_data.py",
+    "models/users.py",
+    "static/src/notification_compat.js",
+    "static/src/proposal_draft.css",
+    "static/src/proposal_draft.js",
+    "views/navigation.xml",
+    "views/notifications.xml"
+  ],
+  "main_files_byte_identical": 217,
+  "xml_files_parsed": 31,
+  "python_files_parsed": 55,
+  "new_regression_tests_passed": 12,
+  "retained_customer_proposal_fixture_tests_passed": 37,
+  "live_odoo_install_or_registry_tested": false,
+  "xml_loader_normalization_is_simulated": true
+}

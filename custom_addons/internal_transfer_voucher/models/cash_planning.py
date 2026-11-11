@@ -1,0 +1,656 @@
+from odoo import api, fields, models, _
+from odoo.exceptions import UserError, ValidationError
+
+
+class CashPlanCategory(models.Model):
+    _name = 'cash.plan.category'
+    _description = 'Cash Planning Category'
+    _order = 'flow_type, sequence, name'
+
+    name = fields.Char(required=True, translate=True)
+    flow_type = fields.Selection([('in', 'Cash Inflow'), ('out', 'Cash Outflow')], required=True)
+    sequence = fields.Integer(default=10)
+    active = fields.Boolean(default=True)
+    company_id = fields.Many2one('res.company', default=lambda self: self.env.company)
+
+    @api.model
+    def _make_default_categories_shared(self):
+        """Keep module-provided categories usable by every allowed company.
+
+        Categories created manually by users remain company-specific.  The
+        predefined XML categories are configuration/master data and must not
+        inherit whichever company happened to be active when the module was
+        first installed.
+        """
+        xmlids = [
+            'cat_in_sales', 'cat_in_customer', 'cat_in_loan', 'cat_in_other',
+            'cat_out_supplier', 'cat_out_subcontractor', 'cat_out_payroll',
+            'cat_out_manpower', 'cat_out_rent', 'cat_out_legal',
+            'cat_out_insurance', 'cat_out_cash', 'cat_out_loans',
+            'cat_out_other', 'cat_out_unplanned', 'cat_in_unplanned',
+        ]
+        categories = self.env['cash.plan.category']
+        for xmlid in xmlids:
+            category = self.env.ref(
+                'internal_transfer_voucher.%s' % xmlid,
+                raise_if_not_found=False,
+            )
+            if category:
+                categories |= category
+        if categories:
+            categories.sudo().write({'company_id': False})
+        return True
+
+
+class CashPlanRun(models.Model):
+    _name = 'cash.plan.run'
+    _description = 'Weekly Cash Plan'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _order = 'date_from desc, id desc'
+
+    name = fields.Char(default='New', readonly=True, copy=False)
+    date_from = fields.Date(required=True, tracking=True)
+    date_to = fields.Date(required=True, tracking=True)
+    company_id = fields.Many2one('res.company', required=True, default=lambda self: self.env.company)
+    currency_id = fields.Many2one(related='company_id.currency_id', store=True)
+    opening_balance = fields.Monetary(tracking=True)
+    budget_amount = fields.Monetary(string='Weekly Payment Budget', tracking=True)
+    notes = fields.Html()
+    line_ids = fields.One2many('cash.plan.line', 'run_id', copy=True)
+    state = fields.Selection([
+        ('draft', 'Draft'), ('submitted', 'Submitted'), ('approved', 'Approved'),
+        ('in_progress', 'In Progress'), ('done', 'Completed'), ('cancel', 'Cancelled')
+    ], default='draft', tracking=True)
+
+    forecast_inflow = fields.Monetary(compute='_compute_totals', store=True)
+    forecast_outflow = fields.Monetary(compute='_compute_totals', store=True)
+    actual_inflow = fields.Monetary(compute='_compute_totals', store=True)
+    actual_outflow = fields.Monetary(compute='_compute_totals', store=True)
+    forecast_net = fields.Monetary(compute='_compute_totals', store=True)
+    actual_net = fields.Monetary(compute='_compute_totals', store=True)
+    forecast_closing = fields.Monetary(compute='_compute_totals', store=True)
+    actual_closing = fields.Monetary(compute='_compute_totals', store=True)
+    forecast_variance = fields.Monetary(compute='_compute_totals', store=True)
+    budget_remaining = fields.Monetary(compute='_compute_totals', store=True)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', 'New') == 'New':
+                vals['name'] = self.env['ir.sequence'].next_by_code('cash.plan.run') or 'New'
+        return super().create(vals_list)
+
+    @api.depends('opening_balance', 'budget_amount', 'line_ids.flow_type', 'line_ids.forecast_amount',
+                 'line_ids.actual_amount', 'line_ids.state')
+    def _compute_totals(self):
+        for rec in self:
+            active_lines = rec.line_ids.filtered(lambda l: l.state != 'cancel')
+            rec.forecast_inflow = sum(active_lines.filtered(lambda l: l.flow_type == 'in').mapped('forecast_amount'))
+            rec.forecast_outflow = sum(active_lines.filtered(lambda l: l.flow_type == 'out').mapped('forecast_amount'))
+            rec.actual_inflow = sum(active_lines.filtered(lambda l: l.flow_type == 'in').mapped('actual_amount'))
+            rec.actual_outflow = sum(active_lines.filtered(lambda l: l.flow_type == 'out').mapped('actual_amount'))
+            rec.forecast_net = rec.forecast_inflow - rec.forecast_outflow
+            rec.actual_net = rec.actual_inflow - rec.actual_outflow
+            rec.forecast_closing = rec.opening_balance + rec.forecast_net
+            rec.actual_closing = rec.opening_balance + rec.actual_net
+            rec.forecast_variance = rec.actual_closing - rec.forecast_closing
+            rec.budget_remaining = rec.budget_amount - rec.forecast_outflow if rec.budget_amount else 0.0
+
+    @api.constrains('date_from', 'date_to')
+    def _check_dates(self):
+        for rec in self:
+            if rec.date_to < rec.date_from:
+                raise ValidationError(_('End date cannot be before start date.'))
+
+    def action_submit(self): self.write({'state': 'submitted'})
+    def action_approve(self): self.write({'state': 'approved'})
+    def action_start(self): self.write({'state': 'in_progress'})
+    def action_done(self): self.write({'state': 'done'})
+    def action_cancel(self): self.write({'state': 'cancel'})
+    def action_draft(self): self.write({'state': 'draft'})
+
+
+class CashPlanLine(models.Model):
+    _name = 'cash.plan.line'
+    _description = 'Cash Planning Line'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _order = 'planned_date, priority, id'
+
+    name = fields.Char(required=True, tracking=True, default=lambda self: _('Planned Cash Movement'))
+    run_id = fields.Many2one(
+        'cash.plan.run', string='Weekly Plan', ondelete='set null', index=True, tracking=True,
+        help='Optional. A planned payment or receipt appears in a weekly plan only after it is explicitly added.'
+    )
+    company_id = fields.Many2one(
+        'res.company', required=True, default=lambda self: self.env.company, index=True
+    )
+    currency_id = fields.Many2one(related='company_id.currency_id', store=True, readonly=True)
+    planned_date = fields.Date(
+        string='Added to Plan Date', tracking=True, copy=False,
+        help='Set automatically to the date the payment is added to a weekly plan.'
+    )
+    added_to_plan_on = fields.Datetime(string='Added to Plan On', readonly=True, copy=False, tracking=True)
+    added_to_plan_by = fields.Many2one('res.users', string='Added to Plan By', readonly=True, copy=False, tracking=True)
+    is_in_weekly_plan = fields.Boolean(string='In Weekly Plan', compute='_compute_is_in_weekly_plan', store=True)
+    flow_type = fields.Selection([('out', 'Payment'), ('in', 'Receipt')], required=True, tracking=True)
+    transaction_type = fields.Selection([
+        ('supplier', 'Supplier / Subcontractor'), ('expense', 'Expense'), ('payroll', 'Payroll / Manpower'),
+        ('cash', 'Cash Withdrawal / Deposit'), ('transfer', 'Journal Transfer'), ('loan', 'Loan / Financing'),
+        ('customer', 'Customer Collection'), ('revenue', 'Sales / Revenue'), ('other', 'Other')
+    ], required=True, default='supplier', tracking=True)
+    category_id = fields.Many2one('cash.plan.category', required=True, domain="[('flow_type', '=', flow_type), '|', ('company_id', '=', False), ('company_id', '=', company_id)]")
+    partner_id = fields.Many2one('res.partner', tracking=True)
+    project_id = fields.Many2one('project.project', tracking=True)
+    forecast_amount = fields.Monetary(required=True, tracking=True)
+    actual_amount = fields.Monetary(compute='_compute_actual', store=True)
+    variance_amount = fields.Monetary(compute='_compute_actual', store=True)
+    priority = fields.Selection([('0', 'Low'), ('1', 'Normal'), ('2', 'High'), ('3', 'Urgent')], default='1', tracking=True)
+    funding_status = fields.Selection([('funded', 'Funded'), ('partial', 'Partially Funded'), ('unfunded', 'Not Funded')], default='funded', tracking=True)
+    journal_id = fields.Many2one('account.journal', domain="[('company_id', '=', company_id), ('default_account_id', '!=', False)]")
+    destination_journal_id = fields.Many2one('account.journal', domain="[('company_id', '=', company_id), ('default_account_id', '!=', False)]")
+    account_id = fields.Many2one('account.account', domain="[('company_ids', 'in', company_id)]")
+    purchase_order_ids = fields.Many2many(
+        'purchase.order',
+        string='Purchase Order(s) to Pay',
+        tracking=True,
+        domain="[('partner_id', '=', partner_id), ('company_id', '=', company_id), ('state', 'in', ('purchase', 'done'))]",
+        help='Optional: select the confirmed Purchase Order or Purchase Orders covered by this planned payment when applicable.',
+    )
+    linked_purchase_order_ids = fields.Many2many(
+        'purchase.order',
+        string='Linked Purchase Orders',
+        compute='_compute_linked_purchase_order_ids',
+        help='Purchase Orders selected on the plan or on its generated Payment Voucher.',
+    )
+    po_amount_paid = fields.Monetary(
+        string='PO Amount Paid',
+        compute='_compute_po_payment_summary',
+        currency_field='currency_id',
+        help='Total amount already paid against the selected Purchase Order(s), converted to the weekly plan currency.',
+    )
+    po_balance_due = fields.Monetary(
+        string='PO Due Balance',
+        compute='_compute_po_payment_summary',
+        currency_field='currency_id',
+        help='Total remaining balance on the selected Purchase Order(s), converted to the weekly plan currency.',
+    )
+    bill_ids = fields.Many2many('account.move', 'cash_plan_line_bill_rel', 'line_id', 'move_id', string='Vendor Bills', domain="[('partner_id', '=', partner_id), ('move_type', '=', 'in_invoice'), ('state', '=', 'posted'), ('company_id', '=', company_id)]")
+    invoice_ids = fields.Many2many('account.move', 'cash_plan_line_invoice_rel', 'line_id', 'move_id', string='Customer Invoices', domain="[('partner_id', '=', partner_id), ('move_type', '=', 'out_invoice'), ('state', '=', 'posted'), ('company_id', '=', company_id)]")
+    description = fields.Text()
+    state = fields.Selection([
+        ('planned', 'Planned'),
+        ('approved', 'Awaiting Payment'),
+        ('executed', 'Paid'),
+        ('cancel', 'Cancelled'),
+    ], default='planned', tracking=True)
+    payment_voucher_id = fields.Many2one('account.payment.voucher', readonly=True, copy=False)
+    receipt_voucher_id = fields.Many2one('account.receipt.voucher', readonly=True, copy=False)
+    receipt_voucher_state = fields.Selection(related='receipt_voucher_id.state', readonly=True)
+    internal_transfer_id = fields.Many2one('account.internal.transfer', readonly=True, copy=False)
+    is_unplanned = fields.Boolean(
+        string='Unplanned Actual',
+        default=False,
+        copy=False,
+        readonly=True,
+        help='Automatically set when this record was created from a Payment or Receipt Voucher that was '
+             'raised directly by the Accountant, without going through the planning / CEO approval flow.',
+    )
+    is_locked = fields.Boolean(
+        string='Locked',
+        compute='_compute_is_locked',
+        store=True,
+        help='Once a planned payment has been submitted to the CEO, its content can no longer be '
+             'edited until it is reset back to Draft.',
+    )
+
+
+    @api.depends('run_id')
+    def _compute_is_in_weekly_plan(self):
+        for rec in self:
+            rec.is_in_weekly_plan = bool(rec.run_id)
+
+    def _assign_to_weekly_plan(self, run, added_by=None):
+        self.ensure_one()
+        if not run:
+            raise UserError(_('Select a weekly plan.'))
+        if run.company_id != self.company_id:
+            raise UserError(_('The selected weekly plan belongs to another company.'))
+        if run.state in ('done', 'cancel'):
+            raise UserError(_('You cannot add a cash movement to a completed or cancelled weekly plan.'))
+        today = fields.Date.context_today(self)
+        self.with_context(allow_locked_write=True).write({
+            'run_id': run.id,
+            'planned_date': self.planned_date or today,
+            'added_to_plan_on': fields.Datetime.now(),
+            'added_to_plan_by': (added_by or self.env.user).id,
+        })
+        return True
+
+    def action_add_to_plan(self):
+        self.ensure_one()
+        self._check_any_group(
+            ['internal_transfer_voucher.group_payment_execution_manager'],
+            'Only a Payment Execution Manager can add this cash movement to a weekly plan from the backend.',
+        )
+        if self.run_id:
+            raise UserError(_('This planned cash movement is already included in %s.') % self.run_id.display_name)
+        if self.state == 'cancel':
+            raise UserError(_('A cancelled cash movement cannot be added to a weekly plan.'))
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Add to Weekly Plan'),
+            'res_model': 'cash.plan.add.to.run.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_line_id': self.id},
+        }
+
+    def action_remove_from_plan(self):
+        for line in self:
+            line._check_any_group(
+                ['internal_transfer_voucher.group_payment_execution_manager'],
+                'Only a Payment Execution Manager can remove this cash movement from a weekly plan from the backend.',
+            )
+            if line.run_id and line.run_id.state in ('done', 'cancel'):
+                raise UserError(_('You cannot remove a cash movement from a completed or cancelled weekly plan.'))
+            line.with_context(allow_locked_write=True).write({
+                'run_id': False,
+                'planned_date': False,
+                'added_to_plan_on': False,
+                'added_to_plan_by': False,
+            })
+        return True
+
+    @api.model
+    def retrieve_dashboard(self):
+        """Counts for the Planned Payments status cards in the backend list."""
+        base = [('flow_type', '=', 'out')]
+        count = self.search_count
+        return {
+            'all_count': count(base),
+            'not_sent_count': count(base + [('ceo_decision', '=', 'not_sent')]),
+            'pending_count': count(base + [('ceo_decision', '=', 'pending')]),
+            'approved_count': count(base + [('ceo_decision', 'in', ('approved', 'adjusted'))]),
+            'held_count': count(base + [('ceo_decision', '=', 'held')]),
+            'rejected_count': count(base + [('ceo_decision', '=', 'rejected')]),
+            'paid_count': count(base + [('state', '=', 'executed')]),
+            'added_to_plan_count': count(base + [('run_id', '!=', False)]),
+            'not_added_to_plan_count': count(base + [('run_id', '=', False)]),
+        }
+
+    @api.depends('flow_type', 'ceo_decision', 'state')
+    def _compute_is_locked(self):
+        for rec in self:
+            rec.is_locked = (
+                rec.flow_type == 'out'
+                and rec.ceo_decision not in ('not_sent', 'not_required', False)
+                and rec.state != 'cancel'
+            )
+
+    # Fields that make up the content of a planned payment. Once the record has been
+    # submitted to the CEO (is_locked = True) these can no longer be changed until the
+    # record is reset to draft via action_reset_to_draft().
+    _LOCKED_PROTECTED_FIELDS = {
+        'name', 'planned_date', 'flow_type', 'transaction_type', 'category_id',
+        'partner_id', 'project_id', 'forecast_amount', 'priority', 'funding_status',
+        'journal_id', 'destination_journal_id', 'account_id', 'purchase_order_ids',
+        'bill_ids', 'invoice_ids', 'description', 'run_id',
+    }
+
+    @api.depends(
+        'purchase_order_ids',
+        'purchase_order_ids.amount_paid',
+        'purchase_order_ids.amount_paid_residual',
+        'purchase_order_ids.currency_id',
+        'planned_date',
+        'currency_id',
+        'company_id',
+    )
+    def _compute_po_payment_summary(self):
+        for line in self:
+            paid = 0.0
+            due = 0.0
+            conversion_date = line.planned_date or fields.Date.context_today(line)
+            for order in line.purchase_order_ids:
+                paid += order.currency_id._convert(
+                    order.amount_paid,
+                    line.currency_id,
+                    line.company_id,
+                    conversion_date,
+                )
+                due += order.currency_id._convert(
+                    order.amount_paid_residual,
+                    line.currency_id,
+                    line.company_id,
+                    conversion_date,
+                )
+            line.po_amount_paid = paid
+            line.po_balance_due = due
+
+    @api.depends(
+        'purchase_order_ids',
+        'payment_voucher_id.purchase_order_ids',
+        'payment_voucher_id.purchase_order_id',
+        'payment_voucher_id.po_allocation_ids.purchase_order_id',
+    )
+    def _compute_linked_purchase_order_ids(self):
+        """Return only the PO(s) that actually belong to this payment.
+
+        Before a Payment Voucher exists, the planned payment selection is the
+        source of truth. Once a voucher is created, its current PO allocation is
+        the source of truth, so an old PO removed from the voucher is not still
+        shown to the CEO from the original plan.
+        """
+        for rec in self:
+            voucher = rec.payment_voucher_id
+            if not voucher:
+                rec.linked_purchase_order_ids = rec.purchase_order_ids
+                continue
+
+            orders = voucher.po_allocation_ids.mapped('purchase_order_id')
+            if not orders:
+                orders = voucher.purchase_order_ids
+            if not orders and voucher.purchase_order_id:
+                orders = voucher.purchase_order_id
+            rec.linked_purchase_order_ids = orders
+
+    @api.depends('payment_voucher_id.state', 'payment_voucher_id.amount', 'receipt_voucher_id.state',
+                 'receipt_voucher_id.amount', 'internal_transfer_id.state', 'internal_transfer_id.amount', 'forecast_amount')
+    def _compute_actual(self):
+        for rec in self:
+            actual = 0.0
+            if rec.payment_voucher_id and rec.payment_voucher_id.state == 'posted':
+                actual = rec.payment_voucher_id.amount
+            elif rec.receipt_voucher_id and rec.receipt_voucher_id.state == 'posted':
+                actual = rec.receipt_voucher_id.amount
+            elif rec.internal_transfer_id and rec.internal_transfer_id.state == 'posted':
+                actual = rec.internal_transfer_id.amount
+            rec.actual_amount = actual
+            rec.variance_amount = actual - rec.forecast_amount
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('name'):
+                vals['name'] = self._prepare_default_name(vals)
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if 'name' in vals and not vals.get('name'):
+            vals['name'] = _('Planned Cash Movement')
+        locked_fields = self._LOCKED_PROTECTED_FIELDS.intersection(vals.keys())
+        if locked_fields and not self.env.context.get('allow_locked_write'):
+            locked_recs = self.filtered('is_locked')
+            if locked_recs:
+                raise UserError(_(
+                    'This planned payment has already been submitted to the CEO and can no longer be '
+                    'changed. Reset it to draft first if you need to edit it.'
+                ))
+        return super().write(vals)
+
+    @api.onchange('category_id', 'partner_id', 'transaction_type', 'flow_type')
+    def _onchange_planning_name(self):
+        for rec in self:
+            if not rec.name or rec.name == _('Planned Cash Movement'):
+                parts = []
+                if rec.category_id:
+                    parts.append(rec.category_id.display_name)
+                elif rec.transaction_type:
+                    parts.append(dict(rec._fields['transaction_type'].selection).get(rec.transaction_type))
+                if rec.partner_id:
+                    parts.append(rec.partner_id.display_name)
+                rec.name = ' - '.join(filter(None, parts)) or _('Planned Cash Movement')
+
+    def _prepare_default_name(self, vals):
+        parts = []
+        category_id = vals.get('category_id')
+        partner_id = vals.get('partner_id')
+        transaction_type = vals.get('transaction_type')
+        if category_id:
+            category = self.env['cash.plan.category'].browse(category_id).exists()
+            if category:
+                parts.append(category.display_name)
+        elif transaction_type:
+            parts.append(dict(self._fields['transaction_type'].selection).get(transaction_type))
+        if partner_id:
+            partner = self.env['res.partner'].browse(partner_id).exists()
+            if partner:
+                parts.append(partner.display_name)
+        return ' - '.join(filter(None, parts)) or _('Planned Cash Movement')
+
+
+    @api.onchange('partner_id', 'company_id', 'transaction_type', 'flow_type')
+    def _onchange_planned_payment_purchase_orders(self):
+        """Never retain a PO that does not belong to the current planned payment."""
+        for rec in self:
+            if rec.flow_type != 'out' or rec.transaction_type != 'supplier' or not rec.partner_id:
+                rec.purchase_order_ids = [(5, 0, 0)]
+                continue
+            valid_orders = rec.purchase_order_ids.filtered(
+                lambda po: po.partner_id == rec.partner_id
+                and po.company_id == rec.company_id
+                and po.state in ('purchase', 'done')
+            )
+            if valid_orders != rec.purchase_order_ids:
+                rec.purchase_order_ids = [(6, 0, valid_orders.ids)]
+
+    @api.constrains('purchase_order_ids', 'partner_id', 'company_id', 'transaction_type', 'flow_type')
+    def _check_planned_payment_purchase_orders(self):
+        for rec in self:
+            if rec.flow_type != 'out' or rec.transaction_type != 'supplier':
+                continue
+            invalid = rec.purchase_order_ids.filtered(
+                lambda po: po.partner_id != rec.partner_id
+                or po.company_id != rec.company_id
+                or po.state not in ('purchase', 'done')
+            )
+            if invalid:
+                raise ValidationError(_(
+                    'Every selected Purchase Order must be confirmed and must belong to the selected supplier and company.'
+                ))
+
+    @api.constrains('forecast_amount')
+    def _check_amount(self):
+        for rec in self:
+            if not rec.is_unplanned and rec.forecast_amount <= 0:
+                raise ValidationError(_('Forecast amount must be greater than zero.'))
+
+    def action_approve(self):
+        self.write({'state': 'approved'})
+
+    def action_cancel(self):
+        self.write({'state': 'cancel'})
+
+    def action_execute(self):
+        self.ensure_one()
+        if self.state == 'cancel':
+            raise UserError(_('Cancelled planning lines cannot be executed.'))
+        if self.payment_voucher_id or self.receipt_voucher_id or self.internal_transfer_id:
+            return self.action_open_document()
+        if not self.journal_id:
+            raise UserError(_('Select the expected journal before execution.'))
+
+        common = {
+            'date': self.planned_date or fields.Date.context_today(self),
+            'amount': self.forecast_amount,
+            'currency_id': self.currency_id.id,
+            'company_id': self.company_id.id,
+            'description': self.description or self.name,
+        }
+        action = False
+        if self.transaction_type == 'transfer':
+            if not self.destination_journal_id:
+                raise UserError(_('Select a destination journal.'))
+            transfer = self.env['account.internal.transfer'].create({
+                **common, 'source_journal_id': self.journal_id.id,
+                'line_ids': [(0, 0, {'journal_id': self.destination_journal_id.id, 'amount': self.forecast_amount})],
+            })
+            self.internal_transfer_id = transfer
+            action = self._document_action('account.internal.transfer', transfer.id)
+        elif self.flow_type == 'out':
+            if not self.partner_id:
+                raise UserError(_('Select a partner for the planned payment.'))
+            vals = {**common, 'partner_id': self.partner_id.id, 'journal_id': self.journal_id.id,
+                    'account_id': self.account_id.id if self.account_id else False,
+                    'bill_ids': [(6, 0, self.bill_ids.ids)], 'purchase_order_ids': [(6, 0, self.purchase_order_ids.ids)]}
+            voucher = self.env['account.payment.voucher'].with_context(
+                skip_cash_plan_autolink=True).create(vals)
+            self.payment_voucher_id = voucher
+            voucher.cash_plan_line_id = self.id
+            action = self._document_action('account.payment.voucher', voucher.id)
+        else:
+            if not self.partner_id:
+                raise UserError(_('Select a partner for the planned receipt.'))
+            if not self.account_id:
+                raise UserError(_('Select an income or receivable account.'))
+            voucher = self.env['account.receipt.voucher'].with_context(
+                skip_cash_plan_autolink=True
+            ).create({
+                **common, 'partner_id': self.partner_id.id, 'journal_id': self.journal_id.id,
+                'account_id': self.account_id.id, 'invoice_ids': [(6, 0, self.invoice_ids.ids)]})
+            self.receipt_voucher_id = voucher
+            voucher.cash_plan_line_id = self.id
+            action = self._document_action('account.receipt.voucher', voucher.id)
+        self.state = 'executed'
+        return action
+
+
+    def action_create_receipt_voucher(self):
+        """Create a draft Receipt Voucher from a planned receipt.
+
+        Payment Execution Managers can perform this handoff. The accounting
+        voucher remains in Draft until the accountant reviews and posts it.
+        """
+        self.ensure_one()
+        self._check_any_group(
+            [
+                'internal_transfer_voucher.group_payment_execution_manager',
+                'internal_transfer_voucher.group_weekly_payment_plan_manager',
+            ],
+            'Only a Payment Execution Manager or Weekly Payment Plan Manager can create the Receipt Voucher.',
+        )
+        if self.flow_type != 'in':
+            raise UserError(_('This action is only available for planned receipts.'))
+        if self.state == 'cancel':
+            raise UserError(_('A cancelled planned receipt cannot create a Receipt Voucher.'))
+        if not self.run_id:
+            raise UserError(_('Add this planned receipt to a weekly plan before creating the Receipt Voucher.'))
+        if self.receipt_voucher_id:
+            return self.action_open_document()
+        if not self.partner_id:
+            raise UserError(_('Select the customer or received-from partner.'))
+        if not self.journal_id:
+            raise UserError(_('Select the receiving journal before creating the Receipt Voucher.'))
+        if not self.account_id:
+            raise UserError(_('Select an income or receivable account before creating the Receipt Voucher.'))
+
+        voucher = self.env['account.receipt.voucher'].with_context(
+            skip_cash_plan_autolink=True
+        ).create({
+            'date': self.planned_date or fields.Date.context_today(self),
+            'amount': self.forecast_amount,
+            'currency_id': self.currency_id.id,
+            'company_id': self.company_id.id,
+            'description': self.description or self.name,
+            'partner_id': self.partner_id.id,
+            'journal_id': self.journal_id.id,
+            'account_id': self.account_id.id,
+            'invoice_ids': [(6, 0, self.invoice_ids.ids)],
+        })
+        self.with_context(allow_locked_write=True).write({
+            'receipt_voucher_id': voucher.id,
+            'state': 'executed',
+        })
+        voucher.with_context(skip_cash_plan_link_lock=True).write({
+            'cash_plan_line_id': self.id,
+        })
+        return self._document_action('account.receipt.voucher', voucher.id)
+
+    def action_reset_receipt_to_draft(self):
+        """Undo a generated draft receipt voucher and reopen the planned receipt."""
+        self.ensure_one()
+        self._check_any_group(
+            [
+                'internal_transfer_voucher.group_payment_execution_manager',
+                'internal_transfer_voucher.group_weekly_payment_plan_manager',
+            ],
+            'Only a Payment Execution Manager or Weekly Payment Plan Manager can reset this planned receipt.',
+        )
+        if self.flow_type != 'in':
+            raise UserError(_('This action is only available for planned receipts.'))
+        voucher = self.receipt_voucher_id
+        if not voucher:
+            self.with_context(allow_locked_write=True).write({'state': 'planned'})
+            return True
+        if voucher.state != 'draft':
+            raise UserError(_(
+                'The Receipt Voucher is already posted or cancelled. Reset or cancel it from the Receipt Voucher first.'
+            ))
+        voucher.with_context(skip_cash_plan_link_lock=True).write({'cash_plan_line_id': False})
+        self.with_context(allow_locked_write=True).write({
+            'receipt_voucher_id': False,
+            'state': 'planned',
+        })
+        voucher.unlink()
+        return True
+
+
+    @api.model
+    def _assign_existing_unplanned_actuals_by_voucher_date(self):
+        """Migration helper used on module upgrade for already-created direct vouchers."""
+        lines = self.sudo().search([('is_unplanned', '=', True)])
+        for line in lines:
+            voucher = line.payment_voucher_id or line.receipt_voucher_id
+            if not voucher or not voucher.date or not voucher.company_id:
+                continue
+            run = self.env['cash.plan.run'].sudo().search([
+                ('company_id', '=', voucher.company_id.id),
+                ('date_from', '<=', voucher.date),
+                ('date_to', '>=', voucher.date),
+                ('state', '!=', 'cancel'),
+            ], order='date_from desc, id desc', limit=1)
+            values = {
+                'run_id': run.id if run else False,
+                'planned_date': voucher.date,
+            }
+            if line.payment_voucher_id:
+                values['description'] = _(
+                    'Created directly from Payment Voucher %s. The voucher date automatically selects the matching '
+                    'Weekly Cash Plan; this line remains classified as an Unplanned Actual.'
+                ) % voucher.name
+            else:
+                values['description'] = _(
+                    'Created directly from Receipt Voucher %s. The voucher date automatically selects the matching '
+                    'Weekly Cash Plan; this line remains classified as an Unplanned Actual.'
+                ) % voucher.name
+            line.with_context(allow_locked_write=True).write(values)
+        return True
+
+    def action_link_existing_voucher(self):
+        self.ensure_one()
+        if self.state == 'cancel':
+            raise UserError(_('A cancelled planned movement cannot be linked to a voucher.'))
+        if self.payment_voucher_id or self.receipt_voucher_id or self.internal_transfer_id:
+            raise UserError(_('This planned movement already has an executed document linked to it.'))
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Link Existing Voucher'),
+            'res_model': 'cash.plan.link.voucher.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_line_id': self.id},
+        }
+
+    def _document_action(self, model, res_id):
+        return {'type': 'ir.actions.act_window', 'res_model': model, 'res_id': res_id,
+                'view_mode': 'form', 'target': 'current'}
+
+    def action_open_document(self):
+        self.ensure_one()
+        if self.payment_voucher_id:
+            return self._document_action('account.payment.voucher', self.payment_voucher_id.id)
+        if self.receipt_voucher_id:
+            return self._document_action('account.receipt.voucher', self.receipt_voucher_id.id)
+        if self.internal_transfer_id:
+            return self._document_action('account.internal.transfer', self.internal_transfer_id.id)
+        raise UserError(_('No executed voucher exists yet.'))

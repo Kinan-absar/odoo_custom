@@ -1,0 +1,39 @@
+<odoo>
+    <record id="view_cash_plan_link_voucher_wizard_form" model="ir.ui.view">
+        <field name="name">cash.plan.link.voucher.wizard.form</field>
+        <field name="model">cash.plan.link.voucher.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Link Existing Voucher">
+                <group>
+                    <field name="line_id"/>
+                    <field name="flow_type" invisible="1"/>
+                    <field name="company_id" invisible="1"/>
+                    <field name="partner_id" invisible="1"/>
+                    <field name="payment_voucher_id"
+                           options="{'no_create': True, 'no_create_edit': True}"
+                           invisible="flow_type != 'out'"
+                           required="flow_type == 'out'"/>
+                    <field name="receipt_voucher_id"
+                           options="{'no_create': True, 'no_create_edit': True}"
+                           invisible="flow_type != 'in'"
+                           required="flow_type == 'in'"/>
+                </group>
+                <div class="alert alert-info" role="alert">
+                    If the selected voucher already created an automatic Unplanned Actual line,
+                    that line will be removed and the voucher will be transferred to this planned movement.
+                </div>
+                <footer>
+                    <button name="action_link_voucher" type="object" string="Link Voucher" class="btn-primary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_cash_plan_link_voucher_wizard" model="ir.actions.act_window">
+        <field name="name">Link Existing Voucher</field>
+        <field name="res_model">cash.plan.link.voucher.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

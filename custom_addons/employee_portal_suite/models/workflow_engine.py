@@ -86,6 +86,7 @@ class EmployeePortalWorkflow(models.Model):
     _description = 'Employee Portal Approval Workflow'
     _order = 'applies_to, project_id, sequence, name'
 
+    is_template = fields.Boolean(default=False, copy=False)
     name = fields.Char(required=True, tracking=True)
     active = fields.Boolean(default=True)
     sequence = fields.Integer(default=10)
@@ -125,6 +126,21 @@ class EmployeePortalWorkflow(models.Model):
     def _compute_step_count(self):
         for rec in self:
             rec.step_count = len(rec.step_ids)
+
+    def action_use_template(self):
+        self.ensure_one()
+        if not self.is_template:
+            raise UserError(_('Choose a workflow template first.'))
+        workflow = self.copy({'name': self.name + _(' - Project Copy'),
+                              'is_template': False, 'active': False, 'project_id': False})
+        return {'type': 'ir.actions.act_window', 'res_model': self._name,
+                'res_id': workflow.id, 'view_mode': 'form', 'target': 'current',
+                'context': {'active_test': False}}
+
+    @api.constrains('is_template', 'active')
+    def _check_template_inactive(self):
+        if any(rec.is_template and rec.active for rec in self):
+            raise ValidationError(_('Templates cannot be activated. Use Create Project Workflow, fill the project and approvers, then activate the copy.'))
 
     @api.onchange('applies_to')
     def _onchange_applies_to(self):
@@ -172,7 +188,7 @@ class EmployeePortalWorkflow(models.Model):
         Priority for MR: project, then default.
         """
         company = company or (project.company_id if project else self.env.company)
-        base = [('active', '=', True), ('company_id', '=', company.id), ('applies_to', '=', applies_to)]
+        base = [('is_template', '=', False), ('active', '=', True), ('company_id', '=', company.id), ('applies_to', '=', applies_to)]
         project_id = project.id if project else False
         candidates = []
         if applies_to == 'employee_request':
@@ -234,7 +250,7 @@ class EmployeePortalWorkflowStep(models.Model):
         if self.approver_type != 'user':
             self.user_id = False
 
-    @api.constrains('approver_type', 'role_assignment_id', 'user_id')
+    @api.constrains('approver_type', 'approval_role_id', 'role_assignment_id', 'user_id')
     def _check_approver_source(self):
         for rec in self:
             if rec.approver_type == 'approval_role' and not rec.approval_role_id:

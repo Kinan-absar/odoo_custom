@@ -1,0 +1,20 @@
+--- v0.9.7/__manifest__.py
++++ v0.9.8/__manifest__.py
+@@ -1,5 +1,5 @@
+ {'name': 'Portal Backend Workspace - Employee Portal Bridge',
+- 'version': '18.0.0.9.7',
++ 'version': '18.0.0.9.8',
+  'summary': 'Shared bell, navigation, existing customer/project mapping and '
+             'optional technical proposal editing',
+  'category': 'Productivity',
+--- v0.9.7/views/proposals.xml
++++ v0.9.8/views/proposals.xml
+@@ -34,7 +34,7 @@
+ <td><span t-field="p.amount"/></td>
+ <td><div t-if="can_edit" class="d-flex gap-2"><form method="post" t-att-id="'pbw-milestone-%s' % p.id" t-att-action="'/my/workspace/sales/%s/milestone/%s/save' % (order.id,p.id)"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><button class="btn btn-sm btn-outline-primary">Save Milestone</button></form><form method="post" t-att-action="'/my/workspace/sales/%s/milestone/%s/delete' % (order.id,p.id)"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><button class="btn btn-sm btn-outline-danger">Remove</button></form></div></td>
+ </tr></tbody></table></div>
+-<p class="text-muted small">Milestones use the VAT-exclusive quotation total. Total: <strong t-out="'%.2f%%' % sum(order.absar_proposal_payment_ids.mapped('percentage'))"/>. Milestones must total 100% before printing.</p>
++<p class="text-muted small">Milestones use the VAT-exclusive quotation total. Total: <strong t-translation="off"><t t-out="'{:.2f}'.format(sum(order.absar_proposal_payment_ids.mapped('percentage')))"/>%</strong>. Milestones must total 100% before printing.</p>
+ <form t-if="can_edit" method="post" t-att-action="'/my/workspace/sales/%s/milestone/add' % order.id" class="row g-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><div class="col-md-4"><input class="form-control" name="name" placeholder="Milestone" required="required"/></div><div class="col-md-2"><input class="form-control" name="percentage" type="number" step="0.01" min="0" max="100" placeholder="%" required="required"/></div><div class="col-md-4"><input class="form-control" name="due_condition" placeholder="Payment due condition"/></div><div class="col-md-2"><button class="btn btn-outline-primary">Add</button></div></form>
+ </div></t>
+     </xpath>

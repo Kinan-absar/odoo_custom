@@ -1,0 +1,119 @@
+/* Portal-only presentation. Backend lists, report PDFs and transaction forms keep their logic. */
+.pbwep-portal-main{--bs-primary:#087f83;--bs-primary-rgb:8,127,131;--bs-link-color:#087f83;--bs-link-hover-color:#07686b;--pbw-primary:#087f83;--pbw-border:#d8e8e9}
+.pbwep-portal-main .btn-primary{background:#087f83!important;border:1px solid #087f83!important;color:#fff!important;box-shadow:none!important;transform:none!important}
+.pbwep-portal-main .btn-primary:hover,.pbwep-portal-main .btn-primary:focus-visible{background:#07686b!important;border-color:#07686b!important}
+.pbwep-portal-main .btn-outline-primary{--bs-btn-color:#087f83;--bs-btn-border-color:#087f83;--bs-btn-hover-bg:#087f83;--bs-btn-hover-border-color:#087f83;--bs-btn-active-bg:#07686b;--bs-btn-active-border-color:#07686b;color:#087f83;border-color:#087f83}
+.pbwep-portal-main .btn-outline-primary:hover,.pbwep-portal-main .btn-outline-primary:active{color:#fff;background:#087f83;border-color:#087f83}
+.pbwep-portal-main .text-primary{color:#087f83!important}.pbwep-portal-main .badge-primary,.pbwep-portal-main .bg-primary{background-color:#087f83!important;color:white!important}
+.pbwep-portal-main :is(input,select,textarea):focus{border-color:#087f83;box-shadow:0 0 0 3px rgba(8,127,131,.1)}
+.pbwep-portal-main .pbw-list-page-card{border:0!important;background:transparent!important;box-shadow:none!important}
+.pbwep-portal-main .pbw-list-scroll{overflow-x:auto!important;max-width:100%;padding:0 2px 5px;isolation:isolate}
+.pbwep-portal-main table.pbw-compact-list{width:100%!important;min-width:var(--pbw-list-width,900px);table-layout:fixed;border-collapse:separate!important;border-spacing:0 5px!important;background:transparent!important;margin:8px 0 0!important;border:0!important;font-size:13px;line-height:1.4;color:#203b4a}
+.pbwep-portal-main table.pbw-compact-list thead{background:transparent!important}
+.pbwep-portal-main table.pbw-compact-list th{background:transparent!important;border:0!important;color:#617580!important;font-size:11px!important;font-weight:700!important;vertical-align:middle!important;padding:7px 13px!important;white-space:nowrap!important;text-transform:none!important;letter-spacing:0!important;box-shadow:none!important}
+.pbwep-portal-main table.pbw-compact-list tbody tr{height:48px;background:transparent!important}
+.pbwep-portal-main table.pbw-compact-list td{height:48px;background:#fff!important;vertical-align:middle!important;padding:9px 13px!important;border:0!important;border-top:1px solid #d8e8e9!important;border-bottom:1px solid #d8e8e9!important;box-shadow:none!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap!important;font-size:13px!important;line-height:1.4!important}
+.pbwep-portal-main table.pbw-compact-list td:first-child{border-left:4px solid #19858c!important;border-radius:8px 0 0 8px!important;font-weight:650}
+.pbwep-portal-main table.pbw-compact-list td:last-child{border-right:1px solid #d8e8e9!important;border-radius:0 8px 8px 0!important}
+.pbwep-portal-main table.pbw-compact-list td[colspan]{border-left:1px solid #d8e8e9!important;border-radius:8px!important}
+.pbwep-portal-main table.pbw-compact-list .pbw-record-row{cursor:pointer}
+.pbwep-portal-main table.pbw-compact-list .pbw-record-row:hover td,.pbwep-portal-main table.pbw-compact-list .pbw-row-selected td{background:#f0faf9!important}
+.pbwep-portal-main table.pbw-compact-list .pbw-record-row:focus-visible{outline:2px solid #087f83;outline-offset:-2px}
+.pbwep-portal-main table.pbw-compact-list td a:not(.btn){color:#087f83!important;font-weight:650;text-decoration:none}
+.pbwep-portal-main table.pbw-compact-list td .badge{font-size:11px!important;padding:4px 8px!important;font-weight:600!important;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+.pbwep-portal-main table.pbw-compact-list td .btn{padding:4px 9px!important;min-height:28px!important;font-size:12px!important}
+.pbwep-portal-main table.pbw-compact-list :is(td,th).text-end,.pbwep-portal-main table.pbw-compact-list :is(td,th).text-right,.pbwep-portal-main table.pbw-compact-list .pbw-list-amount{text-align:right!important;font-variant-numeric:tabular-nums}
+.pbwep-portal-main .pbw-record-reference{font-weight:700;color:#087f83;text-decoration:none}
+.pbwep-portal-main .portal-report-desc{display:none}
+/* Signature requests remain subject to the existing can_sign gate. */
+.pbwep-portal-main .pbw-sign-list:not(.pbw-empty){background:transparent!important;border:0!important;box-shadow:none!important;overflow-x:auto!important;padding:0 2px}
+.pbwep-portal-main .pbw-sign-row{grid-template-columns:minmax(320px,1fr) 120px 110px 230px 170px!important;min-width:1050px;min-height:48px!important;padding:8px 13px!important;gap:14px!important;background:white;border:1px solid #d8e8e9!important;border-left:4px solid #19858c!important;border-radius:8px!important;margin-bottom:5px;line-height:1.35}
+.pbwep-portal-main .pbw-sign-row.head{min-height:0!important;background:transparent!important;border-color:transparent!important;font-size:11px!important;padding:7px 13px!important}
+.pbwep-portal-main .pbw-sign-row.pbw-record-row{cursor:pointer}.pbwep-portal-main .pbw-sign-row.pbw-record-row:hover{background:#f0faf9}
+.pbwep-portal-main .pbw-sign-row .pbw-doc-icon{display:none}.pbwep-portal-main .pbw-sign-row .pbw-doc-name{font-size:13px!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap!important}.pbwep-portal-main .pbw-sign-row .pbw-workflow{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pbwep-portal-main .pbw-sign-row .pbw-btn{height:28px}.pbwep-portal-main .pbw-sign-row .pbw-btn.sign{background:#087f83!important;box-shadow:none!important}
+/* Histories and dashboard document links follow the same compact surface. */
+@media(min-width:768px){
+.pbwep-portal-main .history-row.pbw-attendance-row{display:grid!important;grid-template-columns:28px minmax(190px,1fr) minmax(300px,2fr) 100px;min-height:48px;padding:9px 13px!important;border:1px solid #d8e8e9!important;border-left:4px solid #19858c!important;background:#fff;border-radius:8px!important;margin:5px 0!important}
+.pbwep-portal-main .history-row.pbw-attendance-row :is(.history-date,.history-times,.history-hours){margin:0!important;font-size:13px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pbwep-portal-main .history-row .history-icon{width:24px;height:24px;font-size:12px;border-radius:6px}
+.pbwep-portal-main .activity-card{padding:10px 14px!important;min-height:48px!important;border:1px solid #d8e8e9!important;border-left:4px solid #19858c!important;border-radius:8px!important;margin:5px 0!important;background:white!important}.pbwep-portal-main .activity-card .activity-content{display:flex;justify-content:space-between;align-items:center;gap:14px;min-width:0;flex:1}.pbwep-portal-main .activity-card .activity-time{white-space:nowrap;margin:0!important}
+}
+/* Treasury's ledger is a grid because each record owns independent review forms. */
+.pbwep-portal-main .pbw-ledger-scroll{overflow-x:auto;padding:0 2px 5px}
+.pbwep-portal-main .pbw-payment-ledger .ept-ledger-head,.pbwep-portal-main .pbw-payment-ledger .ept-row{display:grid!important;grid-template-columns:180px 130px 100px 150px 180px 160px 140px 130px 130px 140px 90px!important;gap:14px!important;min-width:1770px!important;align-items:center!important}
+.pbwep-portal-main .pbw-plan-ledger .ept-ledger-head,.pbwep-portal-main .pbw-plan-ledger .ept-row{display:grid!important;grid-template-columns:180px 130px 100px 180px 160px 140px 130px 130px 130px 130px 140px!important;gap:14px!important;min-width:1770px!important;align-items:center!important}
+.pbwep-portal-main .pbw-ledger-scroll .ept-ledger-head{padding:8px 14px 8px 18px!important;font-size:11px!important;color:#617580!important;background:transparent!important;text-transform:none!important;letter-spacing:0!important}
+.pbwep-portal-main .pbw-ledger-scroll .ept-row{min-height:48px!important;padding:9px 14px!important;border:1px solid #d8e8e9!important;border-left:4px solid #19858c!important;border-radius:8px!important;margin:5px 0!important;background:white!important}
+.pbwep-portal-main .pbw-ledger-scroll .ept-row>div{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;line-height:1.35}.pbwep-portal-main .pbw-ledger-scroll .ept-row .ept-row-title{font-size:13px!important}.pbwep-portal-main .pbw-ledger-scroll .ept-row .ept-amount{font-size:13px!important}.pbwep-portal-main .pbw-ledger-scroll .ept-row-wrap{border:0!important;background:transparent!important;margin:0!important;box-shadow:none!important}.pbwep-portal-main .pbw-ledger-scroll .ept-day-block{margin:0!important;padding:0!important}.pbwep-portal-main .pbw-ledger-scroll .ept-plan-badge{margin:0!important}.pbwep-portal-main .pbw-ledger-scroll .ept-row[data-pbw-expand]{cursor:pointer}.pbwep-portal-main .pbw-ledger-scroll .ept-row[data-pbw-expand]:hover{background:#f0faf9!important}
+.pbwep-portal-main .pbw-row-details{min-width:1770px;background:#fff;border:1px solid #d8e8e9;border-radius:8px;padding:14px;margin:0 0 8px;max-width:none}.pbwep-portal-main .pbw-row-details[hidden]{display:none!important}.pbwep-portal-main .pbw-row-details>.js-add-plan-form{max-width:450px}.pbwep-portal-main .pbw-row-details .ept-review-panel{border:0!important;margin:0!important}.pbwep-portal-main .pbw-record-row:focus-visible{outline:2px solid #087f83;outline-offset:-2px}
+
+.pbwep-portal-main .pbw-flow-reference{display:flex;gap:8px;align-items:center}.pbwep-portal-main .pbw-flow-reference .fa{flex-shrink:0;font-size:12px}
+
+/* Clearer column headings across PBW and its workspace/bridge document lists. */
+@media(min-width:769px){
+.pbwep-portal-main table.pbw-compact-list thead th{
+    font-size:14px!important;font-weight:700!important;color:#284653!important;
+    padding-top:10px!important;padding-bottom:10px!important;
+    border-bottom:2px solid #087f83!important;
+}
+.pbwep-portal-main .pbw-column-list .pbw-list-header,
+.pbwep-portal-main .pbw-ledger-scroll .ept-ledger-head,
+.pbwep-portal-main .pbw-sign-row.head{
+    font-size:14px!important;font-weight:700!important;color:#284653!important;
+    line-height:1.4!important;padding-top:10px!important;padding-bottom:10px!important;
+    border-bottom:2px solid #087f83!important;
+}
+}
+
+/* Reset legacy column positions after the Treasury ledger was split into columns. */
+.pbwep-portal-main .pbw-ledger-scroll .ept-ledger-head > div{text-align:left!important}
+.pbwep-portal-main .pbw-payment-ledger .ept-ledger-head > div:nth-child(8),
+.pbwep-portal-main .pbw-payment-ledger .ept-ledger-head > div:nth-child(9),
+.pbwep-portal-main .pbw-plan-ledger .ept-ledger-head > div:nth-child(7),
+.pbwep-portal-main .pbw-plan-ledger .ept-ledger-head > div:nth-child(8),
+.pbwep-portal-main .pbw-plan-ledger .ept-ledger-head > div:nth-child(9),
+.pbwep-portal-main .pbw-plan-ledger .ept-ledger-head > div:nth-child(10){text-align:right!important}
+
+/* Approval forms: comfortable rounded actions on desktop and mobile. */
+.pbwep-portal-main form[action^="/my/employee/requests/"] .btn,
+.pbwep-portal-main form[action^="/my/employee/material/requests/"] .btn {
+    border-radius: 12px !important;
+    min-height: 40px;
+    padding: .6rem 1.25rem;
+    font-weight: 600;
+}
+
+/* Clarification is a conversation panel; it is independent of the approval status. */
+.pbw-clarification-panel {padding:18px 20px;background:#fff;border:1px solid #e1e8eb;border-left:3px solid #087f83;border-radius:14px;box-shadow:0 2px 8px #16354705;}
+.pbw-clarification-heading,.pbw-clarification-heading>div {display:flex;align-items:center;gap:9px;}
+.pbw-clarification-heading {justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.pbw-clarification-icon {color:#087f83;background:#eaf6f4;border-radius:9px;padding:7px 9px;}
+.pbw-clarification-state {font-size:12px;font-weight:600;color:#8a610b;background:#fff5d9;border-radius:20px;padding:5px 11px;}
+.pbw-clarification-state.is-replied {color:#176b4b;background:#eaf6ef;}
+.pbw-clarification-meta {color:#6b7784;font-size:12px;margin:10px 0;}
+.pbw-clarification-message {white-space:pre-wrap;overflow-wrap:anywhere;color:#263544;margin:10px 0;font-size:14px;}
+.pbw-clarification-reply,.pbw-clarification-compose {background:#f5f9f9;border-radius:10px;padding:12px 14px;}
+@media(max-width:768px){.pbw-clarification-panel{padding:14px;}.pbw-clarification-state{max-width:100%;}.pbw-clarification-panel .btn{min-height:42px;}}
+
+/* MR form and one shared conversation, matching backend's side-by-side layout. */
+.pbw-mr-record-header{display:flow-root;min-width:0;width:100%;}
+.pbwep-portal-main .pbw-mr-record-layout{width:100%!important;max-width:none!important;display:grid;grid-template-columns:minmax(0,1fr) minmax(310px,360px);grid-template-areas:"form conversation";gap:22px;align-items:start;}
+.pbwep-portal-main .pbw-mr-record-layout::before,.pbwep-portal-main .pbw-mr-record-layout::after{content:none!important;display:none!important;}
+.pbw-mr-record-main{grid-area:form;min-width:0;width:100%;}
+.pbw-mr-record-conversation{grid-area:conversation;min-width:0;width:100%;position:sticky;top:24px;}
+.pbw-mr-chatter{position:static;min-width:0;border:1px solid #dfe7e8;border-radius:14px;background:#fff;overflow:hidden;}
+.pbw-mr-chatter-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:17px 16px 5px;}
+.pbw-mr-chatter-heading>div{display:flex;align-items:center;gap:9px;}.pbw-mr-chatter-heading i{color:#087f83;}.pbw-mr-chatter-heading>span{font-size:11px;color:#7a8890;}
+.pbw-mr-chatter-hint{font-size:12px;color:#75818b;margin:0;padding:0 16px 14px;}
+.pbw-mr-composer{padding:14px 16px;background:#f6f9f9;border-top:1px solid #e4eaea;border-bottom:1px solid #e4eaea;}
+.pbw-mr-composer .form-label{font-size:12px;}.pbw-mr-composer textarea{font-size:13px;border-radius:9px;resize:vertical;min-height:82px;}
+.pbw-mr-composer-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;}.pbw-mr-composer-footer small{font-size:11px;color:#74818a;}.pbw-mr-composer .btn{font-size:12px;white-space:nowrap;}
+.pbw-mr-message-list{max-height:calc(100vh - 310px);min-height:180px;overflow-y:auto;overscroll-behavior:contain;padding:5px 16px;}
+.pbw-mr-message{display:flex;gap:10px;padding:15px 0;border-bottom:1px solid #edf1f2;}.pbw-mr-message:last-of-type{border-bottom:0;}
+.pbw-mr-avatar{flex:0 0 30px;height:30px;border-radius:50%;background:#e8f3f2;color:#087f83;display:grid;place-items:center;font-size:12px;font-weight:700;}
+.pbw-mr-message-content{min-width:0;flex:1;}.pbw-mr-message-meta{display:flex;flex-direction:column;gap:2px;font-size:12px;}.pbw-mr-message-meta time{font-size:10px;color:#849098;}
+.pbw-mr-message-body{font-size:12px;line-height:1.6;color:#3e505d;overflow-wrap:anywhere;margin-top:6px;overflow-x:auto;}.pbw-mr-message-body p{margin:0 0 6px;}.pbw-mr-message-body img{max-width:100%;height:auto;}
+.pbw-mr-conversation-empty{text-align:center;color:#89969f;padding:30px 10px;}.pbw-mr-conversation-empty i{font-size:24px;}.pbw-mr-conversation-empty p{margin:10px 0 2px;}.pbw-mr-conversation-empty small{font-size:11px;}
+.pbw-mr-load-earlier{display:block;text-align:center;padding:12px;font-size:12px;}
+.pbw-mr-notification-row{display:flex;align-items:center;gap:16px;padding:16px 8px;border-top:1px solid #edf1f2;text-decoration:none!important;}.pbw-mr-notification-row>div{flex:1;display:flex;flex-direction:column;gap:3px;}.pbw-mr-notification-row span,.pbw-mr-notification-row small{font-size:12px;color:#76858d;}
+@media(max-width:1100px){.pbwep-portal-main .pbw-mr-record-layout{grid-template-columns:minmax(0,1fr);grid-template-areas:"form" "conversation";}.pbw-mr-record-conversation{position:static;}.pbw-mr-message-list{max-height:520px;}}
+@media(max-width:768px){.pbwep-portal-main .pbw-mr-record-layout{gap:14px;padding-left:0;padding-right:0;}.pbw-mr-composer .btn{min-height:42px;}.pbw-mr-message-list{max-height:430px;}}

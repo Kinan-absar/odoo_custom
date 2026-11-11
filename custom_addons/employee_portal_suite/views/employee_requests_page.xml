@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <odoo>
 
     <template id="employee_requests_page" name="Employee Requests Page">
@@ -6,7 +6,7 @@
 
             <div class="container mt-4">
 
-                <div class="card shadow-sm border-0">
+                <div class="card shadow-sm border-0 eps-list-page-card">
                     <div class="card-body">
 
                         <!-- Header -->
@@ -16,8 +16,7 @@
                             <div class="material-header-top">
                                 <h4 class="mb-0 fw-semibold">Employee Requests</h4>
 
-                                <a href="/my/employee/requests/new"
-                                class="btn btn-primary btn-sm">
+                                <a href="/my/employee/requests/new" class="btn btn-primary btn-sm">
                                     + Create New Request
                                 </a>
                             </div>
@@ -25,21 +24,15 @@
                             <!-- Search Below -->
                             <form method="get" class="material-search-form">
                                 <div class="position-relative">
-                                    <input type="text"
-                                        id="employeeSearchInput"
-                                        name="search"
-                                        t-att-value="search or ''"
-                                        placeholder="Search request #"
-                                        class="form-control mobile-search"/>
+                                    <input type="text" id="employeeSearchInput" name="search" t-att-value="search or ''" placeholder="Search request #" class="form-control mobile-search"/>
 
                                     <button type="submit" class="search-btn">
-                                        <i class="fa fa-search"></i>
+                                        <i class="fa fa-search"/>
                                     </button>
 
                                     <t t-if="search">
-                                        <a href="/my/employee/requests"
-                                        class="clear-search">
-                                            <i class="fa fa-times"></i>
+                                        <a href="/my/employee/requests" class="clear-search">
+                                            <i class="fa fa-times"/>
                                         </a>
                                     </t>
                                 </div>
@@ -51,26 +44,25 @@
                         <!-- Requests Table -->
                         <t t-if="requests">
 
-                            <div class="table-responsive d-none d-md-block">
-                                <table class="table table-hover table-sm align-middle mb-0">
+                            <div class="table-responsive d-none d-md-block eps-list-scroll">
+                                <table class="table table-hover table-sm align-middle mb-0 eps-compact-list" style="--eps-list-width:600px">
 
-                                    <thead class="table-light">
+                                    <colgroup><col style="width:125px"/><col style="width:125px"/><col style="width:150px"/><col style="width:115px"/></colgroup><thead class="table-light">
                                         <tr>
                                             <th>Request</th>
                                             <th>Type</th>
                                             <th>Status</th>
                                             <th>Date</th>
-                                            <th></th>
-                                        </tr>
+                                            </tr>
                                     </thead>
 
                                     <tbody>
                                         <t t-foreach="requests" t-as="req">
-                                            <tr>
+                                            <tr t-att-data-eps-record-href="'/my/employee/requests/%s' % req.id" tabindex="0" role="link" class="eps-record-row">
 
-                                                <td class="fw-semibold">
+                                                <td class="fw-semibold"><a class="eps-record-reference" t-att-href="'/my/employee/requests/%s' % req.id">
                                                     <t t-out="req.name"/>
-                                                </td>
+                                                </a></td>
 
                                                 <td>
                                                     <t t-out="req.get_request_type_display()"/>
@@ -86,14 +78,7 @@
                                                     </small>
                                                 </td>
 
-                                                <td class="text-end">
-                                                    <a t-att-href="'/my/employee/requests/%s' % req.id"
-                                                       class="btn btn-outline-primary btn-sm">
-                                                        View
-                                                    </a>
-                                                </td>
-
-                                            </tr>
+                                                </tr>
                                         </t>
                                     </tbody>
 
@@ -102,8 +87,7 @@
                          <!-- MOBILE CARD LIST -->
                             <div class="d-md-none">
                                 <t t-foreach="requests" t-as="req">
-                                    <a t-att-href="'/my/employee/requests/%s' % req.id"
-                                    class="mobile-request-card">
+                                    <a t-att-href="'/my/employee/requests/%s' % req.id" class="mobile-request-card">
 
                                         <div class="mobile-request-top">
                                             <div>

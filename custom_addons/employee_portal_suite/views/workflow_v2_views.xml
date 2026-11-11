@@ -8,11 +8,13 @@
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="before">
                 <header>
-                    <button name="action_validate_workflow" type="object" string="Validate" class="btn-primary" icon="fa-check-circle"/>
-                    <button name="action_open_test_wizard" type="object" string="Test / Preview" icon="fa-flask"/>
+                    <button name="action_use_template" type="object" string="Create Project Workflow" class="btn-primary" invisible="not is_template"/>
+                    <button name="action_validate_workflow" type="object" string="Validate" invisible="is_template" class="btn-primary" icon="fa-check-circle"/>
+                    <button name="action_open_test_wizard" type="object" string="Test / Preview" invisible="is_template" icon="fa-flask"/>
                 </header>
             </xpath>
             <xpath expr="//field[@name='step_count']" position="after">
+                <field name="is_template" invisible="1"/>
                 <field name="validation_state" widget="badge" readonly="1"/>
                 <field name="validated_on" readonly="1" invisible="not validated_on"/>
                 <field name="validated_by" readonly="1" invisible="not validated_by"/>
@@ -300,4 +302,12 @@
             </xpath>
         </field>
     </record>
+    <record id="action_workflow_templates" model="ir.actions.act_window">
+        <field name="name">Workflow Templates</field>
+        <field name="res_model">employee.portal.workflow</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('is_template', '=', True)]</field>
+        <field name="context">{'active_test': False, 'default_is_template': True, 'default_active': False}</field>
+    </record>
+    <menuitem id="menu_workflow_templates" name="Workflow Templates" parent="menu_employee_portal_configuration" action="action_workflow_templates" sequence="41" groups="employee_portal_suite.group_employee_portal_superadmin"/>
 </odoo>

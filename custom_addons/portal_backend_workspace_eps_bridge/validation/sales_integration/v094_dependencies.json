@@ -1,0 +1,17 @@
+[
+  "base",
+  "web",
+  "portal",
+  "mail",
+  "sale_management",
+  "sale_stock",
+  "purchase_stock",
+  "project_purchase",
+  "account",
+  "analytic",
+  "hr",
+  "hr_attendance",
+  "hr_contract",
+  "hr_work_entry",
+  "hr_payroll"
+]

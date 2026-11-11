@@ -1,0 +1,57 @@
+#eps-visual-dashboard{display:none}
+@media(min-width:769px){
+#eps-visual-dashboard{display:block;color:#203b4a;padding-bottom:28px;--v-teal:#087f83;--v-line:#e2ebed;animation:eps-v-appear .35s ease both}
+#eps-visual-dashboard ~ .eps-legacy-dashboard,#eps-visual-dashboard ~ .eps-legacy-recent{display:none!important}
+#eps-visual-dashboard a{color:inherit;text-decoration:none}
+.eps-v-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;margin:0 0 24px}
+.eps-v-heading h1{font-size:27px;font-weight:750;line-height:1.25;margin:5px 0 8px;color:#182d3d}
+.eps-v-heading p{font-size:13px;color:#758793;margin:0}
+.eps-v-heading .eps-v-eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#087f83;font-weight:700}
+.eps-v-updated{display:flex;align-items:center;gap:12px;font-size:11px;color:#758793;white-space:nowrap}
+.eps-v-refresh{padding:9px 12px;border:1px solid var(--v-line);border-radius:9px;background:#fff;font-weight:650}.eps-v-refresh:hover{background:#eaf6f4}
+.eps-v-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:#fff;border:1px solid var(--v-line);border-radius:16px;padding:18px 6px;margin-bottom:20px}
+.eps-v-summary>div{display:flex;flex-direction:column;gap:5px;padding:0 20px;border-right:1px solid var(--v-line);min-width:0}.eps-v-summary>div:last-child{border:0}
+.eps-v-summary span{font-size:12px;color:#617988}.eps-v-summary strong{font-size:30px;line-height:1.25;font-weight:750;letter-spacing:-.04em}.eps-v-summary small,.eps-v-summary a{font-size:11px;color:#758793}.eps-v-summary a{color:#087f83!important}.eps-v-summary strong.eps-v-attendance{font-size:18px;line-height:2.1;letter-spacing:0}
+.eps-v-charts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:20px;margin-bottom:20px}.eps-v-work{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-bottom:20px}
+.eps-v-panel{background:#fff;border:1px solid var(--v-line);border-radius:16px;padding:22px;min-width:0;box-shadow:0 4px 15px #163a4303}
+.eps-v-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:20px}.eps-v-panel-head h2{font-size:15px;font-weight:750;margin:0 0 5px}.eps-v-panel-head p{font-size:11px;color:#7a8c95;margin:0}
+.eps-v-tag{background:#eff7f7;color:#087f83;font-size:10px;font-weight:650;padding:5px 9px;border-radius:20px;white-space:nowrap}
+.eps-v-status-chart{display:flex;align-items:center;gap:28px;justify-content:center;min-height:205px}
+.eps-v-donut{width:165px;height:165px;flex:0 0 165px;display:grid;place-items:center;border-radius:50%;transition:transform .2s}
+.eps-v-donut:hover{transform:scale(1.025)}.eps-v-donut>div{width:128px;height:128px;background:#fff;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center}.eps-v-donut strong{font-size:32px;line-height:1.3}.eps-v-donut span{font-size:11px;color:#7a8c95}
+.eps-v-legend{display:flex;flex-direction:column;gap:14px;min-width:125px}.eps-v-legend>div{display:flex;align-items:center;gap:8px;font-size:12px}.eps-v-legend i,.eps-v-week-legend i{width:9px;height:9px;border-radius:3px;display:inline-block;flex-shrink:0}.eps-v-legend strong{margin-left:auto;font-size:13px}
+.eps-v-week-legend{display:flex;gap:18px;font-size:10px;color:#738891;justify-content:flex-end;margin:-8px 0 12px}.eps-v-week-legend span{display:flex;align-items:center;gap:5px}.eps-v-er{background:#087f83}.eps-v-mr{background:#7cc7c7}
+.eps-v-weeks{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:12px;min-height:195px}.eps-v-week{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0}.eps-v-week>strong{font-size:11px;font-weight:650;color:#526d79}.eps-v-week>span{font-size:10px;color:#81939a;white-space:nowrap}.eps-v-week-track{height:145px;width:100%;max-width:40px;background:repeating-linear-gradient(to top,#f0f4f4 0 1px,transparent 1px 36px);position:relative;border-bottom:1px solid #dbe5e6;display:flex;align-items:flex-end}.eps-v-week-stack{width:100%;display:flex;flex-direction:column;border-radius:5px 5px 0 0;overflow:hidden;min-height:0;transform-origin:bottom;animation:eps-v-grow .6s ease both}.eps-v-week:hover .eps-v-week-track{background-color:#f3fafa}
+.eps-v-queue{display:flex;align-items:center;gap:15px;padding:12px 0;border-bottom:1px solid #eef2f3}.eps-v-queue:last-child{border:0}.eps-v-queue>div{flex:1;min-width:0}.eps-v-queue strong{font-size:12px;font-weight:650}.eps-v-queue>b{font-size:19px;min-width:24px;text-align:right}.eps-v-queue>i{color:#9ab3b8}.eps-v-queue:hover strong{color:#087f83}.eps-v-work-track{display:block;height:5px;background:#edf3f3;border-radius:8px;margin-top:8px;overflow:hidden}.eps-v-work-track i{display:block;height:100%;background:#087f83;border-radius:8px}
+.eps-v-document{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #eef2f3}.eps-v-document:last-child{border:0}.eps-v-document>div{min-width:0;flex:1}.eps-v-document strong{font-size:12px;display:block}.eps-v-document small{font-size:10px;color:#7a8c95;display:block;margin-top:4px}.eps-v-doc-icon{background:#eaf6f5;color:#087f83;display:grid;place-items:center;width:32px;height:32px;flex:0 0 32px;border-radius:9px}.eps-v-doc-status{font-size:10px;background:#f1f5f6;padding:5px 8px;border-radius:6px;color:#526f7b}.eps-v-document:hover strong{color:#087f83}
+.eps-v-empty{font-size:12px;color:#83949c;padding:12px 0}.eps-v-all-clear{display:flex;flex-direction:column;align-items:center;gap:9px;padding:30px 15px;color:#6a818a;font-size:12px;text-align:center}.eps-v-all-clear i{font-size:35px;color:#087f83}.eps-v-all-clear strong{color:#264553}
+.eps-v-plan{display:flex;align-items:center;gap:24px;padding:16px 0;border-top:1px solid #eef2f3}.eps-v-plan>div:first-of-type{flex:0 0 180px}.eps-v-plan strong{font-size:12px;display:block}.eps-v-plan small{font-size:10px;color:#7a8c95}.eps-v-cash-rows{flex:1}.eps-v-cash-rows>div{display:flex;align-items:center;gap:12px;font-size:11px;margin:8px 0}.eps-v-cash-rows span{width:50px}.eps-v-cash-rows b{width:100px;text-align:right;font-variant-numeric:tabular-nums}.eps-v-cash-track{height:8px;background:#edf3f3;border-radius:5px;flex:1;overflow:hidden}.eps-v-cash-track i{display:block;height:100%;background:#9acfd0;border-radius:5px}.eps-v-cash-track i.eps-v-actual{background:#087f83}
+@keyframes eps-v-appear{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}@keyframes eps-v-grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@media(max-width:1150px){.eps-v-charts,.eps-v-work{grid-template-columns:minmax(0,1fr)}.eps-v-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.eps-v-summary>div:nth-child(2){border:0}.eps-v-heading{align-items:flex-start}.eps-v-updated{flex-direction:column;align-items:flex-end}.eps-v-plan{flex-wrap:wrap}.eps-v-plan>div:first-of-type{flex-basis:100%}}
+@media(prefers-reduced-motion:reduce){#eps-visual-dashboard,.eps-v-week-stack{animation:none}.eps-v-donut{transition:none}}
+}
+
+/* Original light dashboard, with one prominent attention area above the charts. */
+@media(min-width:769px){
+.eps-v-date{font-size:12px;color:#7a8c95;margin:0;white-space:nowrap}
+.eps-v-attention{background:#fff;border:1px solid #dfe8ea;border-left:4px solid #087f83;border-radius:16px;padding:20px 22px;margin:0 0 20px;box-shadow:0 4px 15px #163a4303}
+.eps-v-attention .eps-v-panel-head{margin-bottom:14px}
+.eps-v-attention .eps-v-panel-head h2{font-size:17px}
+.eps-v-attention-links{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+#eps-visual-dashboard .eps-v-attention-link{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #e2ebed;border-radius:10px;padding:14px;font-size:12px;font-weight:600}
+.eps-v-attention-link span{flex:1;min-width:0}
+.eps-v-attention-link strong{font-size:23px;color:#203b4a;font-weight:750}
+.eps-v-attention-link i{color:#7e9ca3}
+#eps-visual-dashboard .eps-v-attention-link:hover{background:#f3faf9;border-color:#a7d4d3}
+.eps-v-attention-link:focus-visible{outline:2px solid #087f83;outline-offset:2px}
+.eps-v-attention-clear{font-size:12px;color:#617988;margin:0}.eps-v-attention-clear i{color:#087f83;margin-right:6px}
+.eps-v-recent-panel{margin-bottom:20px}
+.eps-v-cash{margin-top:20px}
+}
+
+/* Pending queues retain a visible amber dot, with a gentle attention pulse. */
+@media(min-width:769px){
+#eps-visual-dashboard .eps-v-attention-link::before{content:'';width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:#f5a623;animation:eps-v-attention-pulse 2.2s ease-out infinite}
+@keyframes eps-v-attention-pulse{0%,100%{box-shadow:0 0 0 0 rgba(245,166,35,.30)}65%{box-shadow:0 0 0 6px rgba(245,166,35,0)}}
+@media(prefers-reduced-motion:reduce){#eps-visual-dashboard .eps-v-attention-link::before{animation:none}}
+}

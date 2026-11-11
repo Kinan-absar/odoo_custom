@@ -1,0 +1,1 @@
+Local source/test evidence for v0.9.10. Scripts record the executed test fixture and expect the build root, both input ZIPs and the original EPS layout reference. They do not run as Odoo addon code. See TEST_REPORT_v0.9.10.md for full limitations.

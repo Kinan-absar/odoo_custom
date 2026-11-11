@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_attendance_trusted_device_list" model="ir.ui.view">
+        <field name="name">employee.portal.attendance.device.list</field>
+        <field name="model">employee.portal.attendance.device</field>
+        <field name="arch" type="xml">
+            <list string="Trusted Attendance Devices"
+                  decoration-warning="state == 'pending'"
+                  decoration-muted="state == 'revoked'">
+                <field name="employee_id"/>
+                <field name="device_label"/>
+                <field name="state" widget="badge"/>
+                <field name="first_seen_at"/>
+                <field name="last_seen_at"/>
+                <field name="trusted_at" optional="hide"/>
+                <field name="trusted_by" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_attendance_trusted_device_form" model="ir.ui.view">
+        <field name="name">employee.portal.attendance.device.form</field>
+        <field name="model">employee.portal.attendance.device</field>
+        <field name="arch" type="xml">
+            <form string="Attendance Device" create="0" delete="0">
+                <header>
+                    <button name="action_trust_replace" type="object" string="Approve &amp; Replace Current Device"
+                            class="btn-primary" invisible="state == 'trusted'"/>
+                    <button name="action_revoke" type="object" string="Revoke Device"
+                            invisible="state == 'revoked'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="pending,trusted,revoked"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="employee_id" readonly="1"/>
+                            <field name="user_id" readonly="1"/>
+                            <field name="device_label" readonly="1"/>
+                            <field name="token_prefix" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="first_seen_at" readonly="1"/>
+                            <field name="last_seen_at" readonly="1"/>
+                            <field name="trusted_at" readonly="1"/>
+                            <field name="trusted_by" readonly="1"/>
+                            <field name="revoked_at" readonly="1"/>
+                            <field name="revoked_by" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Browser / Device Details">
+                        <field name="user_agent" readonly="1" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_attendance_trusted_device_search" model="ir.ui.view">
+        <field name="name">employee.portal.attendance.device.search</field>
+        <field name="model">employee.portal.attendance.device</field>
+        <field name="arch" type="xml">
+            <search string="Attendance Devices">
+                <field name="employee_id"/>
+                <field name="device_label"/>
+                <filter name="pending" string="Pending Approval" domain="[('state','=','pending')]"/>
+                <filter name="trusted" string="Trusted" domain="[('state','=','trusted')]"/>
+                <filter name="revoked" string="Revoked" domain="[('state','=','revoked')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_employee" string="Employee" context="{'group_by':'employee_id'}"/>
+                    <filter name="group_state" string="Status" context="{'group_by':'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_attendance_trusted_devices" model="ir.actions.act_window">
+        <field name="name">Trusted Devices</field>
+        <field name="res_model">employee.portal.attendance.device</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_attendance_trusted_device_search"/>
+    </record>
+
+    <menuitem id="menu_attendance_trusted_devices"
+              name="Trusted Devices"
+              parent="menu_employee_portal_attendance_root"
+              action="action_attendance_trusted_devices"
+              sequence="10"
+              groups="employee_portal_suite.group_attendance_manager"/>
+</odoo>

@@ -1,0 +1,13 @@
+<odoo>
+    <template id="employee_workspace_navigation" inherit_id="employee_portal_suite.employee_portal_layout" name="Separate Workspace portal switch">
+        <xpath expr="//t[@t-call-assets='web.assets_frontend']" position="after">
+            <link rel="stylesheet" href="/portal_backend_workspace/static/src/core/workspace_navigation.css?v=18.0.0.9.10"/>
+        </xpath>
+        <xpath expr="//nav[@id='ep-desktop-sidebar-nav']" position="before">
+            <t t-if="request.env.user._pbw_has_access()" t-call="portal_backend_workspace.portal_switcher">
+                <t t-set="pbw_switch_url" t-value="'/my/workspace'"/>
+                <t t-set="pbw_switch_name">Workspace</t>
+            </t>
+        </xpath>
+    </template>
+</odoo>

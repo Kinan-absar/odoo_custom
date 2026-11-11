@@ -1,0 +1,1270 @@
+[
+  {
+    "name": "standalone/1440: cards match role",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/1440: no menu history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/1440: no portal link mixed in menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/1440: correct switch presence",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/1440: no nested card links",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/1440: no horizontal page overflow",
+    "passed": true,
+    "detail": {
+      "client": 1440,
+      "scroll": 1440,
+      "columns": 4
+    }
+  },
+  {
+    "name": "standalone/1440: responsive grid",
+    "passed": true,
+    "detail": {
+      "client": 1440,
+      "scroll": 1440,
+      "columns": 4
+    }
+  },
+  {
+    "name": "standalone/1440: one visible bell",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/1440: bell has history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/1440: no script errors",
+    "passed": true,
+    "detail": []
+  },
+  {
+    "name": "standalone/1024: cards match role",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/1024: no menu history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/1024: no portal link mixed in menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/1024: correct switch presence",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/1024: no nested card links",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/1024: no horizontal page overflow",
+    "passed": true,
+    "detail": {
+      "client": 1024,
+      "scroll": 1024,
+      "columns": 2
+    }
+  },
+  {
+    "name": "standalone/1024: responsive grid",
+    "passed": true,
+    "detail": {
+      "client": 1024,
+      "scroll": 1024,
+      "columns": 2
+    }
+  },
+  {
+    "name": "standalone/1024: one visible bell",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/1024: bell has history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/1024: no script errors",
+    "passed": true,
+    "detail": []
+  },
+  {
+    "name": "standalone/768: cards match role",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/768: no menu history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/768: no portal link mixed in menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/768: correct switch presence",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/768: no nested card links",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/768: no horizontal page overflow",
+    "passed": true,
+    "detail": {
+      "client": 768,
+      "scroll": 768,
+      "columns": 2
+    }
+  },
+  {
+    "name": "standalone/768: responsive grid",
+    "passed": true,
+    "detail": {
+      "client": 768,
+      "scroll": 768,
+      "columns": 2
+    }
+  },
+  {
+    "name": "standalone/768: one visible bell",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/768: bell has history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/768: drawer open",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/768: escape closes drawer",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/768: no script errors",
+    "passed": true,
+    "detail": []
+  },
+  {
+    "name": "standalone/390: cards match role",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/390: no menu history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/390: no portal link mixed in menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/390: correct switch presence",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/390: no nested card links",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/390: no horizontal page overflow",
+    "passed": true,
+    "detail": {
+      "client": 390,
+      "scroll": 390,
+      "columns": 1
+    }
+  },
+  {
+    "name": "standalone/390: responsive grid",
+    "passed": true,
+    "detail": {
+      "client": 390,
+      "scroll": 390,
+      "columns": 1
+    }
+  },
+  {
+    "name": "standalone/390: one visible bell",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/390: bell has history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/390: drawer open",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/390: escape closes drawer",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/390: no script errors",
+    "passed": true,
+    "detail": []
+  },
+  {
+    "name": "standalone/320: cards match role",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/320: no menu history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/320: no portal link mixed in menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/320: correct switch presence",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/320: no nested card links",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/320: no horizontal page overflow",
+    "passed": true,
+    "detail": {
+      "client": 320,
+      "scroll": 320,
+      "columns": 1
+    }
+  },
+  {
+    "name": "standalone/320: responsive grid",
+    "passed": true,
+    "detail": {
+      "client": 320,
+      "scroll": 320,
+      "columns": 1
+    }
+  },
+  {
+    "name": "standalone/320: one visible bell",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/320: bell has history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/320: drawer open",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/320: escape closes drawer",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "standalone/320: no script errors",
+    "passed": true,
+    "detail": []
+  },
+  {
+    "name": "integrated/1440: cards match role",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/1440: no menu history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/1440: no portal link mixed in menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/1440: correct switch presence",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/1440: no nested card links",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/1440: no horizontal page overflow",
+    "passed": true,
+    "detail": {
+      "client": 1440,
+      "scroll": 1440,
+      "columns": 4
+    }
+  },
+  {
+    "name": "integrated/1440: responsive grid",
+    "passed": true,
+    "detail": {
+      "client": 1440,
+      "scroll": 1440,
+      "columns": 4
+    }
+  },
+  {
+    "name": "integrated/1440: one visible bell",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/1440: bell has history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/1440: switch above menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/1440: no script errors",
+    "passed": true,
+    "detail": []
+  },
+  {
+    "name": "integrated/1024: cards match role",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/1024: no menu history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/1024: no portal link mixed in menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/1024: correct switch presence",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/1024: no nested card links",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/1024: no horizontal page overflow",
+    "passed": true,
+    "detail": {
+      "client": 1024,
+      "scroll": 1024,
+      "columns": 2
+    }
+  },
+  {
+    "name": "integrated/1024: responsive grid",
+    "passed": true,
+    "detail": {
+      "client": 1024,
+      "scroll": 1024,
+      "columns": 2
+    }
+  },
+  {
+    "name": "integrated/1024: one visible bell",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/1024: bell has history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/1024: switch above menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/1024: no script errors",
+    "passed": true,
+    "detail": []
+  },
+  {
+    "name": "integrated/768: cards match role",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/768: no menu history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/768: no portal link mixed in menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/768: correct switch presence",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/768: no nested card links",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/768: no horizontal page overflow",
+    "passed": true,
+    "detail": {
+      "client": 768,
+      "scroll": 768,
+      "columns": 2
+    }
+  },
+  {
+    "name": "integrated/768: responsive grid",
+    "passed": true,
+    "detail": {
+      "client": 768,
+      "scroll": 768,
+      "columns": 2
+    }
+  },
+  {
+    "name": "integrated/768: one visible bell",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/768: bell has history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/768: drawer open",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/768: switch in drawer",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/768: mobile target size",
+    "passed": true,
+    "detail": {
+      "x": 12,
+      "y": 70,
+      "width": 295,
+      "height": 57.390625
+    }
+  },
+  {
+    "name": "integrated/768: keyboard focus",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/768: escape closes drawer",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/768: no script errors",
+    "passed": true,
+    "detail": []
+  },
+  {
+    "name": "integrated/390: cards match role",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/390: no menu history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/390: no portal link mixed in menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/390: correct switch presence",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/390: no nested card links",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/390: no horizontal page overflow",
+    "passed": true,
+    "detail": {
+      "client": 390,
+      "scroll": 390,
+      "columns": 1
+    }
+  },
+  {
+    "name": "integrated/390: responsive grid",
+    "passed": true,
+    "detail": {
+      "client": 390,
+      "scroll": 390,
+      "columns": 1
+    }
+  },
+  {
+    "name": "integrated/390: one visible bell",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/390: bell has history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/390: drawer open",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/390: switch in drawer",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/390: mobile target size",
+    "passed": true,
+    "detail": {
+      "x": 12,
+      "y": 70,
+      "width": 295,
+      "height": 57.390625
+    }
+  },
+  {
+    "name": "integrated/390: keyboard focus",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/390: escape closes drawer",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/390: no script errors",
+    "passed": true,
+    "detail": []
+  },
+  {
+    "name": "integrated/320: cards match role",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/320: no menu history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/320: no portal link mixed in menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/320: correct switch presence",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/320: no nested card links",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/320: no horizontal page overflow",
+    "passed": true,
+    "detail": {
+      "client": 320,
+      "scroll": 320,
+      "columns": 1
+    }
+  },
+  {
+    "name": "integrated/320: responsive grid",
+    "passed": true,
+    "detail": {
+      "client": 320,
+      "scroll": 320,
+      "columns": 1
+    }
+  },
+  {
+    "name": "integrated/320: one visible bell",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/320: bell has history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/320: drawer open",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/320: switch in drawer",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/320: mobile target size",
+    "passed": true,
+    "detail": {
+      "x": 12,
+      "y": 70,
+      "width": 263,
+      "height": 57.390625
+    }
+  },
+  {
+    "name": "integrated/320: keyboard focus",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/320: escape closes drawer",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "integrated/320: no script errors",
+    "passed": true,
+    "detail": []
+  },
+  {
+    "name": "limited/1440: cards match role",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/1440: no menu history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/1440: no portal link mixed in menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/1440: correct switch presence",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/1440: no nested card links",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/1440: no horizontal page overflow",
+    "passed": true,
+    "detail": {
+      "client": 1440,
+      "scroll": 1440,
+      "columns": 4
+    }
+  },
+  {
+    "name": "limited/1440: responsive grid",
+    "passed": true,
+    "detail": {
+      "client": 1440,
+      "scroll": 1440,
+      "columns": 4
+    }
+  },
+  {
+    "name": "limited/1440: one visible bell",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/1440: bell has history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/1440: switch above menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/1440: no script errors",
+    "passed": true,
+    "detail": []
+  },
+  {
+    "name": "limited/1024: cards match role",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/1024: no menu history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/1024: no portal link mixed in menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/1024: correct switch presence",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/1024: no nested card links",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/1024: no horizontal page overflow",
+    "passed": true,
+    "detail": {
+      "client": 1024,
+      "scroll": 1024,
+      "columns": 2
+    }
+  },
+  {
+    "name": "limited/1024: responsive grid",
+    "passed": true,
+    "detail": {
+      "client": 1024,
+      "scroll": 1024,
+      "columns": 2
+    }
+  },
+  {
+    "name": "limited/1024: one visible bell",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/1024: bell has history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/1024: switch above menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/1024: no script errors",
+    "passed": true,
+    "detail": []
+  },
+  {
+    "name": "limited/768: cards match role",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/768: no menu history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/768: no portal link mixed in menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/768: correct switch presence",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/768: no nested card links",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/768: no horizontal page overflow",
+    "passed": true,
+    "detail": {
+      "client": 768,
+      "scroll": 768,
+      "columns": 2
+    }
+  },
+  {
+    "name": "limited/768: responsive grid",
+    "passed": true,
+    "detail": {
+      "client": 768,
+      "scroll": 768,
+      "columns": 2
+    }
+  },
+  {
+    "name": "limited/768: one visible bell",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/768: bell has history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/768: drawer open",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/768: switch in drawer",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/768: mobile target size",
+    "passed": true,
+    "detail": {
+      "x": 12,
+      "y": 70,
+      "width": 295,
+      "height": 57.390625
+    }
+  },
+  {
+    "name": "limited/768: keyboard focus",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/768: escape closes drawer",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/768: no script errors",
+    "passed": true,
+    "detail": []
+  },
+  {
+    "name": "limited/390: cards match role",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/390: no menu history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/390: no portal link mixed in menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/390: correct switch presence",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/390: no nested card links",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/390: no horizontal page overflow",
+    "passed": true,
+    "detail": {
+      "client": 390,
+      "scroll": 390,
+      "columns": 1
+    }
+  },
+  {
+    "name": "limited/390: responsive grid",
+    "passed": true,
+    "detail": {
+      "client": 390,
+      "scroll": 390,
+      "columns": 1
+    }
+  },
+  {
+    "name": "limited/390: one visible bell",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/390: bell has history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/390: drawer open",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/390: switch in drawer",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/390: mobile target size",
+    "passed": true,
+    "detail": {
+      "x": 12,
+      "y": 70,
+      "width": 295,
+      "height": 57.390625
+    }
+  },
+  {
+    "name": "limited/390: keyboard focus",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/390: escape closes drawer",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/390: no script errors",
+    "passed": true,
+    "detail": []
+  },
+  {
+    "name": "limited/320: cards match role",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/320: no menu history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/320: no portal link mixed in menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/320: correct switch presence",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/320: no nested card links",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/320: no horizontal page overflow",
+    "passed": true,
+    "detail": {
+      "client": 320,
+      "scroll": 320,
+      "columns": 1
+    }
+  },
+  {
+    "name": "limited/320: responsive grid",
+    "passed": true,
+    "detail": {
+      "client": 320,
+      "scroll": 320,
+      "columns": 1
+    }
+  },
+  {
+    "name": "limited/320: one visible bell",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/320: bell has history",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/320: drawer open",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/320: switch in drawer",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/320: mobile target size",
+    "passed": true,
+    "detail": {
+      "x": 12,
+      "y": 70,
+      "width": 263,
+      "height": 57.390625
+    }
+  },
+  {
+    "name": "limited/320: keyboard focus",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/320: escape closes drawer",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "limited/320: no script errors",
+    "passed": true,
+    "detail": []
+  },
+  {
+    "name": "EPS/integrated/1440: switch permission gate",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "EPS/integrated/1440: no workspace section in menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "EPS/integrated/1440: no workspace links in menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "EPS/integrated/1440: switch visible",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "EPS/integrated/1440: switch destination",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "EPS/integrated/1440: switch activates workspace link",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "EPS/integrated/1440: switch activates employee link",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "EPS/integrated/1440: no script errors",
+    "passed": true,
+    "detail": []
+  },
+  {
+    "name": "EPS/integrated/390: switch permission gate",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "EPS/integrated/390: no workspace section in menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "EPS/integrated/390: no workspace links in menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "EPS/integrated/390: switch visible",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "EPS/integrated/390: switch destination",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "EPS/integrated/390: switch activates workspace link",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "EPS/integrated/390: switch activates employee link",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "EPS/integrated/390: no script errors",
+    "passed": true,
+    "detail": []
+  },
+  {
+    "name": "EPS/eps_only/1440: switch permission gate",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "EPS/eps_only/1440: no workspace section in menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "EPS/eps_only/1440: no workspace links in menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "EPS/eps_only/1440: no script errors",
+    "passed": true,
+    "detail": []
+  },
+  {
+    "name": "EPS/eps_only/390: switch permission gate",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "EPS/eps_only/390: no workspace section in menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "EPS/eps_only/390: no workspace links in menu",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "EPS/eps_only/390: no script errors",
+    "passed": true,
+    "detail": []
+  },
+  {
+    "name": "1440: exact Accounting tile styles",
+    "passed": true,
+    "detail": {
+      "home": {
+        "height": "230px",
+        "borderRadius": "22px",
+        "backgroundImage": "linear-gradient(145deg, rgb(255, 255, 255) 35%, rgb(237, 247, 246))",
+        "paddingTop": "30px",
+        "fontFamily": "\"DM Sans\", sans-serif",
+        "boxShadow": "rgba(24, 56, 66, 0.03) 0px 5px 18px 0px",
+        "gap": "22px"
+      },
+      "accounting": {
+        "height": "230px",
+        "borderRadius": "22px",
+        "backgroundImage": "linear-gradient(145deg, rgb(255, 255, 255) 35%, rgb(237, 247, 246))",
+        "paddingTop": "30px",
+        "fontFamily": "\"DM Sans\", sans-serif",
+        "boxShadow": "rgba(24, 56, 66, 0.03) 0px 5px 18px 0px",
+        "gap": "22px"
+      }
+    }
+  },
+  {
+    "name": "390: exact Accounting tile styles",
+    "passed": true,
+    "detail": {
+      "home": {
+        "height": "200px",
+        "borderRadius": "22px",
+        "backgroundImage": "linear-gradient(145deg, rgb(255, 255, 255) 35%, rgb(237, 247, 246))",
+        "paddingTop": "24px",
+        "fontFamily": "\"DM Sans\", sans-serif",
+        "boxShadow": "rgba(24, 56, 66, 0.03) 0px 5px 18px 0px",
+        "gap": "18px"
+      },
+      "accounting": {
+        "height": "200px",
+        "borderRadius": "22px",
+        "backgroundImage": "linear-gradient(145deg, rgb(255, 255, 255) 35%, rgb(237, 247, 246))",
+        "paddingTop": "24px",
+        "fontFamily": "\"DM Sans\", sans-serif",
+        "boxShadow": "rgba(24, 56, 66, 0.03) 0px 5px 18px 0px",
+        "gap": "18px"
+      }
+    }
+  }
+]

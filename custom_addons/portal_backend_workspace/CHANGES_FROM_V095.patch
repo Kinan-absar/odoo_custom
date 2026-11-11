@@ -1,0 +1,414 @@
+--- v0.9.5/__manifest__.py
++++ v0.9.6/__manifest__.py
+@@ -1,6 +1,7 @@
+ {'name': 'Portal Backend Workspace',
+- 'version': '18.0.0.9.5',
+- 'summary': 'Original Sales, Purchase, Accounting and HR workspaces for authorized portal accounts',
++ 'version': '18.0.0.9.6',
++ 'summary': 'Original Sales, Purchase, Accounting and HR workspaces for '
++            'authorized portal accounts',
+  'category': 'Productivity',
+  'author': 'Portal Backend Workspace',
+  'license': 'OPL-1',
+--- v0.9.5/controllers/sales/portal_sales.py
++++ v0.9.6/controllers/sales/portal_sales.py
+@@ -77,10 +77,28 @@
+             raise UserError(_('%s must be a nonnegative finite number.') % field)
+         return result
+ 
++    def _sales_company(self, partner=None):
++        """Use an allowed contact's company, otherwise the active request company.
++
++        Never accept an arbitrary browser company ID or silently create a record
++        in the user's default company when its customer belongs to another one.
++        """
++        user = request.env.user
++        if partner and partner.company_id:
++            company = partner.company_id
++        else:
++            company = request.env.company
++            # A website's default company need not be assigned to the portal user.
++            if company not in user.company_ids:
++                company = user.company_id
++        if not company or company not in user.company_ids:
++            raise Forbidden(_('The quotation company is not available to this user.'))
++        return company
++
+     def _partners(self, limit=500):
+         partner_model = request.env['res.partner'].sudo()
+         return partner_model.search(
+-            partner_model._pbw_sales_customer_domain(request.env.user.company_id),
++            partner_model._pbw_sales_customer_domain(request.env.user.company_ids),
+             limit=limit, order='name,id')
+ 
+     def _projects(self, limit=500):
+@@ -96,8 +114,10 @@
+         customer link was subsequently changed. New choices remain filtered.
+         """
+         customer = partner.commercial_partner_id
++        company = order.company_id if order is not None else self._sales_company(partner)
+         projects = self._projects(limit=None).filtered(
+             lambda p: p.partner_id and p.partner_id.commercial_partner_id == customer
++            and (not p.company_id or p.company_id == company)
+         )
+         if order is not None:
+             current = order._pbw_sales_project()
+@@ -114,6 +134,10 @@
+ 
+     def _render(self, template, **kw):
+         kw.setdefault('error', False)
++        kw.setdefault('document_types', request.env['sale.order']._pbw_sales_document_types())
++        if template == 'portal_backend_workspace.sales__sales_new':
++            kw.setdefault('customer_source_labels', request.env['res.partner']._pbw_sales_customer_source_labels())
++            kw.setdefault('quotation_company', self._sales_company())
+         if template == 'portal_backend_workspace.sales__sales_detail' and kw.get('order'):
+             kw['date_order_local']=self._sales_date_local(kw['order'].date_order)
+             kw['line_boot_json'] = json.dumps(self._line_boot(kw['order']))
+@@ -197,11 +221,17 @@
+         allowed=[('active','=',True),'|',('company_id','=',False),('company_id','in',request.env.user.company_ids.ids)]
+         if kind=='partner_id':
+             model='res.partner'
+-            domain=request.env[model].sudo()._pbw_sales_customer_domain(request.env.user.company_id)
++            domain=request.env[model].sudo()._pbw_sales_customer_domain(request.env.user.company_ids)
+         elif kind=='project_id':
+             partner=request.env['res.partner'].sudo().browse(int(data.get('partner_id') or 0)).exists()
+             if not partner or partner not in self._partners(limit=None):raise Forbidden()
+-            model='project.project';domain=allowed+[('partner_id.commercial_partner_id','=',partner.commercial_partner_id.id)]
++            model='project.project';company=self._sales_company(partner)
++            if data.get('order_id'):
++                order=self._order(self._line_id(data['order_id']))
++                if order.partner_id != partner:raise Forbidden()
++                company=order.company_id
++            domain=[('active','=',True), '|', ('company_id','=',False), ('company_id','=',company.id),
++                    ('partner_id.commercial_partner_id','=',partner.commercial_partner_id.id)]
+         elif kind=='uom_id':model='uom.uom';domain=[('active','=',True)]
+         elif kind=='template_id':raise Forbidden()
+         else:raise Forbidden()
+@@ -209,7 +239,9 @@
+         offset=max(0,min(int(data.get('offset') or 0),100000))
+         records=request.env[model].sudo().search(domain,order='name,id',offset=offset,limit=31)
+         return request.make_json_response({'items':[{'id':r.id,'name':r.display_name,
+-            'customer_id':r.commercial_partner_id.id if kind=='partner_id' else r.partner_id.commercial_partner_id.id if kind=='project_id' else 0} for r in records[:30]],'more':len(records)>30})
++            'customer_id':r.commercial_partner_id.id if kind=='partner_id' else r.partner_id.commercial_partner_id.id if kind=='project_id' else 0,
++            'company_id':r.company_id.id if kind in ('partner_id','project_id') else 0,
++            'company_name':r.company_id.name if kind=='partner_id' and r.company_id else ''} for r in records[:30]],'more':len(records)>30})
+ 
+     @http.route(BASE, type='http', auth='user', website=True)
+     def list_orders(self, **kw):
+@@ -245,26 +277,14 @@
+     def create_order(self, **post):
+         user = self._allowed()
+         try:
+-            partner = request.env['res.partner'].sudo().browse(int(post.get('partner_id') or 0)).exists()
+-            if not partner or partner not in self._partners(limit=None):
+-                raise UserError(_('Select an available customer.'))
+-            kind = post.get('kind')
+-            if kind not in ('standard',):
+-                raise UserError(_('Invalid document type.'))
+-            project_id = int(post.get('project_id') or 0)
+-            project = request.env['project.project'].sudo().browse(project_id).exists() if project_id else False
+-            if project_id and (not project or project not in self._customer_projects(partner)):
+-                raise UserError(_('Select an available project.'))
+-            vals = {
+-                'partner_id':partner.id, 'company_id':user.company_id.id, 'user_id':user.id,
+-                'pbw_portal_creator_id':user.id,
+-                'pbw_portal_review_state':'draft',
+-            }
+-            vals.update(request.env['sale.order']._pbw_sales_project_values(project))
+-            if post.get('validity_date'):
+-                vals['validity_date'] = fields.Date.to_date(post['validity_date'])
+-            order = request.env['sale.order'].sudo().with_company(user.company_id).create(vals)
+-            return request.redirect('%s/%s' % (BASE, order.id))
++            with request.env.cr.savepoint():
++                partner = request.env['res.partner'].sudo().browse(int(post.get('partner_id') or 0)).exists()
++                if not partner or partner not in self._partners(limit=None):
++                    raise UserError(_('Select an available customer.'))
++                virtual, vals = self._line_new_order({'header': post}, required=True)
++                order = self._line_env(virtual)['sale.order'].create(vals)
++                order._pbw_sales_after_document_create()
++                return request.redirect('%s/%s' % (BASE, order.id))
+         except (ValueError, TypeError, UserError, ValidationError) as exc:
+             return self._render('portal_backend_workspace.sales__sales_new',date_order_local=self._sales_date_local(fields.Datetime.now()),line_boot_json=json.dumps(self._line_boot(self._line_new_order({})[0])),partners=self._partners(),projects=self._projects(),templates=self._templates(),units=self._units(),error=str(exc))
+ 
+@@ -291,15 +311,8 @@
+     @http.route(BASE + '/<int:order_id>/save', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+     def save_order(self, order_id, **post):
+         order=self._order(order_id); self._editable(order)
+-        vals={'user_id':(order.user_id or order.pbw_portal_creator_id or request.env.user).id}
+-        project_id = int(post.get('project_id') or 0)
+-        project = request.env['project.project'].sudo().browse(project_id).exists() if project_id else False
+-        if project_id and (not project or project not in self._customer_projects(order.partner_id, order=order)):
+-            raise Forbidden()
+-        vals.update(order._pbw_sales_project_values(project))
+-        try:
+-            vals['date_order']=self._sales_date_utc(post.get('date_order'))
+-            vals['validity_date']=fields.Date.to_date(post['validity_date']) if post.get('validity_date') else False
++        try:
++            vals=self._line_header_values(order,post)
+             order.sudo().write(vals)
+         except (ValueError,ValidationError) as exc:
+             return self._render('portal_backend_workspace.sales__sales_detail',order=order,can_edit=True,can_review=False,error=str(exc),templates=self._templates(),projects=self._customer_projects(order.partner_id, order=order),units=self._units())
+--- v0.9.5/controllers/sales/sales_lines.py
++++ v0.9.6/controllers/sales/sales_lines.py
+@@ -15,23 +15,25 @@
+         partner=False
+         if header.get('partner_id'):
+             partner=request.env['res.partner'].sudo().browse(self._line_id(header['partner_id'])).exists()
+-            if not partner or partner not in self._partners(limit=None) or (partner.company_id and partner.company_id!=user.company_id):
++            if not partner or partner not in self._partners(limit=None):
+                 raise ValidationError(_('Select an available customer for this company.'))
+         if required and not partner:raise ValidationError(_('Select a customer.'))
+         if required and not header.get('date_order'):raise ValidationError(_('Set the quotation/order date.'))
++        company=self._sales_company(partner)
+         project=False
+         if header.get('project_id'):
+             project=request.env['project.project'].sudo().browse(self._line_id(header['project_id'])).exists()
+-            if not partner or not project or project not in self._customer_projects(partner) or (project.company_id and project.company_id!=user.company_id):
++            if not partner or not project or project not in self._customer_projects(partner) or (project.company_id and project.company_id!=company):
+                 raise ValidationError(_('Select a project assigned to this customer and company.'))
+         kind=header.get('kind') or 'standard'
+-        if kind not in ('standard',):raise ValidationError(_('Invalid quotation type.'))
+-        vals=dict(partner_id=partner.id if partner else False,company_id=user.company_id.id,user_id=user.id,
++        vals=dict(partner_id=partner.id if partner else False,company_id=company.id,user_id=user.id,
+             pbw_portal_creator_id=user.id,
+             date_order=self._sales_date_utc(header['date_order']) if header.get('date_order') else fields.Datetime.now(),
+             validity_date=fields.Date.to_date(header['validity_date']) if header.get('validity_date') else False)
+-        vals.update(request.env['sale.order']._pbw_sales_project_values(project))
+-        return request.env['sale.order'].sudo().with_company(user.company_id).new(vals),vals
++        model=request.env['sale.order'].sudo().with_company(company)
++        vals.update(model._pbw_sales_project_values(project))
++        vals.update(model._pbw_sales_document_values(kind, header=header, company=company))
++        return model.new(vals),vals
+ 
+     def _line_header_values(self, order, header):
+         if not isinstance(header,dict):raise ValidationError(_('Invalid quotation details.'))
+@@ -43,6 +45,7 @@
+         vals=dict(date_order=self._sales_date_utc(header.get('date_order')),
+             validity_date=fields.Date.to_date(header['validity_date']) if header.get('validity_date') else False)
+         vals.update(order._pbw_sales_project_values(project))
++        vals.update(order._pbw_sales_document_header_values(header))
+         return vals
+ 
+     def _line_pricing_values(self, order, data):
+@@ -89,7 +92,7 @@
+         return record
+ 
+     def _line_version(self, order):
+-        return json.dumps([str(order.write_date),[(l.id,str(l.write_date)) for l in order.order_line.sorted('id')]],separators=(',',':'))
++        return json.dumps([str(order.write_date),[(l.id,str(l.write_date)) for l in order.order_line.sorted('id')], order._pbw_sales_document_version()],separators=(',',':'))
+ 
+     def _line_analytic(self, order, raw):
+         if not isinstance(raw,dict) or len(raw)>100:
+@@ -255,7 +258,10 @@
+                     virtual=self._line_env(order)['sale.order'].new(dict(self._line_pricing_values(order,data),
+                         order_line=[Command.create(dict(vals,sequence=(i+1)*10)) for i,vals in enumerate(values)]))
+                     result={'untaxed':virtual.amount_untaxed,'tax':virtual.amount_tax,'total':virtual.amount_total,
+-                            'line_amounts':[l.price_subtotal for l in virtual.order_line]}
++                            'line_amounts':[l.price_subtotal for l in virtual.order_line],
++                            'company_id':order.company_id.id,'company_name':order.company_id.name,
++                            'currency':virtual.currency_id.name,
++                            'default_taxes':[{'id':t.id,'label':t.display_name} for t in order.company_id.account_sale_tax_id]}
+                 elif operation=='create':
+                     if order_id:raise AccessError(_('Use Save Lines for an existing quotation.'))
+                     virtual,vals=self._line_new_order(data,required=True)
+@@ -266,6 +272,7 @@
+                         if not isinstance(row,dict) or row.get('id'):raise ValidationError(_('Invalid new quotation line.'))
+                         commands.append(Command.create(dict(self._line_values(virtual,row),sequence=(index+1)*10)))
+                     order=self._line_env(virtual)['sale.order'].create(dict(vals,order_line=commands))
++                    order._pbw_sales_after_document_create()
+                     result=dict(self._line_boot(order),redirect='/my/workspace/sales/%s'%order.id)
+                 elif operation=='save':
+                     if not order_id:raise AccessError(_('Save the new quotation first.'))
+--- v0.9.5/views/sales/portal_sales_templates.xml
++++ v0.9.6/views/sales/portal_sales_templates.xml
+@@ -1,3 +1,4 @@
++<?xml version='1.0' encoding='utf-8'?>
+ <odoo>
+  <template id="sales__sales_workspace_header"><header class="pbw-sales-workspace-header"><div class="pbw-sales-workspace-brand"><span class="pbw-sales-workspace-icon"><i class="fa fa-line-chart" aria-hidden="true"/></span><div><strong>Sales</strong><small t-out="request.env.company.name"/></div></div><nav class="pbw-sales-app-nav" aria-label="Sales workspace"><a t-if="request.env.user.has_group('portal_backend_workspace.sales__group_portal_sales_creator')" href="/my/workspace/sales/updates">Review Updates</a><a href="/my/workspace/sales" t-att-class="'active' if request.httprequest.path.rstrip('/') == '/my/workspace/sales' else ''"><t t-out="'Quotations &amp; Sales Orders' if request.env.user.has_group('portal_backend_workspace.sales__group_portal_sales_user') else 'My Quotations'"/></a><a t-if="request.env.user.has_group('portal_backend_workspace.sales__group_portal_sales_monitor')" href="/my/workspace/sales/monitor">Monitoring</a><a t-if="request.env.user.has_group('portal_backend_workspace.sales__group_portal_sales_approver')" href="/my/workspace/sales/approvals">Approvals</a></nav></header></template>
+ 
+@@ -30,11 +31,12 @@
+     <div class="pbw-sales-head mt-3"><div><h3>New Quotation</h3><span class="pbw-sales-status">Draft</span></div></div>
+     <div class="pbw-sales-sales-actions pbw-document-actions mb-3"><button type="button" class="btn btn-primary" data-sales-save="1">Save Draft</button><a class="btn btn-outline-secondary" href="/my/workspace/sales" data-draft-cancel="1">Cancel</a></div>
+     <div t-if="error" class="alert alert-danger" t-out="error"/>
+-    <div class="pbw-sales-panel"><div id="pbw-sales-new-details" class="row g-3 mb-4">
+-     <div class="col-md-6"><label>Customer</label><select name="partner_id" class="form-select pbw-sales-customer-select" required="required"><option value="">Select customer</option><option t-foreach="partners" t-as="p" t-att-data-commercial-id="p.commercial_partner_id.id" t-att-value="p.id" t-out="p.name"/></select></div>
++    <div class="pbw-sales-panel"><div id="pbw-sales-new-details" class="row g-3 mb-4" t-att-data-default-company-id="quotation_company.id" t-att-data-default-company-name="quotation_company.name">
++     <div class="col-md-6"><label>Customer</label><select name="partner_id" class="form-select pbw-sales-customer-select" required="required"><option value="">Select customer</option><option t-foreach="partners" t-as="p" t-att-data-commercial-id="p.commercial_partner_id.id" t-att-data-company-id="p.company_id.id or 0" t-att-data-company-name="p.company_id.name or ''" t-att-value="p.id" t-out="p.name"/></select><small class="text-muted pbw-sales-company-note">Quotation company: <span data-sales-company-name="1" t-out="quotation_company.name"/></small></div>
++     <div t-if="not partners" class="col-12"><div class="alert alert-warning pbw-sales-empty-customers" role="status">No eligible customers were found in your allowed companies. Use an active contact marked <t t-out="' or '.join(customer_source_labels)"/>. Shared contacts and contacts in your allowed companies are included.</div></div>
+      <div class="col-md-6"><label>Quotation / Order Date</label><input type="datetime-local" name="date_order" class="form-control" step="1" required="required" t-att-value="date_order_local"/></div><div class="col-md-6"><label>Expiration Date</label><input type="date" name="validity_date" class="form-control"/></div>
+-     <div class="col-md-6"><label>Project</label><select name="project_id" class="form-select pbw-sales-project-select"><option value="">No project</option><option t-foreach="projects" t-as="project" t-att-value="project.id" t-att-data-customer-id="project.partner_id.commercial_partner_id.id if project.partner_id else 0" t-out="project.name"/></select></div>
+-     <div class="col-md-6"><label>Document Type</label><select name="kind" class="form-select"><option value="standard">Standard Quotation</option></select></div>
++     <div class="col-md-6"><label>Project</label><select name="project_id" class="form-select pbw-sales-project-select"><option value="">No project</option><option t-foreach="projects" t-as="project" t-att-value="project.id" t-att-data-company-id="project.company_id.id or 0" t-att-data-customer-id="project.partner_id.commercial_partner_id.id if project.partner_id else 0" t-out="project.name"/></select></div>
++     <div class="col-md-6"><label>Document Type</label><select name="kind" class="form-select"><option t-foreach="document_types" t-as="document_type" t-att-value="document_type[0]" t-out="document_type[1]"/></select></div><t t-call="portal_backend_workspace.sales__document_new_extra"/>
+     </div><h5>Order Lines</h5><div id="pbw-sales-line-editor" t-att-data-boot="line_boot_json" t-att-data-csrf="request.csrf_token()"/><noscript>Enable JavaScript to prepare this quotation.</noscript></div>
+    </div>
+   </t>
+@@ -57,15 +59,15 @@
+     <p t-if="order.pbw_order_review_state == 'requested'" class="alert alert-info">Awaiting approval to convert this quotation into a Sales Order.</p>
+     <div t-if="error or request.params.get('error')" class="alert alert-warning" t-out="error or 'The requested change could not be saved. Check the values and try again.'"/>
+     <div t-if="order.pbw_portal_review_note" class="alert alert-info"><strong>Reviewer note:</strong> <t t-out="order.pbw_portal_review_note"/></div>
+-    <div class="pbw-sales-panel"><h5>Quotation Details</h5><div class="row"><div class="col-md-4"><span class="text-muted">Customer</span><p t-out="order.partner_id.name"/></div><div t-if="not can_edit" class="col-md-4"><span class="text-muted">Quotation / Order Date</span><p><span t-field="order.date_order"/></p></div><div class="col-md-4"><span class="text-muted">Document type</span><p t-out="'Standard Quotation'"/></div><div t-if="not can_edit" class="col-md-4"><span class="text-muted">Project</span><p t-out="order._pbw_sales_project().name or 'Not assigned'"/></div><div t-if="not can_edit and order.validity_date" class="col-md-4"><span class="text-muted">Expiration Date</span><p><span t-field="order.validity_date"/></p></div><div class="col-md-4"><span class="text-muted">Salesperson</span><p t-out="order.user_id.name or order.pbw_portal_creator_id.name"/></div></div>
++    <div class="pbw-sales-panel"><h5>Quotation Details</h5><div class="row"><div class="col-md-4"><span class="text-muted">Customer</span><p t-out="order.partner_id.name"/></div><div t-if="not can_edit" class="col-md-4"><span class="text-muted">Quotation / Order Date</span><p><span t-field="order.date_order"/></p></div><div class="col-md-4"><span class="text-muted">Document type</span><p t-out="order._pbw_sales_document_label()"/></div><div t-if="not can_edit" class="col-md-4"><span class="text-muted">Project</span><p t-out="order._pbw_sales_project().name or 'Not assigned'"/></div><div t-if="not can_edit and order.validity_date" class="col-md-4"><span class="text-muted">Expiration Date</span><p><span t-field="order.validity_date"/></p></div><div class="col-md-4"><span class="text-muted">Salesperson</span><p t-out="order.user_id.name or order.pbw_portal_creator_id.name"/></div></div>
+      <form id="pbw-sales-order-details" t-if="can_edit" t-att-action="'/my/workspace/sales/%s/save' % order.id" method="post" class="row g-3"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+       <div class="col-md-4"><label>Quotation reference (automatic)</label><input class="form-control" t-att-value="order.name" readonly="readonly"/></div>
+-      <div class="col-md-4"><label>Project</label><select class="form-select pbw-sales-project-select" name="project_id"><option value="">No project</option><option t-foreach="projects" t-as="project" t-att-value="project.id" t-att-data-customer-id="project.partner_id.commercial_partner_id.id if project.partner_id else 0" t-att-selected="order._pbw_sales_project().id == project.id and 'selected' or None" t-out="project.name"/></select></div><div class="col-md-4"><label>Quotation / Order Date</label><input class="form-control" type="datetime-local" name="date_order" step="1" required="required" t-att-value="date_order_local"/></div><div class="col-md-4"><label>Expiration date</label><input class="form-control" type="date" name="validity_date" t-att-value="order.validity_date or ''"/></div>
+-      </form>
++      <div class="col-md-4"><label>Project</label><select class="form-select pbw-sales-project-select" name="project_id"><option value="">No project</option><option t-foreach="projects" t-as="project" t-att-value="project.id" t-att-data-company-id="project.company_id.id or 0" t-att-data-customer-id="project.partner_id.commercial_partner_id.id if project.partner_id else 0" t-att-selected="order._pbw_sales_project().id == project.id and 'selected' or None" t-out="project.name"/></select></div><div class="col-md-4"><label>Quotation / Order Date</label><input class="form-control" type="datetime-local" name="date_order" step="1" required="required" t-att-value="date_order_local"/></div><div class="col-md-4"><label>Expiration date</label><input class="form-control" type="date" name="validity_date" t-att-value="order.validity_date or ''"/></div>
++      <t t-call="portal_backend_workspace.sales__document_header_extra"/></form>
+     </div>
+     <div class="pbw-sales-panel pbw-sales-sales-lines-panel"><h5>Order Lines</h5><div id="pbw-sales-line-editor" t-att-data-boot="line_boot_json" t-att-data-csrf="request.csrf_token()"/><noscript>Enable JavaScript to view and edit quotation lines.</noscript></div>
+-    <div class="pbw-sales-modal" id="pbw-sales-modal" hidden="hidden"><div class="pbw-sales-modal-content" role="dialog" aria-modal="true" aria-labelledby="pbw-sales-modal-title"><h5 id="pbw-sales-modal-title">Confirm action</h5><p id="pbw-sales-modal-text"/><div class="d-flex gap-2 justify-content-end"><button type="button" class="btn btn-light" id="pbw-sales-modal-cancel">Cancel</button><button type="button" class="btn btn-primary" id="pbw-sales-modal-ok">Continue</button></div></div></div>
++    <t t-call="portal_backend_workspace.sales__document_detail_extra"/><div class="pbw-sales-modal" id="pbw-sales-modal" hidden="hidden"><div class="pbw-sales-modal-content" role="dialog" aria-modal="true" aria-labelledby="pbw-sales-modal-title"><h5 id="pbw-sales-modal-title">Confirm action</h5><p id="pbw-sales-modal-text"/><div class="d-flex gap-2 justify-content-end"><button type="button" class="btn btn-light" id="pbw-sales-modal-cancel">Cancel</button><button type="button" class="btn btn-primary" id="pbw-sales-modal-ok">Continue</button></div></div></div>
+    </div>
+   </t>
+  </template>
+-</odoo>
++<template id="sales__document_new_extra"/><template id="sales__document_header_extra"/><template id="sales__document_detail_extra"/></odoo>
+--- v0.9.5/models/sales/sale_order.py
++++ v0.9.6/models/sales/sale_order.py
+@@ -71,6 +71,40 @@
+     @api.model
+     def _pbw_sales_project_search_domain(self, query):
+         return [(self._pbw_sales_project_field() + '.name', 'ilike', query)]
++
++    @api.model
++    def _pbw_sales_document_types(self):
++        """A bridge may expose types implemented by an installed document engine."""
++        return [('standard', _('Standard Quotation'))]
++
++    def _pbw_sales_document_type(self):
++        self.ensure_one()
++        return 'standard'
++
++    def _pbw_sales_document_label(self):
++        return dict(self._pbw_sales_document_types()).get(
++            self._pbw_sales_document_type(), _('Standard Quotation'))
++
++    @api.model
++    def _pbw_sales_document_values(self, kind, header=None, company=None):
++        if kind != 'standard':
++            raise ValidationError(_('This document type is not available.'))
++        return {}
++
++    def _pbw_sales_document_header_values(self, header):
++        self.ensure_one()
++        return {}
++
++    def _pbw_sales_document_version(self):
++        """Bridge-owned child data participates in optimistic editor locking."""
++        return []
++
++    @api.model
++    def _pbw_sales_extra_content_fields(self):
++        return set()
++
++    def _pbw_sales_after_document_create(self):
++        return True
+ 
+     def _pbw_native_confirmation_context(self):
+         """Bridge extension point, called only after operation authorization."""
+@@ -391,7 +425,7 @@
+             raise AccessError(_('Sales approval metadata can only be changed through the review actions.'))
+         content={'date_order','partner_id','company_id','currency_id','pricelist_id','payment_term_id','validity_date','order_line','note',
+                  'pbw_project_id', self._pbw_sales_project_field()}
+-        if content.intersection(vals):self._pbw_portal_invalidate_review()
++        if (content | self._pbw_sales_extra_content_fields()).intersection(vals):self._pbw_portal_invalidate_review()
+         return super().write(vals)
+ 
+     def action_draft(self):
+--- v0.9.5/models/sales/res_partner.py
++++ v0.9.6/models/sales/res_partner.py
+@@ -1,4 +1,4 @@
+-from odoo import api, fields, models
++from odoo import api, fields, models, _
+ from odoo.osv import expression
+ 
+ 
+@@ -7,7 +7,7 @@
+ 
+     pbw_is_sales_customer = fields.Boolean(
+         string='Workspace Customer / Client',
+-        help='Include this contact in the standalone Sales workspace. Existing Sales customer flags can be connected by the optional Sales Data Bridge.',
++        help='Include this contact in the standalone Sales workspace. The optional Employee Portal bridge connects the original Sales customer checkbox.',
+         index=True,
+     )
+ 
+@@ -20,6 +20,11 @@
+     def _pbw_sales_customer_domain(self, company):
+         return expression.AND([
+             [('active', '=', True), '|', ('company_id', '=', False),
+-             ('company_id', '=', company.id)],
++             ('company_id', 'in', company.ids)],
+             self._pbw_sales_customer_eligibility_domain(),
+         ])
++
++    @api.model
++    def _pbw_sales_customer_source_labels(self):
++        """Readable provider status for the empty-selector message; no contact data."""
++        return [_('Workspace Customer / Client')]
+--- v0.9.5/static/src/sales/js/portal_sales.js
++++ v0.9.6/static/src/sales/js/portal_sales.js
+@@ -192,7 +192,11 @@
+     const customerId = customer.selectedOptions[0]?.dataset.commercialId || '';
+     Array.from(select.options).forEach(option => {
+       if (!option.value) return;
+-      const matches = Boolean(customerId) && option.dataset.customerId === customerId;
++      const defaultCompany = document.getElementById('pbw-sales-new-details')?.dataset.defaultCompanyId || '';
++      const customerCompany = customer.selectedOptions[0]?.dataset.companyId;
++      const companyId = customerCompany && customerCompany !== '0' ? customerCompany : defaultCompany;
++      const matches = Boolean(customerId) && option.dataset.customerId === customerId
++        && (!option.dataset.companyId || option.dataset.companyId === '0' || option.dataset.companyId === companyId);
+       option.hidden = !matches;
+       option.disabled = !matches;
+       if (!matches && option.selected) select.value = '';
+@@ -215,12 +219,26 @@
+    const btn=(text,run)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.className='btn btn-light';b.addEventListener('click',run);return b;};
+    async function load(){const seq=++sequence;rows.textContent='Searching…';try{
+     const partner=document.querySelector('[name="partner_id"]');
+-    const result=await fetch('/my/workspace/sales/search-more',{method:'POST',credentials:'same-origin',body:new URLSearchParams({csrf_token:(select.closest('form')?.querySelector('[name="csrf_token"]')?.value||document.getElementById('pbw-sales-line-editor')?.dataset.csrf),payload:JSON.stringify({kind:select.name,q:input.value,offset,partner_id:partner?.value||document.querySelector('[data-sales-partner]')?.dataset.salesPartner})})});
++    const result=await fetch('/my/workspace/sales/search-more',{method:'POST',credentials:'same-origin',body:new URLSearchParams({csrf_token:(select.closest('form')?.querySelector('[name="csrf_token"]')?.value||document.getElementById('pbw-sales-line-editor')?.dataset.csrf),payload:JSON.stringify({kind:select.name,q:input.value,offset,order_id:(JSON.parse(document.getElementById('pbw-sales-line-editor')?.dataset.boot||'{}').order_id||0),partner_id:partner?.value||document.querySelector('[data-sales-partner]')?.dataset.salesPartner})})});
+     if(!result.ok)throw new Error('Search is unavailable for this selection.');const data=await result.json();if(seq!==sequence)return;rows.replaceChildren();
+-    for(const item of data.items)rows.append(btn(item.name,()=>{let option=Array.from(select.options).find(o=>o.value===String(item.id));if(!option){option=document.createElement('option');option.value=item.id;select.append(option);}option.textContent=item.name;option.dataset.commercialId=item.customer_id;option.dataset.customerId=item.customer_id;option.disabled=false;option.hidden=false;select.value=item.id;select.dispatchEvent(new Event('change',{bubbles:true}));dialog.close();}));
++    for(const item of data.items)rows.append(btn(item.name,()=>{let option=Array.from(select.options).find(o=>o.value===String(item.id));if(!option){option=document.createElement('option');option.value=item.id;select.append(option);}option.textContent=item.name;option.dataset.commercialId=item.customer_id;option.dataset.customerId=item.customer_id;option.dataset.companyId=item.company_id||0;option.dataset.companyName=item.company_name||'';option.disabled=false;option.hidden=false;select.value=item.id;select.dispatchEvent(new Event('change',{bubbles:true}));dialog.close();}));
+     if(!data.items.length)rows.textContent='No matching records';pager.replaceChildren();if(offset)pager.append(btn('Previous',()=>{offset=Math.max(0,offset-30);load();}));if(data.more)pager.append(btn('Next',()=>{offset+=30;load();}));
+    }catch(error){rows.textContent=error.message;}}
+    input.addEventListener('input',()=>{offset=0;load();});dialog.append(title,input,rows,pager,btn('Close',()=>dialog.close()));dialog.addEventListener('close',()=>dialog.remove());document.body.append(dialog);dialog.showModal();load();input.focus();
+   });
+  }
+ });
++
++// Explain the quotation company when selecting a customer from another allowed
++// company. The server independently selects/validates the same company.
++document.addEventListener('DOMContentLoaded', () => {
++  const header = document.getElementById('pbw-sales-new-details');
++  const customer = header?.querySelector('[name="partner_id"]');
++  if (!customer) return;
++  const sync = () => {
++    const option = customer.selectedOptions[0];
++    const name = option?.dataset.companyName || header.dataset.defaultCompanyName || '';
++    header.querySelectorAll('[data-sales-company-name]').forEach(node => { node.textContent = name; });
++  };
++  customer.addEventListener('change', sync); sync();
++});
+--- v0.9.5/static/src/sales/js/sales_lines.js
++++ v0.9.6/static/src/sales/js/sales_lines.js
+@@ -17,7 +17,7 @@
+     const money=v=>Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+     async function post(path,payload={}){
+         const headerRoot=document.getElementById('pbw-sales-new-details')||document.getElementById('pbw-sales-order-details');
+-        if(headerRoot)payload.header=Object.fromEntries(['partner_id','project_id','date_order','validity_date','kind','title'].filter(key=>headerRoot.querySelector('[name="'+key+'"]')).map(key=>[key,headerRoot.querySelector('[name="'+key+'"]')?.value||'']));
++        if(headerRoot)payload.header=Object.fromEntries(['partner_id','project_id','date_order','validity_date','kind','title','template_id'].filter(key=>headerRoot.querySelector('[name="'+key+'"]')).map(key=>[key,headerRoot.querySelector('[name="'+key+'"]')?.value||'']));
+         const response=await fetch((state.order_id?'/my/workspace/sales/'+state.order_id+'/line-api':'/my/workspace/sales/new-api')+path,{method:'POST',credentials:'same-origin',body:new URLSearchParams({csrf_token:csrf,payload:JSON.stringify(payload)})});
+         if(response.headers?.get && !(response.headers.get('content-type')||'').includes('application/json'))throw new Error('Your session or Sales permission changed. Reload this page.');
+         const data=await response.json();if(!data.ok)throw new Error(data.error||'Unable to update quotation lines.');return data.result;
+@@ -42,6 +42,10 @@
+         if(lines.some(l=>!l.display_type&&(!l.name||!l.uom_id||(!l.id&&!l.product_id)))){feedback('Choose a product and unit on each line to calculate totals.');return;}
+         try{const amounts=await post('/preview',{lines});if(seq!==revision)return;
+             Object.assign(state,{untaxed:amounts.untaxed,tax:amounts.tax,total:amounts.total});
++            if(amounts.currency)state.currency=amounts.currency;
++            if(amounts.company_id)state.company_id=amounts.company_id;
++            if(amounts.default_taxes)state.default_taxes=amounts.default_taxes;
++            if(amounts.company_name)document.querySelectorAll('[data-sales-company-name]').forEach(n=>{n.textContent=amounts.company_name;});
+             lines.forEach((line,i)=>{line.subtotal=amounts.line_amounts[i]??0;line._amountKey=amountKey(line);});state.lines.forEach(line=>{line._pending=false;});drawTotals();feedback('');
+         }catch(e){if(seq===revision)feedback(e.message);}
+     }

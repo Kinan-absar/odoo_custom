@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+accounting__access_accounting_post_confirm,Accounting posting warning confirmation,model_pbw_accounting_post_confirm,portal_backend_workspace.accounting__group_approver,1,1,1,1

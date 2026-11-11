@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <odoo>
 
     <template id="employee_portal_dashboard" name="Employee Dashboard">
@@ -51,7 +51,7 @@
                 inset: 0;
                 background: linear-gradient(
                     135deg,
-                    rgba(79,70,229,0.08),
+                    rgba(8,127,131,0.08),
                     transparent 60%
                 );
                 opacity: 0;
@@ -210,13 +210,13 @@
             }
 
             .bg-primary-soft {
-                background: rgba(113,75,103,0.10);
-                color: #714B67;
+                background: rgba(8,127,131,0.10);
+                color: #087f83;
             }
 
             .bg-indigo-soft {
-                background: rgba(79,70,229,0.12);
-                color: #4F46E5;
+                background: rgba(8,127,131,0.12);
+                color: #087f83;
             }
 
             .bg-success-soft {
@@ -235,7 +235,7 @@
             ================================================================ */
 
             .dashboard-hero {
-                background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+                background: linear-gradient(135deg, #159398 0%, #087f83 100%);
                 color: white;
                 border-radius: 26px;
                 padding: 24px;
@@ -244,7 +244,7 @@
                 justify-content: space-between;
                 align-items: center;
 
-                box-shadow: 0 20px 40px rgba(79,70,229,0.25);
+                box-shadow: 0 20px 40px rgba(8,127,131,0.25);
 
                 position: relative;
                 overflow: hidden;
@@ -350,15 +350,15 @@
 
             /* Hover (Desktop) */
             .activity-card:hover {
-                background: rgba(79,70,229,0.06);
-                box-shadow: 0 8px 22px rgba(79,70,229,0.08);
+                background: rgba(8,127,131,0.06);
+                box-shadow: 0 8px 22px rgba(8,127,131,0.08);
                 transform: translateY(-2px);
             }
 
             /* Active (Mobile press feel) */
             .activity-card:active {
                 transform: scale(0.97);
-                background: rgba(79,70,229,0.12);
+                background: rgba(8,127,131,0.12);
             }
 
             /* Left accent indicator */
@@ -383,7 +383,7 @@
             .activity-card i {
                 width: 36px;
                 height: 36px;
-                background: rgba(79,70,229,0.1);
+                background: rgba(8,127,131,0.1);
                 border-radius: 12px;
                 display: flex;
                 align-items: center;
@@ -419,9 +419,10 @@
             }
 
             /* Legacy Telegram connection UI removed; notifications use Web Push. */
-            .needs-attention{background:#fff;border:1px solid #e6e8f0;border-radius:22px;padding:22px;box-shadow:0 8px 24px rgba(15,23,42,.05)}.attention-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px}.attention-kicker{font-size:11px;font-weight:800;letter-spacing:.08em;color:#64748b}.attention-title{font-size:21px;margin:3px 0 0}.attention-total{font-size:12px;font-weight:700;color:#4f46e5;background:#eef2ff;padding:7px 10px;border-radius:999px}.attention-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.attention-item{display:flex;align-items:center;gap:12px;border:1px solid #e8eaf2;border-radius:15px;padding:15px;color:#111827;text-decoration:none!important;background:#fff}.attention-item:hover{border-color:#c7c9f8;box-shadow:0 8px 20px rgba(79,70,229,.08)}.attention-item strong,.attention-item small{display:block}.attention-item strong{font-size:13px}.attention-item small{font-size:11px;color:#64748b;margin-top:3px}.attention-icon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:#ecfdf5;color:#10b981;flex:0 0 38px}.attention-icon.warning{background:#fff7ed;color:#f59e0b}.attention-icon.dark{background:#f1f5f9;color:#334155}.attention-clear{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:16px;background:#f8fafc;border-radius:14px;color:#334155}.attention-clear i{font-size:24px;color:#10b981}.attention-clear strong,.attention-clear small{display:block}.attention-clear small{color:#64748b}@media(min-width:769px){.needs-attention{margin-top:34px}}@media(max-width:900px){.attention-grid{grid-template-columns:1fr}.attention-head{align-items:center}.needs-attention{padding:18px}}
+            .needs-attention{background:#fff;border:1px solid #e6e8f0;border-radius:22px;padding:22px;box-shadow:0 8px 24px rgba(15,23,42,.05)}.attention-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px}.attention-kicker{font-size:11px;font-weight:800;letter-spacing:.08em;color:#64748b}.attention-title{font-size:21px;margin:3px 0 0}.attention-total{font-size:12px;font-weight:700;color:#087f83;background:#eef2ff;padding:7px 10px;border-radius:999px}.attention-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.attention-item{display:flex;align-items:center;gap:12px;border:1px solid #e8eaf2;border-radius:15px;padding:15px;color:#111827;text-decoration:none!important;background:#fff}.attention-item:hover{border-color:#c7c9f8;box-shadow:0 8px 20px rgba(8,127,131,.08)}.attention-item strong,.attention-item small{display:block}.attention-item strong{font-size:13px}.attention-item small{font-size:11px;color:#64748b;margin-top:3px}.attention-icon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:#ecfdf5;color:#10b981;flex:0 0 38px}.attention-icon.warning{background:#fff7ed;color:#f59e0b}.attention-icon.dark{background:#f1f5f9;color:#334155}.attention-clear{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:16px;background:#f8fafc;border-radius:14px;color:#334155}.attention-clear i{font-size:24px;color:#10b981}.attention-clear strong,.attention-clear small{display:block}.attention-clear small{color:#64748b}@media(min-width:769px){.needs-attention{margin-top:34px}}@media(max-width:900px){.attention-grid{grid-template-columns:1fr}.attention-head{align-items:center}.needs-attention{padding:18px}}
             </style>
-            <div class="row mt-4 g-3">
+            <t t-if="visual_dashboard" t-call="employee_portal_suite.visual_desktop_dashboard"/>
+<div class="row mt-4 g-3 ep-dashboard-grid eps-legacy-dashboard">
 
 
                 <section class="needs-attention mb-4">
@@ -435,12 +436,12 @@
                 </section>
 
                 <!-- EMPLOYEE REQUESTS -->
-                <div class="col-6 col-md-6">
+                <div class="col-6 col-md-6 ep-dashboard-tile">
                     <a href="/my/employee/requests" class="dashboard-link">
                         <div class="dashboard-card">
                             <div class="card-top">
                                 <div class="card-icon bg-primary-soft">
-                                    <i class="fa fa-file-text-o"></i>
+                                    <i class="fa fa-file-text-o"/>
                                 </div>
                                 <span class="card-title">Requests</span>
                             </div>
@@ -457,12 +458,12 @@
 
 
                 <!-- MATERIAL REQUESTS -->
-                <div class="col-6 col-md-6">
+                <div class="col-6 col-md-6 ep-dashboard-tile">
                     <a href="/my/employee/material" class="dashboard-link">
                         <div class="dashboard-card">
                             <div class="card-top">
                                 <div class="card-icon bg-indigo-soft">
-                                    <i class="fa fa-cubes"></i>
+                                    <i class="fa fa-cubes"/>
                                 </div>
                                 <span class="card-title">Materials</span>
                             </div>
@@ -480,12 +481,12 @@
 
                 <!-- EMPLOYEE APPROVALS -->
                 <t t-if="can_er_approval_page">
-                    <div class="col-6 col-md-6">
+                    <div class="col-6 col-md-6 ep-dashboard-tile">
                         <a href="/my/employee/approvals" class="dashboard-link">
                             <div class="dashboard-card">
                                 <div class="card-top">
                                     <div class="card-icon bg-success-soft">
-                                        <i class="fa fa-user"></i>
+                                        <i class="fa fa-user"/>
                                     </div>
                                     <span class="card-title">ER Approvals</span>
                                 </div>
@@ -495,12 +496,12 @@
                                             <t t-out="employee_pending_count"/>
                                         </span>
                                         <t t-if="employee_pending_count &gt; 0">
-                                            <span class="badge-pulse bg-success"></span>
+                                            <span class="badge-pulse bg-success"/>
                                         </t>
                                     </div>
                                     <t t-if="new_employee_pending_count &gt; 0">
                                         <span class="card-new-pill">
-                                            <span class="card-new-pill-dot"></span>
+                                            <span class="card-new-pill-dot"/>
                                             <t t-if="new_employee_pending_count == 1">New approval waiting</t>
                                             <t t-if="new_employee_pending_count &gt; 1">
                                                 <t t-out="new_employee_pending_count"/> new approvals waiting
@@ -516,12 +517,12 @@
 
                 <!-- MATERIAL APPROVALS -->
                 <t t-if="can_mr_approval_page">
-                    <div class="col-6 col-md-6">
+                    <div class="col-6 col-md-6 ep-dashboard-tile">
                         <a href="/my/employee/material/approvals" class="dashboard-link">
                             <div class="dashboard-card">
                                 <div class="card-top">
                                     <div class="card-icon bg-warning-soft">
-                                        <i class="fa fa-check-circle-o"></i>
+                                        <i class="fa fa-check-circle-o"/>
                                     </div>
                                     <span class="card-title">MR Approvals</span>
                                 </div>
@@ -531,12 +532,12 @@
                                             <t t-out="material_pending_count"/>
                                         </span>
                                         <t t-if="material_pending_count &gt; 0">
-                                            <span class="badge-pulse"></span>
+                                            <span class="badge-pulse"/>
                                         </t>
                                     </div>
                                     <t t-if="new_material_pending_count &gt; 0">
                                         <span class="card-new-pill">
-                                            <span class="card-new-pill-dot"></span>
+                                            <span class="card-new-pill-dot"/>
                                             <t t-if="new_material_pending_count == 1">New approval waiting</t>
                                             <t t-if="new_material_pending_count &gt; 1">
                                                 <t t-out="new_material_pending_count"/> new approvals waiting
@@ -551,12 +552,12 @@
 
 
                 <!-- SIGNATURES -->
-                <div class="col-6 col-md-6">
+                <div class="col-6 col-md-6 ep-dashboard-tile">
                     <a href="/my/employee/sign" class="dashboard-link">
                         <div class="dashboard-card">
                             <div class="card-top">
                                 <div class="card-icon bg-dark-soft">
-                                    <i class="fa fa-pencil-square-o"></i>
+                                    <i class="fa fa-pencil-square-o"/>
                                 </div>
                                 <span class="card-title">Signatures</span>
                             </div>
@@ -568,7 +569,7 @@
                                 </div>
                                 <t t-if="new_pending_sign_count &gt; 0">
                                     <span class="card-new-pill">
-                                        <span class="card-new-pill-dot"></span>
+                                        <span class="card-new-pill-dot"/>
                                         <t t-if="new_pending_sign_count == 1">New document to sign</t>
                                         <t t-if="new_pending_sign_count &gt; 1">
                                             <t t-out="new_pending_sign_count"/> new documents to sign
@@ -582,12 +583,12 @@
 
                 <!-- SALARY REPORTS (read-only portal viewer group) -->
                 <t t-if="request.env.user.has_group('employee_portal_suite.group_salary_report_viewer')">
-                    <div class="col-6 col-md-6">
+                    <div class="col-6 col-md-6 ep-dashboard-tile">
                         <a href="/my/employee/salary-reports" class="dashboard-link">
                             <div class="dashboard-card">
                                 <div class="card-top">
                                     <div class="card-icon bg-success-soft">
-                                        <i class="fa fa-money"></i>
+                                        <i class="fa fa-money"/>
                                     </div>
                                     <span class="card-title">Salary Reports</span>
                                 </div>
@@ -599,7 +600,7 @@
                                     </div>
                                     <t t-if="new_salary_report_count &gt; 0">
                                         <span class="card-new-pill">
-                                            <span class="card-new-pill-dot"></span>
+                                            <span class="card-new-pill-dot"/>
                                             <t t-if="new_salary_report_count == 1">New report added</t>
                                             <t t-if="new_salary_report_count &gt; 1">
                                                 <t t-out="new_salary_report_count"/> new reports added
@@ -615,12 +616,12 @@
 
                 <!-- PORTAL REPORTS (visible by selected portal groups) -->
                 <t t-if="portal_report_count &gt; 0 or can_manage_portal_reports">
-                    <div class="col-6 col-md-6">
+                    <div class="col-6 col-md-6 ep-dashboard-tile">
                         <a href="/my/employee/reports" class="dashboard-link">
                             <div class="dashboard-card">
                                 <div class="card-top">
                                     <div class="card-icon bg-primary-soft">
-                                        <i class="fa fa-folder-open-o"></i>
+                                        <i class="fa fa-folder-open-o"/>
                                     </div>
                                     <span class="card-title">Reports</span>
                                 </div>
@@ -632,7 +633,7 @@
                                     </div>
                                     <t t-if="new_portal_report_count &gt; 0">
                                         <span class="card-new-pill">
-                                            <span class="card-new-pill-dot"></span>
+                                            <span class="card-new-pill-dot"/>
                                             <t t-if="new_portal_report_count == 1">New report added</t>
                                             <t t-if="new_portal_report_count &gt; 1">
                                                 <t t-out="new_portal_report_count"/> new reports added
@@ -647,26 +648,23 @@
 
                 <!-- ATTENDANCE (only for group_portal_attendance_user) -->
                 <t t-if="can_use_attendance">
-                <div class="col-6 col-md-6">
+                <div class="col-6 col-md-6 ep-dashboard-tile">
                     <a href="/my/employee/attendance" class="dashboard-link">
-                        <div class="dashboard-card"
-                            t-att-style="'background: linear-gradient(180deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid rgba(16,185,129,0.18);' if attendance_checked_in else ''">
+                        <div class="dashboard-card" t-att-style="'background: linear-gradient(180deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid rgba(16,185,129,0.18);' if attendance_checked_in else ''">
                             <div class="card-top">
-                                <div class="card-icon"
-                                    t-att-style="'background: rgba(16,185,129,0.15); color: #059669;' if attendance_checked_in else 'background: rgba(99,102,241,0.10); color: #6366F1;'">
-                                    <i t-att-class="'fa ' + ('fa-clock-o' if attendance_checked_in else 'fa-sign-in')"></i>
+                                <div class="card-icon" t-att-style="'background: rgba(16,185,129,0.15); color: #059669;' if attendance_checked_in else 'background: rgba(21,147,152,0.10); color: #159398;'">
+                                    <i t-att-class="'fa ' + ('fa-clock-o' if attendance_checked_in else 'fa-sign-in')"/>
                                 </div>
                                 <span class="card-title">Attendance</span>
                             </div>
                             <div class="card-bottom">
                                 <div class="card-bottom-number-row">
-                                    <span class="card-number"
-                                        t-att-style="'font-size:18px; color:#059669;' if attendance_checked_in else 'font-size:18px;'">
+                                    <span class="card-number" t-att-style="'font-size:18px; color:#059669;' if attendance_checked_in else 'font-size:18px;'">
                                         <t t-if="attendance_checked_in">Active</t>
                                         <t t-if="not attendance_checked_in">Check In</t>
                                     </span>
                                     <t t-if="attendance_checked_in">
-                                        <span class="badge-pulse bg-success"></span>
+                                        <span class="badge-pulse bg-success"/>
                                     </t>
                                 </div>
                             </div>
@@ -677,27 +675,22 @@
 
 
             </div>
-           <div class="recent-activity mt-4">
+           <div class="recent-activity mt-4 eps-legacy-recent">
 
             <div class="section-title mb-3">Recent Activity</div>
 
             <t t-if="recent_activities">
                 <t t-foreach="recent_activities" t-as="act">
 
-                    <a t-att-href="
-                            '/my/employee/requests/%s' % act.id
-                            if act._name == 'employee.request'
-                            else '/my/employee/material/%s' % act.id
-                        "
-                    class="activity-card">
+                    <a t-att-href="                             '/my/employee/requests/%s' % act.id                             if act._name == 'employee.request'                             else '/my/employee/material/%s' % act.id                         " class="activity-card">
 
                         <!-- ICON -->
                         <div class="activity-icon">
                             <t t-if="act._name == 'employee.request'">
-                                <i class="fa fa-file-text-o"></i>
+                                <i class="fa fa-file-text-o"/>
                             </t>
                             <t t-if="act._name == 'material.request'">
-                                <i class="fa fa-cubes"></i>
+                                <i class="fa fa-cubes"/>
                             </t>
                         </div>
 
@@ -721,8 +714,7 @@
                         </div>
 
                         <!-- STATUS -->
-                        <div class="activity-status"
-                            t-att-class="'activity-status state-' + act.state">
+                        <div class="activity-status" t-att-class="'activity-status state-' + act.state">
                             <t t-out="act.state.replace('_',' ').title()"/>
                         </div>
 

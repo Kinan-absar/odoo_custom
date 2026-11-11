@@ -1,0 +1,418 @@
+--- v0.9.5/__manifest__.py
++++ v0.9.6/__manifest__.py
+@@ -1,10 +1,13 @@
+ {'name': 'Portal Backend Workspace - Employee Portal Bridge',
+- 'version': '18.0.0.9.5',
+- 'summary': 'Shared navigation, login routing and bell, plus existing Sales customer/project mapping',
++ 'version': '18.0.0.9.6',
++ 'summary': 'Shared bell, navigation, existing customer/project mapping and '
++            'optional technical proposal workflows',
+  'category': 'Productivity',
+  'license': 'OPL-1',
+  'depends': ['portal_backend_workspace', 'employee_portal_suite'],
+- 'data': ['views/navigation.xml', 'views/notifications.xml'],
++ 'data': ['views/navigation.xml',
++          'views/notifications.xml',
++          'views/proposals.xml'],
+  'installable': True,
+  'application': False,
+  'auto_install': True}
+--- v0.9.5/models/proposals.py
++++ v0.9.6/models/proposals.py
+@@ -0,0 +1,116 @@
++"""Optional adapter for the original installed proposal engine, not a copy.
++
++No foreign models are inherited and no foreign field is defined by this addon.
++Every entry point checks the known model/field contract before reading it.
++"""
++from odoo import api, models, _
++from odoo.exceptions import ValidationError
++
++
++class SalesProposalBridge(models.Model):
++    _inherit = 'sale.order'
++
++    @api.model
++    def _pbw_has_technical_proposals(self):
++        expected = {
++            'absar_proposal_type': ('selection', None),
++            'absar_proposal_title': ('char', None),
++            'absar_proposal_template_id': ('many2one', 'absar.proposal.template'),
++            'absar_proposal_section_ids': ('one2many', 'absar.proposal.section'),
++            'absar_proposal_payment_ids': ('one2many', 'absar.proposal.payment'),
++        }
++        for name, (kind, relation) in expected.items():
++            field = self._fields.get(name)
++            if field is None or field.type != kind:
++                return False
++            if relation and (field.comodel_name != relation or relation not in self.env):
++                return False
++        if not callable(getattr(self, 'action_absar_load_proposal_template', None)):
++            return False
++        values = dict(self._fields['absar_proposal_type']._description_selection(self.env))
++        return 'standard' in values and 'technical' in values
++
++    @api.model
++    def _pbw_sales_document_types(self):
++        types = list(super()._pbw_sales_document_types())
++        if self._pbw_has_technical_proposals():
++            types.append(('technical', _('Technical & Financial Proposal')))
++        return types
++
++    def _pbw_sales_document_type(self):
++        self.ensure_one()
++        if self._pbw_has_technical_proposals():
++            return self.absar_proposal_type or 'standard'
++        return super()._pbw_sales_document_type()
++
++    @api.model
++    def _pbw_proposal_template(self, ident, company):
++        if not self._pbw_has_technical_proposals():
++            raise ValidationError(_('The Technical & Financial Proposal engine is not installed.'))
++        if not company or company not in self.env.user.sudo(False).company_ids:
++            raise ValidationError(_('The proposal company is not available.'))
++        if isinstance(ident, bool):
++            raise ValidationError(_('Select an available proposal template.'))
++        try:
++            template_id = int(ident)
++        except (ValueError, TypeError, OverflowError):
++            raise ValidationError(_('Select an available proposal template.'))
++        if template_id <= 0:
++            raise ValidationError(_('Select an available proposal template.'))
++        template = self.env['absar.proposal.template'].sudo().search([
++            ('id', '=', template_id), ('active', '=', True),
++            '|', ('company_id', '=', False), ('company_id', '=', company.id),
++        ], limit=1)
++        if not template:
++            raise ValidationError(_('Select an active proposal template belonging to this company.'))
++        return template
++
++    @api.model
++    def _pbw_sales_document_values(self, kind, header=None, company=None):
++        if not self._pbw_has_technical_proposals():
++            return super()._pbw_sales_document_values(kind, header=header, company=company)
++        if kind not in ('standard', 'technical'):
++            raise ValidationError(_('This document type is not available.'))
++        header = header or {}
++        values = {'absar_proposal_type': kind}
++        if kind == 'technical':
++            values['absar_proposal_title'] = str(header.get('title') or 'TECHNICAL & FINANCIAL PROPOSAL')[:160]
++            if header.get('template_id'):
++                values['absar_proposal_template_id'] = self._pbw_proposal_template(
++                    header['template_id'], company).id
++        elif header.get('template_id'):
++            raise ValidationError(_('A proposal template requires Technical & Financial Proposal.'))
++        return values
++
++    def _pbw_sales_document_header_values(self, header):
++        values = super()._pbw_sales_document_header_values(header)
++        self.ensure_one()
++        if self._pbw_sales_document_type() == 'technical' and 'title' in header:
++            values['absar_proposal_title'] = str(header.get('title') or 'TECHNICAL & FINANCIAL PROPOSAL')[:160]
++        return values
++
++    def _pbw_sales_after_document_create(self):
++        result = super()._pbw_sales_after_document_create()
++        for order in self:
++            if order._pbw_sales_document_type() == 'technical' and order.absar_proposal_template_id:
++                order._pbw_proposal_template(order.absar_proposal_template_id.id, order.company_id)
++                order.action_absar_load_proposal_template()
++        return result
++
++    def _pbw_sales_document_version(self):
++        values = list(super()._pbw_sales_document_version())
++        self.ensure_one()
++        if self._pbw_has_technical_proposals():
++            values.append([self.absar_proposal_type, self.absar_proposal_title,
++                [(s.id, str(s.write_date)) for s in self.absar_proposal_section_ids.sorted('id')],
++                [(p.id, str(p.write_date)) for p in self.absar_proposal_payment_ids.sorted('id')]])
++        return values
++
++    @api.model
++    def _pbw_sales_extra_content_fields(self):
++        fields = set(super()._pbw_sales_extra_content_fields())
++        if self._pbw_has_technical_proposals():
++            fields.update({'absar_proposal_type', 'absar_proposal_title',
++                'absar_proposal_template_id', 'absar_proposal_section_ids',
++                'absar_proposal_payment_ids'})
++        return fields
+--- v0.9.5/models/__init__.py
++++ v0.9.6/models/__init__.py
+@@ -1,3 +1,4 @@
+ from . import users
+ from . import notifications
+ from . import sales_data
++from . import proposals
+--- v0.9.5/models/sales_data.py
++++ v0.9.6/models/sales_data.py
+@@ -20,6 +20,15 @@
+         if field and field.type == 'boolean':
+             domain = expression.OR([domain, [('absar_is_sales_customer', '=', True)]])
+         return domain
++
++
++    @api.model
++    def _pbw_sales_customer_source_labels(self):
++        labels = list(super()._pbw_sales_customer_source_labels())
++        field = self._fields.get('absar_is_sales_customer')
++        if field and field.type == 'boolean':
++            labels.append(_('Customer / Client (original Sales)'))
++        return labels
+ 
+ 
+ class SalesProjectDataBridge(models.Model):
+--- v0.9.5/views/proposals.xml
++++ v0.9.6/views/proposals.xml
+@@ -0,0 +1,41 @@
++<?xml version='1.0' encoding='UTF-8'?>
++<odoo>
++  <template id="proposal_document_detail" inherit_id="portal_backend_workspace.sales__document_detail_extra">
++    <xpath expr="." position="inside">
++      <t t-if="order._pbw_sales_document_type() == 'technical'">
++     <div class="pbw-sales-panel"><h5>Technical Proposal Template</h5>
++      <form t-if="can_edit" method="post" t-att-action="'/my/workspace/sales/%s/template' % order.id" class="row g-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><div class="col-md-8"><select name="template_id" class="form-select" required="required"><option value="">Choose a template</option><option t-foreach="templates" t-as="t" t-att-value="t.id" t-out="t.name"/></select></div><div class="col-md-4"><button class="btn btn-outline-primary" data-pbw-sales-confirm="Replace existing proposal sections and milestones with the selected template?">Load / Replace Template</button></div></form>
++      <p t-if="not can_edit" class="text-muted" t-out="order.absar_proposal_template_id.name or 'Custom proposal'"/>
++     </div>
++     <div class="pbw-sales-panel"><h5>Technical Sections</h5><p t-if="can_edit" class="text-muted small">Set the Order number and save to move a section to that position.</p><div class="pbw-sales-sortable" t-att-data-reorder-url="'/my/workspace/sales/%s/sections/reorder' % order.id" t-att-data-csrf="request.csrf_token()"><details t-foreach="order.absar_proposal_section_ids.sorted(key=lambda s:(s.sequence,s.id))" t-as="s" class="pbw-sales-section pbw-sales-section-compact" t-att-data-section-id="s.id"><summary class="pbw-sales-section-heading"><span class="pbw-sales-section-number" t-out="s_index + 1"/><span class="pbw-sales-section-name" t-out="s.name"/><span t-if="not s.include_in_report" class="pbw-sales-muted-tag">Hidden from PDF</span><span class="pbw-sales-section-toggle">Edit / View</span></summary><div class="pbw-sales-section-expanded">
++      
++      <form t-att-action="'/my/workspace/sales/%s/section/%s/save' % (order.id,s.id)" method="post"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
++       <div class="d-flex align-items-center gap-2 mb-2"><label class="mb-0" for="pbw-sales-section-order">Order</label><input type="number" name="position" min="1" t-att-max="len(order.absar_proposal_section_ids)" t-att-value="s_index + 1" class="form-control form-control-sm" style="width:85px" t-att-readonly="not can_edit and 'readonly' or None"/><span class="text-muted small">Set the position, then Save Section</span></div><label>Section type</label><select name="section_type" class="form-select" t-att-disabled="not can_edit and 'disabled' or None"><option t-foreach="s._fields['section_type'].selection" t-as="opt" t-att-value="opt[0]" t-att-selected="s.section_type == opt[0] and 'selected' or None" t-out="opt[1]"/></select>
++       <label class="mt-2">Section title</label><input class="form-control" name="name" t-att-value="s.name" t-att-readonly="not can_edit and 'readonly' or None"/>
++       <label class="mt-2">Content</label>
++       <div class="pbw-sales-editor" t-att-data-editable="can_edit and '1' or '0'">
++        <div t-if="can_edit" class="pbw-sales-editor-toolbar" role="toolbar" aria-label="Format text"><button type="button" data-pbw-sales-format="bold" title="Bold"><b>B</b></button><button type="button" data-pbw-sales-format="italic" title="Italic"><i>I</i></button><button type="button" data-pbw-sales-format="underline" title="Underline"><u>U</u></button><select aria-label="Text size" class="pbw-sales-font-size"><option value="">Text size</option><option value="2">Small</option><option value="3">Normal</option><option value="4">Large</option><option value="5">Extra large</option></select><button type="button" data-pbw-sales-format="insertUnorderedList" title="Bullet list">• List</button></div>
++        <div class="pbw-sales-editor-body" t-att-contenteditable="can_edit and 'true' or 'false'" role="textbox" aria-multiline="true" aria-label="Section content"><t t-if="s.content"><span t-field="s.content"/></t></div>
++        <textarea name="content" hidden="hidden" t-out="s.content or ''"/>
++       </div>
++       <div t-if="can_edit" class="d-flex gap-3 align-items-center mt-2"><label><input type="checkbox" name="include" value="1" t-att-checked="s.include_in_report and 'checked' or None"/> Include in PDF</label><label><input type="checkbox" name="page_break" value="1" t-att-checked="s.page_break_before and 'checked' or None"/> New PDF page</label><button class="btn btn-sm btn-outline-primary">Save Section</button></div>
++      </form>
++      <form t-if="can_edit" method="post" t-att-action="'/my/workspace/sales/%s/section/%s/delete' % (order.id,s.id)" class="mt-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><button class="btn btn-sm btn-outline-danger" data-pbw-sales-confirm="Remove this section?">Delete Section</button></form>
++     </div></details>
++     </div><details t-if="can_edit" class="pbw-sales-add-section"><summary>+ Add Section</summary><form method="post" t-att-action="'/my/workspace/sales/%s/section/add' % order.id" class="pbw-sales-new row g-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><div class="col-md-3"><select class="form-select" name="section_type"><option t-foreach="order.env['absar.proposal.section']._fields['section_type'].selection" t-as="opt" t-att-value="opt[0]" t-out="opt[1]"/></select></div><div class="col-md-4"><input class="form-control" name="name" placeholder="New section title" required="required"/></div><div class="col-md-5"><textarea class="form-control" rows="2" name="content" placeholder="Initial text (can be formatted after adding)"/></div><div class="col-12 d-flex gap-3 align-items-center"><label>Order <input type="number" class="form-control form-control-sm" style="width:85px" name="position" min="1" t-att-max="len(order.absar_proposal_section_ids) + 1" t-att-value="len(order.absar_proposal_section_ids) + 1" t-att-readonly="not can_edit and 'readonly' or None"/></label><label><input type="checkbox" name="page_break" value="1"/> Start on new PDF page</label><button class="btn btn-outline-primary">Save New Section</button></div></form></details>
++     </div>
++     <div class="pbw-sales-panel"><h5>Payment Milestones</h5><div class="table-responsive"><table class="table"><thead><tr><th>Milestone</th><th>%</th><th>Due condition</th><th/></tr></thead><tbody><tr t-foreach="order.absar_proposal_payment_ids" t-as="p"><td t-out="p.name"/><td t-out="p.percentage"/><td t-out="p.due_condition"/><td><form t-if="can_edit" method="post" t-att-action="'/my/workspace/sales/%s/milestone/%s/delete' % (order.id,p.id)"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><button class="btn btn-sm btn-outline-danger">Remove</button></form></td></tr></tbody></table></div>
++      <form t-if="can_edit" method="post" t-att-action="'/my/workspace/sales/%s/milestone/add' % order.id" class="row g-2"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><div class="col-md-4"><input class="form-control" name="name" placeholder="Milestone" required="required"/></div><div class="col-md-2"><input class="form-control" name="percentage" type="number" step="0.01" min="0" max="100" placeholder="%" required="required"/></div><div class="col-md-4"><input class="form-control" name="due_condition" placeholder="Payment due condition"/></div><div class="col-md-2"><button class="btn btn-outline-primary">Add</button></div></form>
++     </div>
++    </t>
++    </xpath>
++  </template>
++  <template id="proposal_document_header" inherit_id="portal_backend_workspace.sales__document_header_extra">
++    <xpath expr="." position="inside">
++      <div t-if="order._pbw_sales_document_type() == 'technical'" class="col-md-4">
++        <label>Proposal title</label>
++        <input class="form-control" name="title" t-att-value="order.absar_proposal_title or ''"/>
++      </div>
++    </xpath>
++  </template>
++</odoo>
+--- v0.9.5/controllers/proposals.py
++++ v0.9.6/controllers/proposals.py
+@@ -0,0 +1,203 @@
++"""Original technical proposal controls in the existing optional EPS bridge."""
++import json
++from odoo import http, Command, _
++from odoo.http import request
++from odoo.exceptions import ValidationError, UserError
++from odoo.tools import float_compare
++from werkzeug.exceptions import Forbidden, NotFound
++from odoo.addons.portal_backend_workspace.controllers.sales.portal_sales import PortalSales, BASE
++
++
++class WorkspaceSalesProposals(PortalSales):
++    def _templates(self, company=None):
++        if not request.env['sale.order']._pbw_has_technical_proposals():
++            return []
++        companies = company or request.env.user.company_ids
++        if any(c not in request.env.user.company_ids for c in companies):
++            raise Forbidden()
++        return request.env['absar.proposal.template'].sudo().search([
++            ('active', '=', True), '|', ('company_id', '=', False),
++            ('company_id', 'in', companies.ids)], order='name,id')
++
++    def _render(self, template, **kw):
++        if kw.get('order'):
++            kw['templates'] = self._templates(kw['order'].company_id)
++        return super()._render(template, **kw)
++
++    def _proposal_order(self, order_id, write=False):
++        order = self._order(order_id)
++        if not order._pbw_has_technical_proposals() or order._pbw_sales_document_type() != 'technical':
++            raise NotFound()
++        if write:
++            self._editable(order)
++            # Recheck after taking the same parent lock used by submission.
++            order._pbw_portal_lock()
++            self._editable(order)
++            if request.httprequest.content_length and request.httprequest.content_length > 2_000_000:
++                raise ValidationError(_('Request is too large.'))
++        return order
++
++    @http.route()
++    def search_more(self, **post):
++        self._allowed()
++        try:
++            data = json.loads(post.get('payload') or '{}')
++        except (ValueError, TypeError):
++            raise Forbidden()
++        if not isinstance(data, dict):
++            raise Forbidden()
++        if data.get('kind') != 'template_id':
++            return super().search_more(**post)
++        if not request.env['sale.order']._pbw_has_technical_proposals():
++            raise Forbidden()
++        if data.get('order_id'):
++            order = self._order(self._line_id(data['order_id']))
++            company = order.company_id
++        else:
++            partner = False
++            if data.get('partner_id'):
++                partner = request.env['res.partner'].sudo().browse(self._line_id(data['partner_id'])).exists()
++                if not partner or partner not in self._partners(limit=None):
++                    raise Forbidden()
++            company = self._sales_company(partner)
++        query = str(data.get('q') or '')[:120]
++        domain = [('active','=',True), '|', ('company_id','=',False), ('company_id','=',company.id)]
++        if query:
++            domain.append(('name','ilike',query))
++        try:
++            offset = max(0, min(int(data.get('offset') or 0), 100000))
++        except (ValueError,TypeError,OverflowError):
++            raise Forbidden()
++        records = request.env['absar.proposal.template'].sudo().search(domain, order='name,id', offset=offset, limit=31)
++        return request.make_json_response({'items':[{'id':r.id,'name':r.display_name} for r in records[:30]], 'more':len(records)>30})
++
++    @http.route()
++    def pdf(self, order_id, **kw):
++        order = self._order(order_id)
++        if order._pbw_sales_document_type() != 'technical':
++            return super().pdf(order_id, **kw)
++        if not order._pbw_can_print_for(request.env.user):
++            raise Forbidden()
++        if not order._pbw_has_technical_proposals():
++            raise NotFound()
++        if order.absar_proposal_payment_ids:
++            total = sum(order.absar_proposal_payment_ids.mapped('percentage'))
++            if float_compare(total, 100.0, precision_digits=2) != 0:
++                raise UserError(_('Payment milestones must total 100%% before printing (currently %.2f%%).') % total)
++        report_xmlid = 'absar_technical_proposal.action_report_absar_technical_proposal'
++        report = request.env.ref(report_xmlid, raise_if_not_found=False)
++        if not report or report.sudo().model != 'sale.order' or report.sudo().report_type != 'qweb-pdf':
++            raise UserError(_('The installed technical proposal PDF report is unavailable.'))
++        content, _kind = request.env['ir.actions.report'].sudo().with_company(order.company_id)._render_qweb_pdf(report_xmlid,[order.id])
++        filename = str(order.name or 'Proposal').replace('/', '-').replace('"', '').replace('\r','').replace('\n','')
++        return request.make_response(content, headers=[('Content-Type','application/pdf'), ('Content-Disposition','inline; filename="%s.pdf"' % filename)])
++
++    @http.route(BASE + '/<int:order_id>/template', type='http', auth='user', website=True, methods=['POST'], csrf=True)
++    def load_template(self,order_id,**post):
++        order=self._proposal_order(order_id, write=True)
++        if order.absar_proposal_type!='technical': raise Forbidden()
++        template=order._pbw_proposal_template(post.get('template_id'), order.company_id)
++        order.sudo().write({'absar_proposal_template_id':template.id})
++        order.sudo().action_absar_load_proposal_template()
++        return request.redirect('%s/%s' % (BASE,order.id))
++
++    def _place_section(self, order, section, raw_position):
++        """Insert a section at the requested 1-based position, shifting others."""
++        sections = list(order.absar_proposal_section_ids.sorted(key=lambda s: (s.sequence, s.id)))
++        if section not in sections:
++            raise Forbidden()
++        sections.remove(section)
++        try:
++            position = int(raw_position)
++        except (TypeError, ValueError):
++            raise Forbidden()
++        if position < 1 or position > len(sections) + 1:
++            raise Forbidden()
++        sections.insert(position - 1, section)
++        for index, item in enumerate(sections, 1):
++            if item.sequence != index * 10:
++                order.write({'absar_proposal_section_ids': [Command.update(item.id, {'sequence': index * 10})]})
++
++    @http.route(BASE + '/<int:order_id>/section/add', type='http', auth='user', website=True, methods=['POST'], csrf=True)
++    def add_section(self,order_id,**post):
++        order=self._proposal_order(order_id, write=True)
++        if order.absar_proposal_type!='technical': raise Forbidden()
++        name=(post.get('name') or '').strip()
++        if not name or len(name)>180: raise Forbidden()
++        section_type=post.get('section_type') or 'custom'
++        allowed=dict(request.env['absar.proposal.section']._fields['section_type'].selection)
++        if section_type not in allowed: raise Forbidden()
++        existing = set(order.absar_proposal_section_ids.ids)
++        order.write({'absar_proposal_section_ids': [Command.create({'name':name,'section_type':section_type,'content':post.get('content') or '', 'page_break_before':post.get('page_break')=='1','sequence':max(order.absar_proposal_section_ids.mapped('sequence') or [0])+10})]})
++        section = order.absar_proposal_section_ids.filtered(lambda s:s.id not in existing)
++        self._place_section(order, section, post.get('position') or len(order.absar_proposal_section_ids))
++        return request.redirect('%s/%s' % (BASE,order.id))
++
++    @http.route(BASE + '/<int:order_id>/section/<int:section_id>/save', type='http', auth='user', website=True, methods=['POST'], csrf=True)
++    def save_section(self,order_id,section_id,**post):
++        order=self._proposal_order(order_id, write=True)
++        section=order.absar_proposal_section_ids.filtered(lambda s:s.id==section_id)
++        if not section: raise NotFound()
++        name=(post.get('name') or '').strip()
++        if not name or len(name)>180: raise Forbidden()
++        section_type=post.get('section_type') or section.section_type
++        if section_type not in dict(section._fields['section_type'].selection): raise Forbidden()
++        order.write({'absar_proposal_section_ids': [Command.update(section.id, {'name':name,'section_type':section_type,'content':post.get('content') or '', 'include_in_report':post.get('include')=='1','page_break_before':post.get('page_break')=='1'})]})
++        self._place_section(order, section, post.get('position'))
++        return request.redirect('%s/%s' % (BASE,order.id))
++
++    @http.route(BASE + '/<int:order_id>/section/<int:section_id>/move', type='http', auth='user', website=True, methods=['POST'], csrf=True)
++    def move_section(self,order_id,section_id,**post):
++        order=self._proposal_order(order_id, write=True)
++        sections=order.absar_proposal_section_ids.sorted(key=lambda x:(x.sequence,x.id))
++        section=sections.filtered(lambda x:x.id==section_id)
++        if not section: raise NotFound()
++        values=list(sections)
++        idx=values.index(section)
++        other=idx+(-1 if post.get('direction')=='up' else 1)
++        if 0<=other<len(values):
++            values[idx],values[other]=values[other],values[idx]
++            for i,item in enumerate(values): order.write({'absar_proposal_section_ids': [Command.update(item.id, {'sequence':(i+1)*10})]})
++        return request.redirect('%s/%s' % (BASE,order.id))
++
++    @http.route(BASE + '/<int:order_id>/sections/reorder', type='http', auth='user', website=True, methods=['POST'], csrf=True)
++    def reorder_sections(self, order_id, **post):
++        order = self._proposal_order(order_id, write=True)
++        try:
++            incoming = [int(value) for value in (post.get('section_ids') or '').split(',') if value.strip()]
++        except ValueError:
++            raise Forbidden()
++        existing = order.absar_proposal_section_ids.ids
++        if len(incoming) != len(existing) or len(set(incoming)) != len(existing) or set(incoming) != set(existing):
++            raise Forbidden()
++        for index, section_id in enumerate(incoming, start=1):
++            order.write({'absar_proposal_section_ids': [Command.update(section_id, {'sequence': index * 10})]})
++        return request.redirect('%s/%s' % (BASE, order.id))
++
++    @http.route(BASE + '/<int:order_id>/section/<int:section_id>/delete', type='http', auth='user', website=True, methods=['POST'], csrf=True)
++    def delete_section(self,order_id,section_id,**post):
++        order=self._proposal_order(order_id, write=True)
++        section=order.absar_proposal_section_ids.filtered(lambda s:s.id==section_id)
++        if not section: raise NotFound()
++        order.write({'absar_proposal_section_ids': [Command.delete(section.id)]})
++        return request.redirect('%s/%s' % (BASE,order.id))
++
++    @http.route(BASE + '/<int:order_id>/milestone/add', type='http', auth='user', website=True, methods=['POST'], csrf=True)
++    def add_milestone(self,order_id,**post):
++        order=self._proposal_order(order_id, write=True)
++        if order.absar_proposal_type!='technical': raise Forbidden()
++        rate=self._num(post.get('percentage'),'Percentage')
++        if rate>100: raise Forbidden()
++        name=(post.get('name') or '').strip()
++        if not name or len(name)>180: raise Forbidden()
++        order.write({'absar_proposal_payment_ids': [Command.create({'name':name,'percentage':rate,'due_condition':(post.get('due_condition') or '')[:255]})]})
++        return request.redirect('%s/%s' % (BASE,order.id))
++
++    @http.route(BASE + '/<int:order_id>/milestone/<int:milestone_id>/delete', type='http', auth='user', website=True, methods=['POST'], csrf=True)
++    def delete_milestone(self,order_id,milestone_id,**post):
++        order=self._proposal_order(order_id, write=True)
++        milestone=order.absar_proposal_payment_ids.filtered(lambda p:p.id==milestone_id)
++        if not milestone: raise NotFound()
++        order.write({'absar_proposal_payment_ids': [Command.delete(milestone.id)]})
++        return request.redirect('%s/%s' % (BASE,order.id))
++
+--- v0.9.5/controllers/__init__.py
++++ v0.9.6/controllers/__init__.py
+@@ -1 +1,2 @@
+ from . import routing
++from . import proposals

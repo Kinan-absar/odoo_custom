@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="employee_portal_layout_treasury" inherit_id="employee_portal_suite.employee_portal_layout">
+        <xpath expr="//div[@id='ep-section-weekly-plan']/div[hasclass('ep-sidebar-section-links')]" position="inside">
+            <t t-if="request.env.user.has_group('employee_portal_suite.group_employee_portal_ceo')">
+                <a href="/my/employee/treasury/payments" class="ep-sidebar-link"><i class="fa fa-check-square-o"/>Payment Approvals</a>
+                <a href="/my/employee/treasury/plans" class="ep-sidebar-link"><i class="fa fa-line-chart"/>Weekly Cash Plans</a>
+            </t>
+        </xpath>
+    </template>
+</odoo>

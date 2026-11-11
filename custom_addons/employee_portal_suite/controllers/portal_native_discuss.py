@@ -497,7 +497,8 @@ self.addEventListener("notificationclick", (event) => {
     @http.route('/my/employee/sw.js', type='http', auth='public', methods=['GET'], csrf=False)
     def employee_portal_service_worker(self, **kwargs):
         script = r'''
-const CACHE_NAME = "employee-portal-pwa-v45";
+const CACHE_NAME = "employee-portal-pwa-v51";
+const OFFLINE_PAGES = new Set(["/my/employee", "/my/employee/attendance"]);
 self.addEventListener("install", () => { self.skipWaiting(); });
 self.addEventListener("activate", (event) => {
     event.waitUntil((async () => {
@@ -506,10 +507,86 @@ self.addEventListener("activate", (event) => {
         await self.clients.claim();
     })());
 });
+
+async function cachePortalPage(req) {
+    const url = new URL(req.url);
+    const canonical = new Request(url.origin + url.pathname, { credentials: "same-origin" });
+    try {
+        const response = await fetch(req);
+        const finalUrl = new URL(response.url || req.url);
+        if (response.ok && !response.redirected && finalUrl.origin === url.origin && OFFLINE_PAGES.has(url.pathname)) {
+            const cache = await caches.open(CACHE_NAME);
+            await cache.put(canonical, response.clone());
+        }
+        return response;
+    } catch (_) {
+        const cached = await caches.match(canonical);
+        if (cached) return cached;
+        throw _;
+    }
+}
+
+async function cacheAsset(req) {
+    const cached = await caches.match(req);
+    if (cached) return cached;
+    const response = await fetch(req);
+    if (response.ok && response.type === "basic") {
+        const cache = await caches.open(CACHE_NAME);
+        await cache.put(req, response.clone());
+    }
+    return response;
+}
+
+self.addEventListener("message", (event) => {
+    const data = event.data || {};
+    if (data.type !== "CACHE_ATTENDANCE_OFFLINE") return;
+    event.waitUntil((async () => {
+        let pageOk = true;
+        const pageUrls = ["/my/employee", "/my/employee/attendance"];
+        for (const path of pageUrls) {
+            try {
+                await cachePortalPage(new Request(self.location.origin + path, { credentials: "same-origin" }));
+                const cached = await caches.match(new Request(self.location.origin + path, { credentials: "same-origin" }));
+                if (!cached) pageOk = false;
+            } catch (_) { pageOk = false; }
+        }
+        let assetFailures = 0;
+        for (const value of (data.assets || []).slice(0, 120)) {
+            try {
+                const url = new URL(value, self.location.origin);
+                if (url.origin !== self.location.origin) continue;
+                await cacheAsset(new Request(url.href, { credentials: "same-origin" }));
+            } catch (_) { assetFailures += 1; }
+        }
+        try { event.ports?.[0]?.postMessage({ok: pageOk, asset_failures: assetFailures}); } catch (_) {}
+    })());
+});
+
 self.addEventListener("fetch", (event) => {
     const req = event.request;
+    const url = new URL(req.url);
+
+    if (url.origin !== self.location.origin) return;
+
+    if (url.pathname.includes("/web/session/logout")) {
+        event.respondWith((async () => {
+            const response = await fetch(req);
+            await caches.delete(CACHE_NAME);
+            return response;
+        })());
+        return;
+    }
+
     if (req.method !== "GET") return;
-    event.respondWith(fetch(req));
+
+    if (req.mode === "navigate" && OFFLINE_PAGES.has(url.pathname)) {
+        event.respondWith(cachePortalPage(req));
+        return;
+    }
+
+    if (["script", "style", "image", "font"].includes(req.destination)) {
+        event.respondWith(cacheAsset(req));
+    }
 });
 self.addEventListener("push", (event) => {
     let data = {};
@@ -545,7 +622,7 @@ self.addEventListener("notificationclick", (event) => {
         return request.make_response(script, headers=[
             ('Content-Type', 'application/javascript; charset=utf-8'),
             ('Cache-Control', 'no-store'),
-            ('Service-Worker-Allowed', '/my/employee'),
+            ('Service-Worker-Allowed', '/my/employee/'),
         ])
 
     @http.route('/employee_portal/discuss/people_all', type='json', auth='user')

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+ <template id="portal_mr_chatter" name="Material Request Conversation">
+  <aside id="eps-mr-chatter" class="eps-mr-chatter" aria-label="Material Request conversation">
+   <header class="eps-mr-chatter-heading"><div><i class="fa fa-comments-o" aria-hidden="true"/><strong>Conversation</strong></div><span t-out="request_rec.name"/></header>
+   <p class="eps-mr-chatter-hint">Messages are shared with the requester and reviewers.</p>
+   <div t-if="request.params.get('chatter_error')" class="alert alert-danger m-3" role="alert" t-out="request.params.get('chatter_error')"/>
+   <form t-att-action="'/my/employee/material/%s/message' % request_rec.id" method="post" class="eps-mr-composer">
+    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+    <input type="hidden" name="view" t-att-value="'approval' if mr_approval_view else 'request'"/>
+    <input type="hidden" name="mode" t-att-value="'reply' if request_rec.can_reply_clarification else 'comment'"/>
+    <label for="eps-mr-message" class="form-label fw-semibold"><t t-if="request_rec.can_reply_clarification">Reply to clarification</t><t t-else="">Send a message</t></label>
+    <textarea id="eps-mr-message" name="message" rows="3" class="form-control" required="required" t-att-placeholder="'Answer the question so approval can continue…' if request_rec.can_reply_clarification else 'Write to the requester and reviewers…'"/>
+    <div class="eps-mr-composer-footer"><small t-if="request_rec.can_reply_clarification">Sending your reply returns this step to the approver.</small><small t-else="">Shared conversation</small><button type="submit" class="btn btn-primary rounded-pill"><i class="fa fa-paper-plane-o me-1"/><t t-if="request_rec.can_reply_clarification">Send Reply</t><t t-else="">Send</t></button></div>
+   </form>
+   <div class="eps-mr-message-list">
+    <article t-foreach="mr_messages" t-as="msg" class="eps-mr-message" t-att-data-message-id="msg.id">
+     <div class="eps-mr-avatar" aria-hidden="true" t-out="(msg.author_id.name or 'S')[:1].upper()"/>
+     <div class="eps-mr-message-content"><div class="eps-mr-message-meta"><strong t-out="msg.author_id.name or 'System'"/><time t-field="msg.date"/></div><div class="eps-mr-message-body" t-field="msg.body"/></div>
+    </article>
+    <div t-if="not mr_messages" class="eps-mr-conversation-empty"><i class="fa fa-comment-o"/><p>No messages yet.</p><small>Questions, replies and shared updates appear here.</small></div>
+    <a t-if="mr_more_before" class="eps-mr-load-earlier" t-att-href="'?chatter_before=%s#eps-mr-chatter' % mr_more_before">Earlier messages <i class="fa fa-angle-right"/></a>
+   </div>
+  </aside>
+ </template>
+ <template id="portal_mr_message_notifications" name="Material Request Messages">
+  <t t-call="employee_portal_suite.employee_portal_layout">
+   <div class="container-fluid py-3"><a href="/my/employee" class="app-back-btn mb-3"><i class="fa fa-arrow-left"/><span>Back</span></a>
+    <div class="card rounded-4 border-0 shadow-sm"><div class="card-body"><h4>Material Request messages</h4><p class="text-muted">Unread conversations shared with you</p>
+     <a t-foreach="items" t-as="item" t-att-href="item['url'] + '#eps-mr-chatter'" class="eps-mr-notification-row"><i class="fa fa-commenting-o"/><div><strong t-out="item['record'].name"/><span><t t-out="item['message'].author_id.name or 'System'"/> · <span t-field="item['message'].date"/></span><small t-out="item['message'].subject or 'New message'"/></div><i class="fa fa-angle-right"/></a>
+     <p t-if="not items" class="text-muted py-4">You're all caught up.</p>
+    </div></div>
+   </div>
+  </t>
+ </template>
+</odoo>

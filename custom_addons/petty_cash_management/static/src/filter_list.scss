@@ -1,0 +1,33 @@
+.pc-filter-bar {
+    padding: 14px 16px 10px;
+    background: #f7f9fa;
+    border-bottom: 1px solid #dce6e7;
+    .pc-filter-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 9px; margin-bottom: 8px; }
+    .pc-filter-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 12px; }
+    .pc-filter-inputs label { font-size: 12px; font-weight: 600; color: #526971; }
+    .pc-filter-inputs input { margin-top: 5px; border-radius: 7px; background: #fff; }
+    .pc-filter-card { border: 1px solid #d8e5e6; border-bottom: 3px solid #b4d9da; border-radius: 10px; background: #fff; color: #264653; padding: 13px 9px; font-weight: 600; transition: background .15s, border-color .15s; }
+    .pc-filter-card:hover, .pc-filter-card.is-active { background: #e8f5f4; border-color: #00858a; color: #006e73; }
+    .pc-filter-card:focus-visible { outline: 2px solid #00858a; outline-offset: 2px; }
+}
+
+.pc-filter-bar .pc-filter-card { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pc-filter-bar .pc-filter-count { background: #edf5f5; border-radius: 20px; padding: 2px 8px; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.pc-filter-bar .is-active .pc-filter-count { background: #00858a; color: white; }
+
+.pc-filter-bar .pc-color-neutral { --card-accent: #607580; --card-tint: #f2f5f6; }
+.pc-filter-bar .pc-color-muted { --card-accent: #6b7280; --card-tint: #f3f4f6; }
+.pc-filter-bar .pc-color-blue { --card-accent: #3478ad; --card-tint: #eaf4fb; }
+.pc-filter-bar .pc-color-teal { --card-accent: #00858a; --card-tint: #e7f5f4; }
+.pc-filter-bar .pc-color-orange { --card-accent: #b76913; --card-tint: #fff2e5; }
+.pc-filter-bar .pc-color-indigo { --card-accent: #5967b5; --card-tint: #eef0fc; }
+.pc-filter-bar .pc-color-purple { --card-accent: #8553ae; --card-tint: #f4edf9; }
+.pc-filter-bar .pc-color-green { --card-accent: #308557; --card-tint: #eaf6ee; }
+.pc-filter-bar .pc-color-red { --card-accent: #b84750; --card-tint: #fceff0; }
+.pc-filter-bar .pc-color-warning { --card-accent: #9d7613; --card-tint: #fff8e0; }
+.pc-filter-bar .pc-color-my { --card-accent: #8553ae; --card-tint: #f4edf9; }
+.pc-filter-bar .pc-filter-card { background: var(--card-tint, #f2f5f6); border-bottom-color: var(--card-accent, #607580); }
+.pc-filter-bar .pc-filter-card:hover, .pc-filter-bar .pc-filter-card.is-active { background: var(--card-tint, #f2f5f6); color: var(--card-accent, #607580); border-color: var(--card-accent, #607580); box-shadow: inset 0 0 0 1px var(--card-accent, #607580); }
+.pc-filter-bar .pc-filter-card:focus-visible { outline-color: var(--card-accent, #607580); }
+.pc-filter-bar .pc-filter-count { background: #ffffffb3; color: var(--card-accent, #607580); }
+.pc-filter-bar .is-active .pc-filter-count { background: var(--card-accent, #607580); color: #fff; }

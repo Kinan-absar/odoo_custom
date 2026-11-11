@@ -1,0 +1,14 @@
+{
+  "input": "Portal_Backend_Workspace_EPS_Bridge_v0.9.9_Remove_Signatories.zip",
+  "input_sha256": "7382ef35127f360331b21f1c59431e6c58bef4552e2d0bba7ea5f7a5d3a93217",
+  "runtime_changes": [
+    {
+      "status": "changed",
+      "path": "__manifest__.py"
+    },
+    {
+      "status": "changed",
+      "path": "views/navigation.xml"
+    }
+  ]
+}

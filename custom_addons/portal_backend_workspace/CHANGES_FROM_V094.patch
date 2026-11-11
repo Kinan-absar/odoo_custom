@@ -1,0 +1,709 @@
+--- v0.9.4/__manifest__.py
++++ v0.9.5/__manifest__.py
+@@ -1,5 +1,5 @@
+ {'name': 'Portal Backend Workspace',
+- 'version': '18.0.0.9.4',
++ 'version': '18.0.0.9.5',
+  'summary': 'Original Sales, Purchase, Accounting and HR workspaces for authorized portal accounts',
+  'category': 'Productivity',
+  'author': 'Portal Backend Workspace',
+--- v0.9.4/controllers/sales/portal_sales.py
++++ v0.9.5/controllers/sales/portal_sales.py
+@@ -33,24 +33,25 @@
+         if not order or order.company_id not in user.company_ids:
+             raise NotFound()
+         creator = order.pbw_portal_creator_id
++        owner = order._pbw_sales_owner()
+         is_monitor = user.has_group('portal_backend_workspace.sales__group_portal_sales_monitor')
+         is_approver = user.has_group('portal_backend_workspace.sales__group_portal_sales_approver')
+         if review:
+-            if not creator or creator.id == user.id:
++            if not creator or user in (owner, creator):
+                 raise NotFound()
+-        elif not (self._operator() or (creator and user in (creator,order.pbw_portal_submitter_id,order.pbw_order_requester_id)) or (is_approver and creator) or is_monitor):
++        elif not (self._operator() or owner == user or (creator and user in (creator,order.pbw_portal_submitter_id,order.pbw_order_requester_id)) or (is_approver and creator) or is_monitor):
+             raise NotFound()
+         return order
+ 
+     def _editable(self, order):
++        self._allowed()
+         if not order.id:
+-            self._allowed()
+             return
+         if order.state in ('draft','sent') and order._pbw_is_sales_approver(request.env.user):
+             return
+         if self._operator() and order.state in ('draft','sent') and (not order.pbw_portal_creator_id or order.pbw_portal_review_state in ('draft','returned')):
+             return
+-        if order.pbw_portal_creator_id.id != request.env.user.id or order.pbw_portal_review_state not in ('draft','returned') or order.state not in ('draft','sent'):
++        if order._pbw_sales_owner() != request.env.user or order.pbw_portal_review_state not in ('draft','returned') or order.state not in ('draft','sent'):
+             raise Forbidden()
+ 
+     def _sales_date_local(self, value):
+@@ -77,10 +78,10 @@
+         return result
+ 
+     def _partners(self, limit=500):
+-        return request.env['res.partner'].sudo().search([
+-            ('pbw_is_sales_customer','=',True), ('active','=',True),
+-            '|', ('company_id','=',False), ('company_id','in',request.env.user.company_ids.ids)
+-        ], limit=limit, order='name')
++        partner_model = request.env['res.partner'].sudo()
++        return partner_model.search(
++            partner_model._pbw_sales_customer_domain(request.env.user.company_id),
++            limit=limit, order='name,id')
+ 
+     def _projects(self, limit=500):
+         return request.env['project.project'].sudo().search([
+@@ -88,12 +89,21 @@
+             ('company_id','in',request.env.user.company_ids.ids)
+         ], limit=limit, order='name')
+ 
+-    def _customer_projects(self, partner):
+-        """Only company-compatible projects assigned to this customer's commercial entity."""
++    def _customer_projects(self, partner, order=None):
++        """Customer projects, plus the authorized document's existing selection.
++
++        Keep an older construction project's selection visible even if its
++        customer link was subsequently changed. New choices remain filtered.
++        """
+         customer = partner.commercial_partner_id
+-        return self._projects(limit=None).filtered(
++        projects = self._projects(limit=None).filtered(
+             lambda p: p.partner_id and p.partner_id.commercial_partner_id == customer
+         )
++        if order is not None:
++            current = order._pbw_sales_project()
++            if current and (not current.company_id or current.company_id == order.company_id):
++                projects |= current
++        return projects
+ 
+     def _units(self):
+         return request.env['uom.uom'].sudo().search([('active','=',True)],order='name')
+@@ -120,14 +130,14 @@
+         params = params or {}
+         domain = [('company_id', 'in', user.company_ids.ids)]
+         if queue:
+-            domain += [('pbw_portal_creator_id','!=',False), ('pbw_portal_creator_id','!=',user.id),
++            domain += [('pbw_portal_creator_id','!=',False), ('pbw_portal_creator_id','!=',user.id), ('create_uid','!=',user.id),
+                        ('pbw_portal_submitter_id','!=',user.id),('pbw_order_requester_id','!=',user.id),
+                        '|',('pbw_portal_review_state','=','submitted'),('pbw_order_review_state','=','requested'), ('state','in',['draft','sent'])]
+         elif updates:
+             domain += [('pbw_sales_decision_at','!=',False),'|','|',
+                 ('pbw_portal_creator_id','=',user.id),('pbw_portal_submitter_id','=',user.id),('pbw_order_requester_id','=',user.id)]
+         elif not monitor and not self._operator():
+-            domain += [('pbw_portal_creator_id','=',user.id)]
++            domain = expression.AND([domain, request.env['sale.order']._pbw_sales_owner_domain(user)])
+         else:
+             source = params.get('source', 'all')
+             if source == 'portal':
+@@ -144,13 +154,16 @@
+             review = params.get('review', 'all')
+             if review in ('draft','submitted','approved','returned'):
+                 domain += [('pbw_portal_creator_id','!=',False),('pbw_portal_review_state','=',review)]
++            elif review == 'direct':
++                domain += [('pbw_order_review_state', '=', 'direct')]
+             elif review == 'na':
+                 domain += [('pbw_portal_creator_id','=',False)]
+         query = (params.get('q') or '').strip()[:120]
+         if query:
+-            domain = expression.AND([domain, ['|','|','|',
+-                ('name','ilike',query),('partner_id.name','ilike',query),
+-                ('pbw_project_id.name','ilike',query),('user_id.name','ilike',query)]])
++            domain = expression.AND([domain, expression.OR([
++                [('name','ilike',query)], [('partner_id.name','ilike',query)],
++                request.env['sale.order']._pbw_sales_project_search_domain(query),
++                [('user_id.name','ilike',query)]])])
+         model = request.env['sale.order'].sudo()
+         count = model.search_count(domain)
+         per_page = 20
+@@ -160,7 +173,7 @@
+             page = 1
+         orders = model.search(domain, limit=per_page, offset=(page-1)*per_page, order='pbw_sales_decision_at desc, id desc' if updates else 'date_order desc, id desc')
+         pending_count = model.search_count([('company_id','in',user.company_ids.ids),
+-                ('pbw_portal_creator_id','!=',False),('pbw_portal_creator_id','!=',user.id),
++                ('pbw_portal_creator_id','!=',False),('pbw_portal_creator_id','!=',user.id),('create_uid','!=',user.id),
+                 ('pbw_portal_submitter_id','!=',user.id),('pbw_order_requester_id','!=',user.id),
+                 '|',('pbw_portal_review_state','=','submitted'),('pbw_order_review_state','=','requested'),('state','in',['draft','sent'])]) if is_approver else 0
+         if queue or updates:
+@@ -182,7 +195,9 @@
+         self._allowed()
+         data=json.loads(post.get('payload') or '{}');kind=data.get('kind');q=str(data.get('q') or '')[:120]
+         allowed=[('active','=',True),'|',('company_id','=',False),('company_id','in',request.env.user.company_ids.ids)]
+-        if kind=='partner_id':model='res.partner';domain=allowed+[('pbw_is_sales_customer','=',True)]
++        if kind=='partner_id':
++            model='res.partner'
++            domain=request.env[model].sudo()._pbw_sales_customer_domain(request.env.user.company_id)
+         elif kind=='project_id':
+             partner=request.env['res.partner'].sudo().browse(int(data.get('partner_id') or 0)).exists()
+             if not partner or partner not in self._partners(limit=None):raise Forbidden()
+@@ -243,8 +258,9 @@
+             vals = {
+                 'partner_id':partner.id, 'company_id':user.company_id.id, 'user_id':user.id,
+                 'pbw_portal_creator_id':user.id,
+-                'pbw_portal_review_state':'draft', 'pbw_project_id':project.id if project else False,
++                'pbw_portal_review_state':'draft',
+             }
++            vals.update(request.env['sale.order']._pbw_sales_project_values(project))
+             if post.get('validity_date'):
+                 vals['validity_date'] = fields.Date.to_date(post['validity_date'])
+             order = request.env['sale.order'].sudo().with_company(user.company_id).create(vals)
+@@ -261,7 +277,7 @@
+         return self._render('portal_backend_workspace.sales__sales_detail', order=order, can_confirm=order._pbw_portal_can_confirm(request.env.user),
+             can_edit=can_edit,
+             can_review=(request.env.user.has_group('portal_backend_workspace.sales__group_portal_sales_approver') and order.pbw_portal_review_state=='submitted' and request.env.user not in (order.pbw_portal_creator_id,order.pbw_portal_submitter_id)),
+-            templates=self._templates(),projects=self._customer_projects(order.partner_id),units=self._units())
++            templates=self._templates(),projects=self._customer_projects(order.partner_id, order=order),units=self._units())
+ 
+     @http.route(BASE+'/new-api/<string:operation>', type='http', auth='user', methods=['POST'], csrf=True)
+     def new_line_api(self, operation, **post):
+@@ -278,15 +294,15 @@
+         vals={'user_id':(order.user_id or order.pbw_portal_creator_id or request.env.user).id}
+         project_id = int(post.get('project_id') or 0)
+         project = request.env['project.project'].sudo().browse(project_id).exists() if project_id else False
+-        if project_id and (not project or project not in self._customer_projects(order.partner_id)):
+-            raise Forbidden()
+-        vals['pbw_project_id'] = project.id if project else False
++        if project_id and (not project or project not in self._customer_projects(order.partner_id, order=order)):
++            raise Forbidden()
++        vals.update(order._pbw_sales_project_values(project))
+         try:
+             vals['date_order']=self._sales_date_utc(post.get('date_order'))
+             vals['validity_date']=fields.Date.to_date(post['validity_date']) if post.get('validity_date') else False
+             order.sudo().write(vals)
+         except (ValueError,ValidationError) as exc:
+-            return self._render('portal_backend_workspace.sales__sales_detail',order=order,can_edit=True,can_review=False,error=str(exc),templates=self._templates(),projects=self._customer_projects(order.partner_id),units=self._units())
++            return self._render('portal_backend_workspace.sales__sales_detail',order=order,can_edit=True,can_review=False,error=str(exc),templates=self._templates(),projects=self._customer_projects(order.partner_id, order=order),units=self._units())
+         return request.redirect('%s/%s' % (BASE, order.id))
+ 
+     @http.route(BASE + '/<int:order_id>/line/add', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+@@ -339,7 +355,10 @@
+     def workflow(self,order_id,**post):
+         order=self._order(order_id)
+         action=post.get('action')
+-        if action=='request_order':
++        if action=='confirm_direct':
++            self._allowed(approve=True)
++            order._pbw_confirm_own_quotation()
++        elif action=='request_order':
+             order.action_pbw_request_order()
+         elif action=='submit':
+             self._editable(order)
+--- v0.9.4/controllers/sales/sales_lines.py
++++ v0.9.5/controllers/sales/sales_lines.py
+@@ -27,9 +27,10 @@
+         kind=header.get('kind') or 'standard'
+         if kind not in ('standard',):raise ValidationError(_('Invalid quotation type.'))
+         vals=dict(partner_id=partner.id if partner else False,company_id=user.company_id.id,user_id=user.id,
+-            pbw_portal_creator_id=user.id,pbw_project_id=project.id if project else False,
++            pbw_portal_creator_id=user.id,
+             date_order=self._sales_date_utc(header['date_order']) if header.get('date_order') else fields.Datetime.now(),
+             validity_date=fields.Date.to_date(header['validity_date']) if header.get('validity_date') else False)
++        vals.update(request.env['sale.order']._pbw_sales_project_values(project))
+         return request.env['sale.order'].sudo().with_company(user.company_id).new(vals),vals
+ 
+     def _line_header_values(self, order, header):
+@@ -37,11 +38,11 @@
+         project=False
+         if header.get('project_id'):
+             project=request.env['project.project'].sudo().browse(self._line_id(header['project_id'])).exists()
+-            if not project or project not in self._customer_projects(order.partner_id) or (project.company_id and project.company_id!=order.company_id):
++            if not project or project not in self._customer_projects(order.partner_id, order=order) or (project.company_id and project.company_id!=order.company_id):
+                 raise ValidationError(_('Select an available project for this customer and company.'))
+-        vals=dict(pbw_project_id=project.id if project else False,
+-            date_order=self._sales_date_utc(header.get('date_order')),
++        vals=dict(date_order=self._sales_date_utc(header.get('date_order')),
+             validity_date=fields.Date.to_date(header['validity_date']) if header.get('validity_date') else False)
++        vals.update(order._pbw_sales_project_values(project))
+         return vals
+ 
+     def _line_pricing_values(self, order, data):
+@@ -290,9 +291,10 @@
+                         vals['sequence']=(index+1)*10
+                         commands.append(Command.update(rid,vals) if rid else Command.create(vals))
+                     commands += [Command.delete(rid) for rid in existing if rid not in seen]
+-                    # Enroll editable native drafts in the existing issuer workflow.
+-                    if not order.pbw_portal_creator_id:
+-                        order._pbw_review_write({'pbw_portal_creator_id':request.env.uid,'pbw_portal_review_state':'draft'})
++                    # Editing another person's native draft must never transfer authorship.
++                    owner = order._pbw_sales_owner()
++                    if owner and order.pbw_portal_creator_id != owner:
++                        order._pbw_review_write({'pbw_portal_creator_id': owner.id})
+                     values=self._line_header_values(order,data['header']) if 'header' in data else {}
+                     order.write(dict(values,order_line=commands))
+                     result=self._line_boot(order)
+--- v0.9.4/models/sales/portal_notifications.py
++++ v0.9.5/models/sales/portal_notifications.py
+@@ -23,7 +23,7 @@
+         summary={}
+         if user.has_group(PREFIX+'group_portal_sales_approver'):
+             domain=company+[
+-                ('pbw_portal_creator_id','!=',False),('pbw_portal_creator_id','!=',user.id),
++                ('pbw_portal_creator_id','!=',False),('pbw_portal_creator_id','!=',user.id),('create_uid','!=',user.id),
+                 ('pbw_portal_submitter_id','!=',user.id),('pbw_order_requester_id','!=',user.id),
+                 ('state','in',['draft','sent']),
+                 '|',('pbw_portal_review_state','=','submitted'),('pbw_order_review_state','=','requested')]
+--- v0.9.4/models/sales/report_approval.py
++++ v0.9.5/models/sales/report_approval.py
+@@ -18,13 +18,15 @@
+             return False
+         if self._pbw_is_sales_approver(user):
+             return True
++        if self.state in ('sale', 'done') and self.pbw_direct_confirmed_by_id:
++            return True
+         required = self._pbw_review_permissions(user)['requires_review']
+         if not required:
+             return True
+         return bool(self.pbw_portal_review_state == 'approved' and self.pbw_portal_approver_id)
+ 
+     @api.depends_context('uid', 'company')
+-    @api.depends('company_id', 'pbw_portal_creator_id', 'pbw_portal_review_state', 'pbw_portal_approver_id')
++    @api.depends('company_id', 'state', 'pbw_portal_creator_id', 'pbw_portal_review_state', 'pbw_portal_approver_id', 'pbw_direct_confirmed_by_id')
+     def _compute_pbw_can_print(self):
+         for order in self:
+             order.pbw_can_print = order._pbw_can_print_for(self.env.user.sudo(False))
+--- v0.9.4/models/sales/res_partner.py
++++ v0.9.5/models/sales/res_partner.py
+@@ -1,11 +1,25 @@
+-from odoo import fields, models
++from odoo import api, fields, models
++from odoo.osv import expression
+ 
+ 
+ class ResPartner(models.Model):
+     _inherit = 'res.partner'
+ 
+     pbw_is_sales_customer = fields.Boolean(
+-        string='Customer / Client',
+-        help='Include this contact in the customer selector for Sales Quotations and the Employee Portal.',
++        string='Workspace Customer / Client',
++        help='Include this contact in the standalone Sales workspace. Existing Sales customer flags can be connected by the optional Sales Data Bridge.',
+         index=True,
+     )
++
++    @api.model
++    def _pbw_sales_customer_eligibility_domain(self):
++        """Fixed provider hook; a bridge can add an existing customer flag."""
++        return [('pbw_is_sales_customer', '=', True)]
++
++    @api.model
++    def _pbw_sales_customer_domain(self, company):
++        return expression.AND([
++            [('active', '=', True), '|', ('company_id', '=', False),
++             ('company_id', '=', company.id)],
++            self._pbw_sales_customer_eligibility_domain(),
++        ])
+--- v0.9.4/models/sales/sale_order.py
++++ v0.9.5/models/sales/sale_order.py
+@@ -3,12 +3,13 @@
+ from odoo import api, fields, models, _
+ from odoo.exceptions import AccessError, UserError, ValidationError
+ from odoo.tools import float_compare
++from odoo.osv import expression
+ 
+ _logger = logging.getLogger(__name__)
+ _PREFIX = 'portal_backend_workspace.sales__'
+ _REVIEW_TOKEN = object()
+ _ORDER_FIELDS = {'pbw_order_review_state', 'pbw_order_requester_id', 'pbw_order_approver_id'}
+-_REVIEW_FIELDS = _ORDER_FIELDS | {'pbw_sales_decision_at','pbw_portal_creator_id','pbw_portal_submitter_id','pbw_portal_review_state','pbw_portal_approver_id'}
++_REVIEW_FIELDS = _ORDER_FIELDS | {'pbw_sales_decision_at','pbw_portal_creator_id','pbw_portal_submitter_id','pbw_portal_review_state','pbw_portal_approver_id', 'pbw_direct_confirmed_by_id'}
+ 
+ 
+ class SaleOrder(models.Model):
+@@ -26,10 +27,14 @@
+     pbw_sales_decision_at = fields.Datetime(string='Latest Sales Decision', readonly=True, copy=False, index=True)
+     pbw_order_review_state = fields.Selection([
+         ('none', 'Not Requested'), ('requested', 'Awaiting Sales Order Approval'),
+-        ('returned', 'Sales Order Request Returned'), ('approved', 'Sales Order Approved')],
++        ('returned', 'Sales Order Request Returned'), ('approved', 'Sales Order Approved'),
++        ('direct', 'Directly Confirmed')],
+         default='none', string='Sales Order Review', readonly=True, copy=False, tracking=True, index=True)
+     pbw_order_requester_id = fields.Many2one('res.users', string='Conversion Requested By', readonly=True, copy=False)
+     pbw_order_approver_id = fields.Many2one('res.users', string='Sales Order Approved By', readonly=True, copy=False)
++    pbw_direct_confirmed_by_id = fields.Many2one(
++        'res.users', string='Directly Confirmed By', readonly=True, copy=False)
++    pbw_can_confirm_direct = fields.Boolean(compute='_compute_pbw_review_buttons')
+     pbw_requires_review = fields.Boolean(compute='_compute_pbw_review_buttons')
+     pbw_can_submit = fields.Boolean(compute='_compute_pbw_review_buttons')
+     pbw_can_approve = fields.Boolean(compute='_compute_pbw_review_buttons')
+@@ -37,6 +42,45 @@
+     pbw_can_request_order = fields.Boolean(compute='_compute_pbw_review_buttons')
+     pbw_can_approve_order = fields.Boolean(compute='_compute_pbw_review_buttons')
+ 
++    def _pbw_sales_owner(self):
++        """Original creator, never the salesperson or an all-documents editor.
++
++        Older builds could enroll a native draft under the editor. create_uid
++        takes precedence so that historical metadata cannot grant ownership.
++        """
++        self.ensure_one()
++        return self.create_uid or self.pbw_portal_creator_id
++
++    @api.model
++    def _pbw_sales_owner_domain(self, user):
++        return [('create_uid', '=', user.id)]
++
++    @api.model
++    def _pbw_sales_project_field(self):
++        """An optional bridge may map the existing construction project field."""
++        return 'pbw_project_id'
++
++    def _pbw_sales_project(self):
++        self.ensure_one()
++        return self[self._pbw_sales_project_field()]
++
++    @api.model
++    def _pbw_sales_project_values(self, project):
++        return {self._pbw_sales_project_field(): project.id if project else False}
++
++    @api.model
++    def _pbw_sales_project_search_domain(self, query):
++        return [(self._pbw_sales_project_field() + '.name', 'ilike', query)]
++
++    def _pbw_native_confirmation_context(self):
++        """Bridge extension point, called only after operation authorization."""
++        self.ensure_one()
++        return {}
++
++    def _pbw_after_native_confirmation(self):
++        """Optional integration cleanup; no other addon is touched by the base."""
++        return True
++
+     def _pbw_is_sales_approver(self, user):
+         self.ensure_one()
+         return bool(user.active and self.company_id in user.company_ids
+@@ -47,25 +91,32 @@
+     def _pbw_review_permissions(self, user):
+         self.ensure_one()
+         allowed = bool(user.active and self.company_id in user.company_ids
+-            and not False
+             and (not user.share or user.sudo().with_company(user.company_id).employee_id))
+-        creator = allowed and user.has_group(_PREFIX+'group_portal_sales_creator')
+-        editable = creator and (self.pbw_portal_creator_id == user or user.has_group(_PREFIX+'group_portal_sales_user'))
+-        reviewer = allowed and user.has_group(_PREFIX+'group_portal_sales_approver') and self.pbw_portal_creator_id and user not in (self.pbw_portal_creator_id, self.pbw_portal_submitter_id)
++        creator = allowed and user.has_group(_PREFIX + 'group_portal_sales_creator')
++        owner = self._pbw_sales_owner()
++        owned = bool(owner and owner == user)
++        approver = allowed and user.has_group(_PREFIX + 'group_portal_sales_approver')
++        reviewer = bool(approver and self.pbw_portal_creator_id
++            and user not in (owner, self.pbw_portal_creator_id, self.pbw_portal_submitter_id))
+         draft = self.state in ('draft', 'sent')
++        direct = bool(draft and owned and approver)
++        # All Company Documents changes visibility/edit scope, not authorship.
+         return dict(
+             requires_review=bool(self.pbw_portal_creator_id or creator),
+-            can_submit=bool(draft and editable and self.pbw_portal_review_state in ('draft','returned')),
++            can_confirm_direct=direct,
++            can_submit=bool(draft and creator and owned and not direct
++                and self.pbw_portal_review_state in ('draft', 'returned')),
+             can_approve=bool(draft and reviewer and self.pbw_portal_review_state == 'submitted'),
+-            can_return=bool(draft and reviewer and self.pbw_portal_review_state in ('submitted','approved')),
+-            can_request_order=bool(draft and editable and self.pbw_portal_review_state == 'approved'
+-                and self.pbw_portal_approver_id and self.pbw_order_review_state in ('none','returned')),
++            can_return=bool(draft and reviewer and self.pbw_portal_review_state in ('submitted', 'approved')),
++            can_request_order=bool(draft and creator and owned and not direct
++                and self.pbw_portal_review_state == 'approved' and self.pbw_portal_approver_id
++                and self.pbw_order_review_state in ('none', 'returned')),
+             can_approve_order=bool(draft and reviewer and self.pbw_portal_review_state == 'approved'
+-                and self.pbw_portal_approver_id and self.pbw_order_review_state == 'requested' and self.pbw_order_requester_id
+-                and user != self.pbw_order_requester_id))
++                and self.pbw_portal_approver_id and self.pbw_order_review_state == 'requested'
++                and self.pbw_order_requester_id and user != self.pbw_order_requester_id))
+ 
+     @api.depends_context('uid')
+-    @api.depends('state', 'company_id', 'pbw_portal_creator_id', 'pbw_portal_submitter_id',
++    @api.depends('state', 'company_id', 'create_uid', 'pbw_portal_creator_id', 'pbw_portal_submitter_id',
+                  'pbw_portal_review_state', 'pbw_portal_approver_id', 'pbw_order_review_state', 'pbw_order_requester_id')
+     def _compute_pbw_review_buttons(self):
+         for order in self:
+@@ -97,7 +148,7 @@
+     def _pbw_portal_reviewers(self):
+         self.ensure_one()
+         return self.env.ref(_PREFIX+'group_portal_sales_approver').sudo().users.filtered(
+-            lambda u:u.active and u not in (self.pbw_portal_creator_id,self.pbw_portal_submitter_id,self.pbw_order_requester_id) and self.company_id in u.company_ids
++            lambda u:u.active and u not in (self._pbw_sales_owner(),self.pbw_portal_creator_id,self.pbw_portal_submitter_id,self.pbw_order_requester_id) and self.company_id in u.company_ids
+             and not False
+             and (not u.share or u.with_company(u.company_id).employee_id))
+ 
+@@ -111,7 +162,8 @@
+             if not trusted:
+                 if (vals.get('pbw_portal_review_state') not in (None,False,'draft') or vals.get('pbw_portal_approver_id')
+                         or vals.get('pbw_portal_submitter_id') or vals.get('pbw_order_review_state') not in (None,False,'none')
+-                        or vals.get('pbw_order_requester_id') or vals.get('pbw_order_approver_id') or vals.get('pbw_sales_decision_at')):
++                        or vals.get('pbw_order_requester_id') or vals.get('pbw_order_approver_id') or vals.get('pbw_sales_decision_at')
++                        or vals.get('pbw_direct_confirmed_by_id')):
+                     raise AccessError(_('Sales approval can only be recorded through the review actions.'))
+                 if prepared or vals.get('pbw_portal_creator_id'):
+                     if vals.get('state') not in (None,False,'draft','sent'):
+@@ -174,14 +226,12 @@
+         user=self._pbw_portal_actor()
+         self._pbw_portal_lock()
+         self._pbw_native_review_access()
+-        operator=user.has_group(_PREFIX+'group_portal_sales_user')
+-        if (self.state not in ('draft','sent') or self.pbw_portal_review_state not in ('draft','returned') or
+-                (self.pbw_portal_creator_id != user and not operator)):
+-            raise UserError(_('Only an accessible editable quotation can be submitted.'))
++        if not self._pbw_review_permissions(user)['can_submit']:
++            raise UserError(_('You can submit only quotations you created. Sales Approvers can confirm their own quotations directly.'))
+         lines=self.order_line.filtered(lambda l:not l.display_type)
+         if not lines or any(l.product_uom_qty<=0 for l in lines):
+             raise ValidationError(_('Add at least one line with a positive quantity.'))
+-        self._pbw_review_write({'pbw_portal_creator_id':self.pbw_portal_creator_id.id or user.id,'pbw_portal_submitter_id':user.id,'pbw_portal_review_state':'submitted','pbw_portal_approver_id':False,'pbw_portal_review_note':False, 'pbw_order_review_state':'none',
++        self._pbw_review_write({'pbw_portal_creator_id':user.id,'pbw_portal_submitter_id':user.id,'pbw_portal_review_state':'submitted','pbw_portal_approver_id':False,'pbw_portal_review_note':False, 'pbw_order_review_state':'none',
+             'pbw_order_requester_id':False,'pbw_order_approver_id':False})
+         self._pbw_portal_notify_reviewers()
+         return True
+@@ -198,7 +248,7 @@
+             user=order._pbw_portal_actor('approver');order._pbw_portal_lock()
+             order._pbw_native_review_access()
+             if (not order.pbw_portal_creator_id or order.pbw_portal_review_state!='submitted' or
+-                    order.state not in ('draft','sent') or user in (order.pbw_portal_creator_id,order.pbw_portal_submitter_id)):
++                    order.state not in ('draft','sent') or user in (order._pbw_sales_owner(),order.pbw_portal_creator_id,order.pbw_portal_submitter_id)):
+                 raise UserError(_('Only another employee’s submitted quotation can be approved.'))
+             order._pbw_review_write({'pbw_portal_review_state':'approved','pbw_portal_approver_id':user.id})
+             order._pbw_portal_close_activities()
+@@ -210,7 +260,7 @@
+             user=order._pbw_portal_actor('approver');order._pbw_portal_lock()
+             order._pbw_native_review_access()
+             if (not order.pbw_portal_creator_id or order.pbw_portal_review_state not in ('submitted','approved') or
+-                    order.state not in ('draft','sent') or user in (order.pbw_portal_creator_id,order.pbw_portal_submitter_id)):
++                    order.state not in ('draft','sent') or user in (order._pbw_sales_owner(),order.pbw_portal_creator_id,order.pbw_portal_submitter_id)):
+                 raise UserError(_('Only another employee’s submitted or approved quotation can be returned.'))
+             note=(order.pbw_portal_review_note or '').strip()
+             if not note:raise ValidationError(_('Explain the correction required.'))
+@@ -239,11 +289,14 @@
+                 raise UserError(_('Only an independent approver can approve a pending Sales Order request.'))
+             # Confirmation and approval share this transaction; native validation failure
+             # rolls back the decision, activities and notifications together.
+-            order.with_company(order.company_id).with_context(_pbw_sales_confirm_token=_REVIEW_TOKEN, validate_analytic=True).action_confirm()
++            order.with_company(order.company_id).with_context(
++                **dict(order._pbw_native_confirmation_context(),
++                       _pbw_sales_confirm_token=_REVIEW_TOKEN, validate_analytic=True)).action_confirm()
+             if order.state not in ('sale','done'):
+                 raise UserError(_('Sales Order confirmation did not complete. Resolve the native validation first.'))
+             order._pbw_review_write({'pbw_order_review_state':'approved','pbw_order_approver_id':user.id})
+             order._pbw_portal_close_activities()
++            order._pbw_after_native_confirmation()
+             order._pbw_portal_notify_creator(_('Sales Order conversion approved by %s. %s is now a Sales Order.')%(user.name,order.name))
+         return {'type':'ir.actions.client','tag':'reload'}
+ 
+@@ -260,16 +313,60 @@
+             order._pbw_portal_notify_creator(_('Sales Order request returned: %s')%note)
+         return {'type':'ir.actions.client','tag':'reload'}
+ 
+-    def _pbw_portal_can_confirm(self,user):
+-        # Compatibility for older templates: preparers never get a native Confirm.
+-        return False
++    def _pbw_portal_can_confirm(self, user):
++        return self._pbw_review_permissions(user)['can_confirm_direct']
+ 
+     def action_confirm(self):
+-        actor=self.env.user.sudo(False)
+-        if self.env.context.get('_pbw_sales_confirm_token') is not _REVIEW_TOKEN:
+-            if self.filtered('pbw_portal_creator_id') or actor.has_group(_PREFIX+'group_portal_sales_creator'):
+-                raise UserError(_('Request Sales Order approval. The approver will approve the conversion.'))
+-        return super().action_confirm()
++        actor = self.env.user.sudo(False)
++        if self.env.context.get('_pbw_sales_confirm_token') is _REVIEW_TOKEN:
++            return super().action_confirm()
++        if actor.share and not self.env.su:
++            raise AccessError(_('Confirm through the Sales workspace.'))
++        managed = self.filtered(lambda order: bool(order.pbw_portal_creator_id)
++            or actor.has_group(_PREFIX + 'group_portal_sales_creator'))
++        # Check the whole batch before applying any confirmation.
++        for order in managed:
++            if not order._pbw_portal_can_confirm(actor):
++                raise UserError(_('Request Sales Order approval. Only a Sales Approver may directly confirm a quotation they created.'))
++        for order in managed:
++            order._pbw_confirm_own_quotation()
++        unmanaged = self - managed
++        return super(SaleOrder, unmanaged).action_confirm() if unmanaged else True
++
++    def _pbw_confirm_own_quotation(self):
++        self.ensure_one()
++        user = self._pbw_portal_actor('approver')
++        # A savepoint keeps confirmation, audit metadata and notification cleanup
++        # atomic even when a caller catches a native validation exception.
++        with self.env.cr.savepoint():
++            self._pbw_portal_lock()
++            self._pbw_native_review_access()
++            if not self._pbw_review_permissions(user)['can_confirm_direct']:
++                raise AccessError(_('Only a Sales Approver can directly confirm their own draft quotation.'))
++            lines = self.order_line.filtered(lambda line: not line.display_type)
++            if not lines or any(line.product_uom_qty <= 0 for line in lines):
++                raise ValidationError(_('Add at least one line with a positive quantity.'))
++            context = dict(self._pbw_native_confirmation_context(),
++                _pbw_sales_confirm_token=_REVIEW_TOKEN, validate_analytic=True)
++            self.with_company(self.company_id).with_context(**context).action_confirm()
++            if self.state not in ('sale', 'done'):
++                raise UserError(_('Sales Order confirmation did not complete. Resolve the native validation first.'))
++            # Direct confirmation is not recorded as an independent approval.
++            self._pbw_review_write({'pbw_portal_creator_id': user.id,
++                'pbw_order_review_state': 'direct', 'pbw_direct_confirmed_by_id': user.id})
++            self._pbw_portal_close_activities()
++            self._pbw_after_native_confirmation()
++            self.sudo().message_post(
++                body=_('Directly confirmed by %s as the quotation creator and Sales Approver; no independent approval was required.') % user.name,
++                author_id=user.partner_id.id, message_type='comment', subtype_xmlid='mail.mt_note')
++        return True
++
++    def action_pbw_confirm_own(self):
++        if self.env.user.share and not self.env.su:
++            raise AccessError(_('Confirm through the Sales workspace.'))
++        for order in self:
++            order._pbw_confirm_own_quotation()
++        return {'type': 'ir.actions.client', 'tag': 'reload'}
+ 
+     def _pbw_portal_invalidate_review(self):
+         if self.env.context.get('_pbw_sales_confirm_token') is _REVIEW_TOKEN:
+@@ -293,14 +390,14 @@
+         if _REVIEW_FIELDS.intersection(vals) and self.env.context.get('_pbw_sales_review_token') is not _REVIEW_TOKEN:
+             raise AccessError(_('Sales approval metadata can only be changed through the review actions.'))
+         content={'date_order','partner_id','company_id','currency_id','pricelist_id','payment_term_id','validity_date','order_line','note',
+-                 'pbw_project_id'}
++                 'pbw_project_id', self._pbw_sales_project_field()}
+         if content.intersection(vals):self._pbw_portal_invalidate_review()
+         return super().write(vals)
+ 
+     def action_draft(self):
+         result=super().action_draft()
+         self.filtered('pbw_portal_creator_id')._pbw_review_write({'pbw_portal_review_state':'draft','pbw_portal_approver_id':False,'pbw_portal_review_note':False, 'pbw_order_review_state':'none',
+-            'pbw_order_requester_id':False,'pbw_order_approver_id':False})
++            'pbw_order_requester_id':False,'pbw_order_approver_id':False,'pbw_direct_confirmed_by_id':False})
+         return result
+ 
+ 
+--- v0.9.4/security/sales/groups.xml
++++ v0.9.5/security/sales/groups.xml
+@@ -4,10 +4,11 @@
+  <field name="category_id" ref="portal_backend_workspace.module_category_workspace"/><field name="implied_ids" eval="[(4, ref('portal_backend_workspace.group_workspace_access'))]"/></record>
+  <record id="sales__group_portal_sales_approver" model="res.groups">
+   <field name="name">Workspace: Sales - Approve</field>
++  <field name="comment">Review other users' submitted quotations. Quotations you created can be confirmed directly; other users' quotations retain independent review.</field>
+   <field name="implied_ids" eval="[(4, ref('portal_backend_workspace.sales__group_portal_sales_creator')), (4, ref('portal_backend_workspace.group_workspace_access'))]"/>
+  <field name="category_id" ref="portal_backend_workspace.module_category_workspace"/></record>
+  <record id="sales__group_portal_sales_monitor" model="res.groups">
+   <field name="name">Workspace: Sales - Monitor (Read Only)</field>
+  <field name="category_id" ref="portal_backend_workspace.module_category_workspace"/><field name="implied_ids" eval="[(4, ref('portal_backend_workspace.group_workspace_access'))]"/></record>
+- <record id="sales__group_portal_sales_user" model="res.groups"><field name="name">Sales User (All Company Documents)</field><field name="implied_ids" eval="[(4, ref('sales__group_portal_sales_creator')), (4, ref('portal_backend_workspace.group_workspace_access'))]"/><field name="comment">Work on all company-compatible quotations and sales orders. Every quotation requires independent approval; this role expands document visibility only. Grants no internal accounting or sales model ACLs.</field><field name="category_id" ref="portal_backend_workspace.module_category_workspace"/></record>
++ <record id="sales__group_portal_sales_user" model="res.groups"><field name="name">Sales User (All Company Documents)</field><field name="implied_ids" eval="[(4, ref('sales__group_portal_sales_creator')), (4, ref('portal_backend_workspace.group_workspace_access'))]"/><field name="comment">Work on all company-compatible quotations and sales orders. This role expands visibility and editing scope, but does not let a user submit another creator's quotation. Sales Approvers can directly confirm only their own quotations. Grants no internal accounting or sales model ACLs.</field><field name="category_id" ref="portal_backend_workspace.module_category_workspace"/></record>
+ </odoo>
+--- v0.9.4/static/src/sales/js/sales_lines.js
++++ v0.9.5/static/src/sales/js/sales_lines.js
+@@ -28,7 +28,12 @@
+     function amountKey(line){return JSON.stringify([line.quantity,line.price_unit,line.discount,line.taxes_id,line.uom_id]);}
+     function lineAmount(line){return line && !line.display_type && Number.isFinite(Number(line.subtotal)) ? Number(line.subtotal) : null;}
+     function blank(){const taxes=state.default_taxes||[];return {id:0,name:'',product_id:0,quantity:1,price_unit:0,discount:0,taxes_id:taxes.map(t=>t.id),taxes:taxes.map(t=>({...t})),_defaultTaxes:taxes.map(t=>t.id),analytic_distribution:{}};}
+-    function changed(){const review=document.querySelector('[data-pbw-sales-submit-review]');if(review)review.disabled=true;dirty=true;revision++;error='';state.lines.forEach(l=>{l._pending=true;});drawTotals();clearTimeout(timer);timer=setTimeout(preview,250);}
++    const workflowButtons = () => document.querySelectorAll('[data-pbw-sales-submit-review], [data-pbw-sales-confirm-direct]');
++    function syncWorkflowButtons(){
++        const blocked=dirty||busy||pendingComputations>0||!state.lines.some(line=>!line.display_type);
++        workflowButtons().forEach(button=>{button.disabled=blocked;button.title=dirty?'Save Draft before continuing.':'';});
++    }
++    function changed(){dirty=true;syncWorkflowButtons();revision++;error='';state.lines.forEach(l=>{l._pending=true;});drawTotals();clearTimeout(timer);timer=setTimeout(preview,250);}
+     function feedback(message){error=message;const node=root.querySelector('[data-sales-status]');if(node)node.textContent=message;drawTotals();}
+     async function preview(){
+         const seq=revision;
+@@ -168,7 +173,7 @@
+             actions.append(button('Catalog',catalog));surface.append(actions);}
+         document.querySelectorAll('[data-sales-save]').forEach(node=>{node.hidden=!state.editable;node.disabled=busy;node.textContent=busy?'Saving…':'Save Draft';});
+         const totals=text('div','','pbw-sales-sales-totals');totals.setAttribute('data-sales-totals','true');surface.append(totals);drawTotals();
+-        const review=document.querySelector('[data-pbw-sales-submit-review]');if(review)review.disabled=dirty||!state.lines.some(l=>!l.display_type);
++        syncWorkflowButtons();
+         if(!state.editable)root.querySelectorAll('input,select').forEach(node=>{node.disabled=true;});
+         if(busy)root.querySelectorAll('input,button,select').forEach(node=>{node.disabled=true;});
+         if(focus){const node=focus[4]?root.querySelector('[data-sales-row="'+focus[0]+'"] .pbw-sales-sales-description'):gridControl(focus[0],focus[1]);if(node){node.dataset.suppressLookupOnce='1';restoring=true;node.focus();restoring=false;if(typeof focus[2]==='number'&&(['text','search'].includes(node.type)||node.tagName==='TEXTAREA'))node.setSelectionRange?.(focus[2],focus[3]);}}
+@@ -180,9 +185,12 @@
+         moveGrid(Number(input.closest('[data-sales-row]').dataset.salesRow),Number(input.closest('[data-sales-column]').dataset.salesColumn),-1);
+     },true);
+     const headerRoot=document.getElementById('pbw-sales-new-details')||document.getElementById('pbw-sales-order-details');
+-    headerRoot?.addEventListener('input',()=>{dirty=true;});
++    headerRoot?.addEventListener('input',()=>{dirty=true;syncWorkflowButtons();});
+     headerRoot?.addEventListener('change',event=>{changed();if(['partner_id','date_order'].includes(event.target.name)){headerSequence++;for(const line of state.lines)if(!line.display_type)reprice(line,null,event.target.name==='partner_id');}});
+     headerRoot?.addEventListener('submit',event=>{event.preventDefault();save();});
++    workflowButtons().forEach(button=>button.closest('form')?.addEventListener('submit',event=>{
++        if(dirty||busy||pendingComputations>0){event.preventDefault();feedback('Save Draft before continuing.');}
++    }));
+     document.querySelectorAll('[data-sales-save]').forEach(node=>node.addEventListener('click',save));
+     installDraftNavigation({isDirty:()=>state.editable&&dirty,save:()=>save({navigate:false}),onError:e=>{if(!error)feedback(e.message);}});
+     render();
+--- v0.9.4/tests/__init__.py
++++ v0.9.5/tests/__init__.py
+@@ -1 +1,3 @@
+ from . import test_notifications
++
++from . import test_sales_policy
+--- v0.9.4/views/sales/portal_sales_templates.xml
++++ v0.9.5/views/sales/portal_sales_templates.xml
+@@ -10,13 +10,13 @@
+      <input class="form-control" name="q" type="search" t-att-value="q" placeholder="Search quotation, customer, project, salesperson"/>
+      <select t-if="monitoring or request.env.user.has_group('portal_backend_workspace.sales__group_portal_sales_user')" name="source" class="form-select" aria-label="Source"><option value="all">All sources</option><option value="portal" t-att-selected="source == 'portal' and 'selected' or None">Portal</option><option value="backend" t-att-selected="source == 'backend' and 'selected' or None">Backend</option></select>
+      <select t-if="monitoring or request.env.user.has_group('portal_backend_workspace.sales__group_portal_sales_user')" name="sales_state" class="form-select" aria-label="Sales status"><option value="all">All sales statuses</option><option value="quotation" t-att-selected="sales_state == 'quotation' and 'selected' or None">Quotations</option><option value="order" t-att-selected="sales_state == 'order' and 'selected' or None">Sales Orders</option><option value="cancel" t-att-selected="sales_state == 'cancel' and 'selected' or None">Cancelled</option></select>
+-     <select t-if="monitoring or request.env.user.has_group('portal_backend_workspace.sales__group_portal_sales_user')" name="review" class="form-select" aria-label="Internal review"><option value="all">All review statuses</option><option value="na" t-att-selected="review == 'na' and 'selected' or None">Not applicable (backend)</option><option value="draft" t-att-selected="review == 'draft' and 'selected' or None">Portal draft</option><option value="submitted" t-att-selected="review == 'submitted' and 'selected' or None">Awaiting approval</option><option value="approved" t-att-selected="review == 'approved' and 'selected' or None">Approved</option><option value="returned" t-att-selected="review == 'returned' and 'selected' or None">Returned</option></select>
++     <select t-if="monitoring or request.env.user.has_group('portal_backend_workspace.sales__group_portal_sales_user')" name="review" class="form-select" aria-label="Internal review"><option value="all">All review statuses</option><option value="na" t-att-selected="review == 'na' and 'selected' or None">Not applicable (backend)</option><option value="draft" t-att-selected="review == 'draft' and 'selected' or None">Portal draft</option><option value="submitted" t-att-selected="review == 'submitted' and 'selected' or None">Awaiting approval</option><option value="approved" t-att-selected="review == 'approved' and 'selected' or None">Approved</option><option value="returned" t-att-selected="review == 'returned' and 'selected' or None">Returned</option><option value="direct" t-att-selected="review == 'direct' and 'selected' or None">Directly Confirmed</option></select>
+      <button class="btn btn-outline-primary" type="submit">Filter</button>
+     </form>
+     <p class="pbw-sales-result-count"><t t-out="total_count"/> matching records · Page <t t-out="page"/> of <t t-out="pages"/></p>
+     <div class="pbw-record-list pbw-column-list pbw-layout-sales" aria-label="Sales quotations and orders">
+      <div class="pbw-list-header" aria-hidden="true"><span>Number</span><span>Customer</span><span>Project</span><span>Salesperson</span><span>Date</span><span>Total (incl. VAT)</span><span>Status</span><span>Approval</span></div><article t-foreach="orders" t-as="o" class="pbw-record-card" tabindex="0" role="link" t-att-data-record-href="'/my/workspace/sales/%s' % o.id" t-att-aria-label="'Open ' + o.name"><div class="pbw-list-cell" data-mobile-label="Number" t-att-title="o.name"><a class="pbw-record-number" t-att-href="'/my/workspace/sales/%s' % o.id" t-out="o.name"/></div><div class="pbw-list-cell" data-mobile-label="Customer" t-att-title="o.partner_id.name"><div class="pbw-record-party" t-out="o.partner_id.name"/>
+-       </div><div class="pbw-list-cell" data-mobile-label="Project"><span><t t-out="o.pbw_project_id.name or 'Not assigned'"/></span></div><div class="pbw-list-cell" data-mobile-label="Salesperson"><span><t t-out="o.user_id.name or '—'"/></span></div><div class="pbw-list-cell" data-mobile-label="Date"><span><span t-field="o.date_order" t-options="{'widget':'date'}"/></span></div><div class="pbw-list-cell pbw-list-money" data-mobile-label="Total (incl. VAT)"><strong class="pbw-record-value"><t t-out="'{:,.2f}'.format(o.amount_total)"/> <t t-out="o.currency_id.name"/></strong>
++       </div><div class="pbw-list-cell" data-mobile-label="Project"><span><t t-out="o._pbw_sales_project().name or 'Not assigned'"/></span></div><div class="pbw-list-cell" data-mobile-label="Salesperson"><span><t t-out="o.user_id.name or '—'"/></span></div><div class="pbw-list-cell" data-mobile-label="Date"><span><span t-field="o.date_order" t-options="{'widget':'date'}"/></span></div><div class="pbw-list-cell pbw-list-money" data-mobile-label="Total (incl. VAT)"><strong class="pbw-record-value"><t t-out="'{:,.2f}'.format(o.amount_total)"/> <t t-out="o.currency_id.name"/></strong>
+        </div><div class="pbw-list-cell" data-mobile-label="Status" t-att-title="dict(o._fields['state'].selection).get(o.state)"><span class="pbw-record-badge" t-out="dict(o._fields['state'].selection).get(o.state)"/></div><div class="pbw-list-cell" data-mobile-label="Approval" t-att-title="dict(o._fields['pbw_order_review_state'].selection).get(o.pbw_order_review_state) if o.pbw_order_review_state != 'none' else dict(o._fields['pbw_portal_review_state'].selection).get(o.pbw_portal_review_state)"><span t-if="o.pbw_portal_creator_id" class="pbw-record-badge" t-out="dict(o._fields['pbw_order_review_state'].selection).get(o.pbw_order_review_state) if o.pbw_order_review_state != 'none' else dict(o._fields['pbw_portal_review_state'].selection).get(o.pbw_portal_review_state)"/>
+       </div></article><div t-if="not orders" class="pbw-record-empty">No quotations match these filters.</div>
+     </div>
+@@ -42,10 +42,11 @@
+  <template id="sales__sales_detail" name="Portal Sales Quotation Editor">
+   <t t-call="portal_backend_workspace.workspace_layout">
+    <div class="container pbw-sales-wrap py-4" t-att-data-sales-partner="order.partner_id.id"><t t-call="portal_backend_workspace.sales__sales_workspace_header"/><a t-att-href="'/my/workspace/sales/monitor' if request.env.user.has_group('portal_backend_workspace.sales__group_portal_sales_monitor') and not order.pbw_portal_creator_id else '/my/workspace/sales'">← Quotations</a>
+-    <div class="pbw-sales-head mt-3"><div><h3><t t-out="order.name"/> · <t t-out="order.partner_id.name"/></h3><span class="pbw-sales-status pbw-sales-status-sales" t-out="dict(order._fields['state'].selection).get(order.state)"/> <span t-if="order.pbw_portal_creator_id" t-att-class="'pbw-sales-status pbw-sales-status-' + (order.pbw_portal_review_state or 'draft')" t-out="dict(order._fields['pbw_portal_review_state'].selection).get(order.pbw_portal_review_state)"/><span t-else="" class="pbw-sales-muted-tag">Approval required before confirmation</span></div>
++    <div class="pbw-sales-head mt-3"><div><h3><t t-out="order.name"/> · <t t-out="order.partner_id.name"/></h3><span class="pbw-sales-status pbw-sales-status-sales" t-out="dict(order._fields['state'].selection).get(order.state)"/> <span t-if="order.pbw_order_review_state == 'direct'" class="pbw-sales-status">Directly Confirmed</span><span t-elif="can_confirm_direct" class="pbw-sales-muted-tag">Ready for direct confirmation</span><span t-elif="order.pbw_portal_creator_id" t-att-class="'pbw-sales-status pbw-sales-status-' + (order.pbw_portal_review_state or 'draft')" t-out="dict(order._fields['pbw_portal_review_state'].selection).get(order.pbw_portal_review_state)"/><span t-else="" class="pbw-sales-muted-tag">Approval required before confirmation</span></div>
+      <a t-if="can_print" t-att-href="'/my/workspace/sales/%s/pdf' % order.id" class="btn btn-outline-primary" target="_blank">Print / Download PDF</a></div>
+     <div class="pbw-sales-sales-actions pbw-document-actions d-flex gap-2 flex-wrap mb-3">
+      <button t-if="can_edit" type="button" class="btn btn-primary" data-sales-save="1">Save Draft</button><a class="btn btn-outline-secondary" href="/my/workspace/sales" data-draft-cancel="1">Cancel</a>
++     <form t-if="can_confirm_direct" method="post" t-att-action="'/my/workspace/sales/%s/workflow' % order.id"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="action" value="confirm_direct"/><button class="btn btn-primary" data-pbw-sales-confirm-direct="1" t-att-disabled="not order.order_line and 'disabled' or None">Confirm Sales Order</button></form>
+      <form t-if="can_submit" method="post" t-att-action="'/my/workspace/sales/%s/workflow' % order.id"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="action" value="submit"/><button class="btn btn-primary" data-pbw-sales-submit-review="1" t-att-disabled="not order.order_line and 'disabled' or None">Submit for Approval</button></form>
+      <form t-if="can_request_order" method="post" t-att-action="'/my/workspace/sales/%s/workflow' % order.id"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><input type="hidden" name="action" value="request_order"/><button class="btn btn-primary">Request Sales Order Approval</button></form>
+      <t t-if="can_approve or can_return or can_approve_order">
+@@ -56,10 +57,10 @@
+     <p t-if="order.pbw_order_review_state == 'requested'" class="alert alert-info">Awaiting approval to convert this quotation into a Sales Order.</p>
+     <div t-if="error or request.params.get('error')" class="alert alert-warning" t-out="error or 'The requested change could not be saved. Check the values and try again.'"/>
+     <div t-if="order.pbw_portal_review_note" class="alert alert-info"><strong>Reviewer note:</strong> <t t-out="order.pbw_portal_review_note"/></div>
+-    <div class="pbw-sales-panel"><h5>Quotation Details</h5><div class="row"><div class="col-md-4"><span class="text-muted">Customer</span><p t-out="order.partner_id.name"/></div><div t-if="not can_edit" class="col-md-4"><span class="text-muted">Quotation / Order Date</span><p><span t-field="order.date_order"/></p></div><div class="col-md-4"><span class="text-muted">Document type</span><p t-out="'Standard Quotation'"/></div><div t-if="not can_edit" class="col-md-4"><span class="text-muted">Project</span><p t-out="order.pbw_project_id.name or 'Not assigned'"/></div><div t-if="not can_edit and order.validity_date" class="col-md-4"><span class="text-muted">Expiration Date</span><p><span t-field="order.validity_date"/></p></div><div class="col-md-4"><span class="text-muted">Salesperson</span><p t-out="order.user_id.name or order.pbw_portal_creator_id.name"/></div></div>
++    <div class="pbw-sales-panel"><h5>Quotation Details</h5><div class="row"><div class="col-md-4"><span class="text-muted">Customer</span><p t-out="order.partner_id.name"/></div><div t-if="not can_edit" class="col-md-4"><span class="text-muted">Quotation / Order Date</span><p><span t-field="order.date_order"/></p></div><div class="col-md-4"><span class="text-muted">Document type</span><p t-out="'Standard Quotation'"/></div><div t-if="not can_edit" class="col-md-4"><span class="text-muted">Project</span><p t-out="order._pbw_sales_project().name or 'Not assigned'"/></div><div t-if="not can_edit and order.validity_date" class="col-md-4"><span class="text-muted">Expiration Date</span><p><span t-field="order.validity_date"/></p></div><div class="col-md-4"><span class="text-muted">Salesperson</span><p t-out="order.user_id.name or order.pbw_portal_creator_id.name"/></div></div>
+      <form id="pbw-sales-order-details" t-if="can_edit" t-att-action="'/my/workspace/sales/%s/save' % order.id" method="post" class="row g-3"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+       <div class="col-md-4"><label>Quotation reference (automatic)</label><input class="form-control" t-att-value="order.name" readonly="readonly"/></div>
+-      <div class="col-md-4"><label>Project</label><select class="form-select pbw-sales-project-select" name="project_id"><option value="">No project</option><option t-foreach="projects" t-as="project" t-att-value="project.id" t-att-data-customer-id="project.partner_id.commercial_partner_id.id if project.partner_id else 0" t-att-selected="order.pbw_project_id.id == project.id and 'selected' or None" t-out="project.name"/></select></div><div class="col-md-4"><label>Quotation / Order Date</label><input class="form-control" type="datetime-local" name="date_order" step="1" required="required" t-att-value="date_order_local"/></div><div class="col-md-4"><label>Expiration date</label><input class="form-control" type="date" name="validity_date" t-att-value="order.validity_date or ''"/></div>
++      <div class="col-md-4"><label>Project</label><select class="form-select pbw-sales-project-select" name="project_id"><option value="">No project</option><option t-foreach="projects" t-as="project" t-att-value="project.id" t-att-data-customer-id="project.partner_id.commercial_partner_id.id if project.partner_id else 0" t-att-selected="order._pbw_sales_project().id == project.id and 'selected' or None" t-out="project.name"/></select></div><div class="col-md-4"><label>Quotation / Order Date</label><input class="form-control" type="datetime-local" name="date_order" step="1" required="required" t-att-value="date_order_local"/></div><div class="col-md-4"><label>Expiration date</label><input class="form-control" type="date" name="validity_date" t-att-value="order.validity_date or ''"/></div>
+       </form>
+     </div>
+     <div class="pbw-sales-panel pbw-sales-sales-lines-panel"><h5>Order Lines</h5><div id="pbw-sales-line-editor" t-att-data-boot="line_boot_json" t-att-data-csrf="request.csrf_token()"/><noscript>Enable JavaScript to view and edit quotation lines.</noscript></div>
+--- v0.9.4/views/sales/res_partner_views.xml
++++ v0.9.5/views/sales/res_partner_views.xml
+@@ -5,7 +5,7 @@
+     <field name="inherit_id" ref="base.view_partner_form"/>
+     <field name="arch" type="xml">
+       <xpath expr="//field[@name='category_id']" position="after">
+-        <field name="pbw_is_sales_customer" string="Customer / Client"/>
++        <field name="pbw_is_sales_customer" string="Workspace Customer / Client"/>
+       </xpath>
+     </field>
+   </record>
+--- v0.9.4/views/sales/sale_order_views.xml
++++ v0.9.5/views/sales/sale_order_views.xml
+@@ -12,6 +12,8 @@
+    </xpath>
+    <xpath expr="//header" position="inside">
+     <field name="pbw_requires_review" invisible="1"/>
++    <field name="pbw_can_confirm_direct" invisible="1"/>
++    <button name="action_pbw_confirm_own" type="object" string="Confirm Sales Order" class="btn-primary" invisible="not pbw_can_confirm_direct"/>
+     <field name="pbw_can_submit" invisible="1"/><field name="pbw_can_approve" invisible="1"/><field name="pbw_can_return" invisible="1"/>
+     <field name="pbw_can_request_order" invisible="1"/><field name="pbw_can_approve_order" invisible="1"/>
+     <button name="action_pbw_portal_submit" type="object" string="Submit for Approval" class="btn-primary" invisible="not pbw_can_submit"/>
+@@ -24,7 +26,7 @@
+    <xpath expr="//sheet/notebook" position="inside">
+     <page string="Sales Review" invisible="not pbw_requires_review">
+      <group><group><field name="pbw_portal_creator_id" readonly="1"/><field name="pbw_portal_submitter_id" readonly="1"/><field name="pbw_portal_review_state" readonly="1"/><field name="pbw_portal_approver_id" readonly="1"/></group>
+-      <group><field name="pbw_order_review_state"/><field name="pbw_order_requester_id"/><field name="pbw_order_approver_id"/></group></group>
++      <group><field name="pbw_order_review_state"/><field name="pbw_order_requester_id"/><field name="pbw_order_approver_id"/><field name="pbw_direct_confirmed_by_id"/></group></group>
+      <field name="pbw_portal_review_note" placeholder="Enter the reason before clicking Return." readonly="not (pbw_can_return or pbw_can_approve_order)"/>
+     </page>
+    </xpath>
