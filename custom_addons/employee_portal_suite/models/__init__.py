@@ -52,3 +52,5 @@ from . import material_chatter
 from . import backend_card_counts
 
 from . import attendance_trusted_device
+
+from . import attendance_demo_setup

@@ -407,6 +407,14 @@
 
                                 <div class="history-date">
                                         <t t-out="fmt_dt(att.check_in, '%A, %d %b %Y')"/>
+                                        <t t-if="att.eps_demo_scenario">
+                                            <span class="badge bg-secondary ms-1">Demo</span>
+                                        </t>
+                                        <t t-if="att.check_in_recorded_offline or att.check_out_recorded_offline">
+                                            <span class="badge bg-info text-dark ms-1">
+                                                <i class="fa fa-cloud-upload"/> Offline · Synced
+                                            </span>
+                                        </t>
                                         <!-- Outside-location checkout flag -->
                                         <t t-if="att.checkout_outside_location">
                                             <span style="                                                 display:inline-flex;align-items:center;gap:4px;                                                 background:rgba(239,68,68,0.12);color:#991B1B;                                                 font-size:10px;font-weight:700;border-radius:6px;                                                 padding:2px 7px;margin-left:6px;vertical-align:middle;">

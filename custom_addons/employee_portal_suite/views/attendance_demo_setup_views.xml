@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_attendance_demo_setup_form" model="ir.ui.view">
+        <field name="name">employee.portal.attendance.demo.setup.form</field>
+        <field name="model">employee.portal.attendance.demo.setup</field>
+        <field name="arch" type="xml">
+            <form string="Attendance Demo Setup">
+                <div class="alert alert-info" invisible="employee_id">
+                    Creates a separate portal employee, project, geofenced site and ten completed
+                    sample attendances. Includes outside-site flags and offline-synced examples.
+                    Use a development/demo database: these samples appear in attendance reports.
+                </div>
+                <div class="alert alert-success" invisible="not employee_id">
+                    Demo ready. Copy the login and password below, then sign in from your phone
+                    at /my/employee/attendance. The first device to open Attendance becomes trusted.
+                    No device has been pre-registered. Open on your phone before opening on desktop.
+                </div>
+                <group>
+                    <group string="Portal Login">
+                        <field name="name" readonly="employee_id"/>
+                        <field name="login" readonly="employee_id"/>
+                        <field name="demo_password" readonly="employee_id"/>
+                        <field name="company_id" readonly="employee_id" options="{'no_create': True}"/>
+                        <field name="timezone" readonly="employee_id"/>
+                    </group>
+                    <group string="Demo Project Geofence">
+                        <field name="latitude" readonly="employee_id"/>
+                        <field name="longitude" readonly="employee_id"/>
+                        <field name="radius" readonly="employee_id"/>
+                        <label for="latitude" string="Set the coordinates of your recording location so live check-in passes the geofence."/>
+                    </group>
+                </group>
+                <group string="Created Records" invisible="not employee_id">
+                    <field name="employee_id"/>
+                    <field name="project_id"/>
+                    <field name="location_id"/>
+                </group>
+                <p>Offline samples are historical synchronized examples. To film the live offline queue,
+                   load Attendance online on the trusted device, disconnect, record an event and reconnect.</p>
+                <footer>
+                    <button name="action_create_demo" type="object" string="Create Demo Employee &amp; History"
+                            class="btn-primary" invisible="employee_id"/>
+                    <button name="action_view_attendance" type="object" string="Open Demo Attendance"
+                            class="btn-primary" invisible="not employee_id"/>
+                    <button string="Close" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="view_attendance_flag_demo_list" model="ir.ui.view">
+        <field name="name">hr.attendance.demo.list</field>
+        <field name="model">hr.attendance</field>
+        <field name="arch" type="xml">
+            <list string="Demo Attendance" decoration-danger="checkout_outside_location" default_order="check_in desc">
+                <field name="employee_id"/>
+                <field name="check_in"/>
+                <field name="check_out"/>
+                <field name="check_in_work_location_id"/>
+                <field name="check_in_project_id"/>
+                <field name="worked_hours" widget="float_time"/>
+                <field name="checkout_outside_location"/>
+                <field name="check_in_recorded_offline"/>
+                <field name="check_out_recorded_offline"/>
+                <field name="attendance_exception_state" widget="badge"/>
+                <field name="eps_demo_scenario" optional="show"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_attendance_demo_setup" model="ir.actions.act_window">
+        <field name="name">Attendance Demo Setup</field>
+        <field name="res_model">employee.portal.attendance.demo.setup</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+    <menuitem id="menu_attendance_demo_setup" name="Attendance Demo Setup"
+              parent="menu_employee_portal_root" action="action_attendance_demo_setup"
+              sequence="45" groups="base.group_system"/>
+</odoo>
