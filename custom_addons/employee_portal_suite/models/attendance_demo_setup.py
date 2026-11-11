@@ -121,6 +121,7 @@ class AttendanceDemoSetup(models.TransientModel):
         })
         location = env['hr.work.location'].sudo().create({
             'name': 'Demo — Riverside Site', 'company_id': self.company_id.id,
+            'address_id': self.company_id.partner_id.id,
         })
         site = env['hr.work.location.project'].sudo().create({
             'work_location_id': location.id, 'project_id': project.id,

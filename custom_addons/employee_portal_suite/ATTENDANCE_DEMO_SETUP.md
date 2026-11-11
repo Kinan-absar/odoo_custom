@@ -1,4 +1,4 @@
-# Attendance demo — version 18.0.1.20.133
+# Attendance demo — version 18.0.1.20.134
 
 ## Install and create
 1. Replace employee_portal_suite with this complete folder on your development/staging branch.
@@ -42,3 +42,6 @@ Offline samples are seeded historical examples, not proof that the phone has que
 All Python and XML parsed; all manifest data files and new ACL references checked. Sample generator checked across 36 combinations of timezone/date/geofence, including DST transitions: ten closed sessions, no overlaps/future records, three offline pairs and two outside-site flags. Existing attendance controllers and device-registration code are byte-identical to the supplied module. Odoo is not installed in the build environment, so an actual Odoo installation/upgrade and UI run remains to be checked on staging.
 
 Use a demo database: sample attendance is real stored demo data and is included in attendance reports. The generated password is shown in the admin-only setup form, which is transient; retain it securely or reset the demo user's password through Odoo if lost.
+
+## Fix in 18.0.1.20.134
+The demo site now uses the selected company partner as its required Work Address (address_id). This fixes the Work Location mandatory-field error during demo creation. Upgrade the module, reopen Attendance Demo Setup and create the demo again.
