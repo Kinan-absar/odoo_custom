@@ -20,6 +20,8 @@
         checkedIn: root.dataset.serverCheckedIn === "1",
         geoEnforce: root.dataset.geoEnforce === "1",
         serverCheckInIso: root.dataset.serverCheckInIso || "",
+        deviceToken: root.dataset.deviceToken || "",
+        deviceState: root.dataset.deviceState || "unknown",
     };
 
     function safeParse(raw, fallback) {
@@ -54,7 +56,19 @@
     }
     function ensureDevice() {
         let device = loadDevice();
-        if (!device.token || String(device.token).length < 32) {
+        if (serverState.deviceToken && String(serverState.deviceToken).length >= 32) {
+            if (device.token !== serverState.deviceToken) {
+                device = {
+                    token: serverState.deviceToken,
+                    state: serverState.deviceState || "unknown",
+                    created_at: device.created_at || new Date().toISOString(),
+                };
+                saveDevice(device);
+            } else if (serverState.deviceState && device.state !== serverState.deviceState) {
+                device.state = serverState.deviceState;
+                saveDevice(device);
+            }
+        } else if (!device.token || String(device.token).length < 32) {
             device = {token: secureToken(), state: "unknown", created_at: new Date().toISOString()};
             saveDevice(device);
         }

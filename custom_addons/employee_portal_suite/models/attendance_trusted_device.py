@@ -6,6 +6,7 @@ from odoo.exceptions import UserError
 
 class EmployeePortalAttendanceDevice(models.Model):
     _name = 'employee.portal.attendance.device'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Employee Portal Trusted Attendance Device'
     _order = 'state, create_date desc, id desc'
 
@@ -86,7 +87,45 @@ class EmployeePortalAttendanceDevice(models.Model):
             'trusted_at': now if state == 'trusted' else False,
             'trusted_by': user.id if state == 'trusted' else False,
         })
+        if state == 'pending':
+            device._notify_pending_managers()
         return {'state': state, 'device_id': device.id, 'auto_trusted': state == 'trusted'}
+
+    def _notify_pending_managers(self):
+        activity_type = self.env.ref('mail.mail_activity_data_todo', raise_if_not_found=False)
+        group = self.env.ref('employee_portal_suite.group_attendance_manager', raise_if_not_found=False)
+        if not activity_type or not group:
+            return
+        manager_users = self.env['res.users'].sudo().search([
+            ('active', '=', True),
+            ('groups_id', 'in', group.id),
+        ])
+        for device in self:
+            if manager_users:
+                try:
+                    device.sudo().message_post(
+                        body=_('A new phone is requesting attendance access for %s. Open Trusted Devices to approve or reject it.') % device.employee_id.name,
+                        partner_ids=manager_users.mapped('partner_id').ids,
+                        message_type='notification',
+                        subtype_xmlid='mail.mt_note',
+                    )
+                except Exception:
+                    pass
+            for manager in manager_users:
+                existing = self.env['mail.activity'].sudo().search([
+                    ('res_model', '=', device._name),
+                    ('res_id', '=', device.id),
+                    ('activity_type_id', '=', activity_type.id),
+                    ('user_id', '=', manager.id),
+                ], limit=1)
+                if existing:
+                    continue
+                device.sudo().activity_schedule(
+                    activity_type_id=activity_type.id,
+                    user_id=manager.id,
+                    summary=_('Approve attendance device'),
+                    note=_('A new phone is requesting attendance access for %s. Review the Trusted Devices list and approve or revoke it.') % device.employee_id.name,
+                )
 
     @api.model
     def validate_token(self, employee, token, touch=True):
@@ -113,6 +152,9 @@ class EmployeePortalAttendanceDevice(models.Model):
                 'revoked_at': now,
                 'revoked_by': self.env.user.id,
             })
+        self.env['mail.activity'].sudo().search([
+            ('res_model', '=', self._name), ('res_id', '=', self.id),
+        ]).unlink()
         self.sudo().write({
             'state': 'trusted',
             'trusted_at': now,
@@ -127,6 +169,9 @@ class EmployeePortalAttendanceDevice(models.Model):
         for device in self:
             if device.state == 'revoked':
                 continue
+            self.env['mail.activity'].sudo().search([
+                ('res_model', '=', device._name), ('res_id', '=', device.id),
+            ]).unlink()
             device.sudo().write({
                 'state': 'revoked',
                 'revoked_at': now,

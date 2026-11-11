@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 import pytz
 import json
 import logging
+import secrets
 
 _logger = logging.getLogger(__name__)
 
@@ -114,7 +115,23 @@ class EmployeePortalAttendance(http.Controller):
         success_message = kw.get('success')
         error_message = kw.get('error')
 
-        return request.render('employee_portal_suite.employee_portal_attendance', {
+        # Trusted attendance device bootstrap. Keep online attendance independent
+        # from JavaScript: the server issues a persistent device token cookie and
+        # registers/checks it when the Attendance page opens.
+        device_cookie_name = 'eps_attendance_device_v1'
+        device_token = (request.httprequest.cookies.get(device_cookie_name) or '').strip()
+        if len(device_token) < 32 or len(device_token) > 512:
+            device_token = secrets.token_hex(32)
+        device_label = request.httprequest.headers.get('Sec-CH-UA-Platform') or 'Attendance Device'
+        user_agent = request.httprequest.headers.get('User-Agent', '')
+        device_result = request.env['employee.portal.attendance.device'].sudo().register_or_check(
+            employee, user, device_token, device_label=device_label, user_agent=user_agent,
+        )
+        trusted_device_state = device_result.get('state') or 'unknown'
+        if error_message == 'device_not_trusted' and trusted_device_state == 'trusted':
+            error_message = False
+
+        response = request.render('employee_portal_suite.employee_portal_attendance', {
             'employee': employee,
             'open_attendance': open_attendance,
             'recent_attendances': recent_attendances,
@@ -133,7 +150,14 @@ class EmployeePortalAttendance(http.Controller):
             'fmt_dt': lambda dt, fmt='%I:%M %p': (
                 _tz_convert(dt, employee).strftime(fmt) if dt else ''
             ),
+            'trusted_device_token': device_token,
+            'trusted_device_state': trusted_device_state,
         })
+        response.set_cookie(
+            device_cookie_name, device_token, max_age=31536000, path='/',
+            secure=True, httponly=False, samesite='Lax',
+        )
+        return response
 
     # ---------------------------------------------------------
     # CHECK-IN
@@ -319,12 +343,18 @@ class EmployeePortalAttendance(http.Controller):
             employee, user, token, device_label=label, user_agent=user_agent,
         )
         state = result.get('state')
-        return _json_response({
+        response = _json_response({
             'state': state,
             'trusted': state == 'trusted',
             'pending': state == 'pending',
             'auto_trusted': bool(result.get('auto_trusted')),
         })
+        if token:
+            response.set_cookie(
+                'eps_attendance_device_v1', token, max_age=31536000, path='/',
+                secure=True, httponly=False, samesite='Lax',
+            )
+        return response
 
     # ---------------------------------------------------------
     # OFFLINE PWA SYNC
