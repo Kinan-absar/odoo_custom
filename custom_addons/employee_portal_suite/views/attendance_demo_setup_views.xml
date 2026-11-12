@@ -12,8 +12,8 @@
                 </div>
                 <div class="alert alert-success" invisible="not employee_id">
                     Demo ready. Copy the login and password below, then sign in from your phone
-                    at /my/employee/attendance. The first device to open Attendance becomes trusted.
-                    No device has been pre-registered. Open on your phone before opening on desktop.
+                    at /my/employee/attendance. A previously unused device registers as trusted. A browser previously used by
+                    another employee requires manager approval. No device has been pre-registered. Open on your phone before opening on desktop.
                 </div>
                 <group>
                     <group string="Portal Login">

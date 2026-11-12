@@ -1,4 +1,5 @@
 import hashlib
+from psycopg2.errors import SerializationFailure, UniqueViolation
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
@@ -30,7 +31,8 @@ class EmployeePortalAttendanceDevice(models.Model):
     revoked_by = fields.Many2one('res.users', readonly=True)
 
     _sql_constraints = [
-        ('attendance_device_token_hash_uniq', 'unique(token_hash)', 'This attendance device token already exists.'),
+        ('employee_token_uniq', 'unique(employee_id, token_hash)',
+         'This attendance device is already registered for this employee.'),
     ]
 
     @api.model
@@ -72,12 +74,20 @@ class EmployeePortalAttendanceDevice(models.Model):
             return {'state': device.state, 'device_id': device.id}
 
         has_trusted = Device._has_trusted_device(employee)
-        state = 'pending' if has_trusted else 'trusted'
-        device = Device.create({
+        # A shared browser token may legitimately have registration history for
+        # another employee. Keep that history, but require manager approval for
+        # the new employee instead of auto-trusting or rejecting at SQL level.
+        token_hash = Device._hash_token(token)
+        used_by_other_employee = bool(Device.search_count([
+            ('token_hash', '=', token_hash),
+            ('employee_id', '!=', employee.id),
+        ], limit=1))
+        state = 'pending' if has_trusted or used_by_other_employee else 'trusted'
+        create_vals = {
             'name': (device_label or 'Attendance Device')[:128],
             'employee_id': employee.id,
             'user_id': user.id,
-            'token_hash': Device._hash_token(token),
+            'token_hash': token_hash,
             'token_prefix': token[:8],
             'state': state,
             'device_label': (device_label or '')[:128],
@@ -86,7 +96,22 @@ class EmployeePortalAttendanceDevice(models.Model):
             'last_seen_at': now,
             'trusted_at': now if state == 'trusted' else False,
             'trusted_by': user.id if state == 'trusted' else False,
-        })
+        }
+        try:
+            with self.env.cr.savepoint():
+                device = Device.create(create_vals)
+        except UniqueViolation as error:
+            if error.diag.constraint_name != 'employee_portal_attendance_device_employee_token_uniq':
+                raise
+            # A parallel page load may have registered this employee/token.
+            # Preserve its state, including pending/revoked, rather than trusting it.
+            device = Device._device_for_token(employee, token)
+            if not device:
+                # Odoo uses repeatable-read: a competing commit may not be visible
+                # in this transaction. Let its standard transaction retry refresh it.
+                raise SerializationFailure('Concurrent attendance device registration; retry transaction.') from error
+            device.write(vals)
+            return {'state': device.state, 'device_id': device.id}
         if state == 'pending':
             device._notify_pending_managers()
         return {'state': state, 'device_id': device.id, 'auto_trusted': state == 'trusted'}
