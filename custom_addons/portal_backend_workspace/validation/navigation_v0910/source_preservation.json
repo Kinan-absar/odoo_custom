@@ -1,0 +1,18 @@
+{
+  "input": "Portal_Backend_Workspace_v0.9.7_Customer_Proposal_Fix.zip",
+  "input_sha256": "1f24b67e70ff632074d027c231ed99ffd3fb17182a4a6088844eed96a7d0da70",
+  "runtime_changes": [
+    {
+      "status": "added",
+      "path": "static/src/core/workspace_navigation.css"
+    },
+    {
+      "status": "changed",
+      "path": "__manifest__.py"
+    },
+    {
+      "status": "changed",
+      "path": "views/workspace_layout.xml"
+    }
+  ]
+}

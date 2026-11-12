@@ -1,0 +1,10 @@
+/* Only the added proposal editor; no workspace, table, font or layout overrides. */
+#pbw-proposal-draft-editor[hidden], .pbw-proposal-new-header[hidden] { display:none!important; }
+#pbw-proposal-draft-editor { min-width:0; max-width:100%; }
+#pbw-proposal-draft-editor .pbw-sales-section-expanded { min-width:0; }
+#pbw-proposal-draft-editor .pbw-sales-editor-body { min-height:140px; overflow-wrap:anywhere; }
+#pbw-proposal-draft-editor .pbw-sales-editor-body img { max-width:100%; height:auto; }
+#pbw-proposal-draft-editor .table-responsive { max-width:100%; overflow-x:auto; }
+#pbw-proposal-draft-editor .pbw-proposal-draft-payments { min-width:760px; }
+#pbw-proposal-draft-editor .pbw-proposal-payment-amount { white-space:nowrap; }
+#pbw-proposal-draft-editor .pbw-sales-editor-toolbar { flex-wrap:wrap; }

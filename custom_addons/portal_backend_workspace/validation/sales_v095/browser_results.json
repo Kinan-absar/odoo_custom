@@ -1,0 +1,74 @@
+[
+  {
+    "name": "1440: saved own quotation can confirm",
+    "passed": true
+  },
+  {
+    "name": "1440: header edit disables confirm",
+    "passed": true
+  },
+  {
+    "name": "1440: save restores confirm",
+    "passed": true
+  },
+  {
+    "name": "1440: quantity edit disables confirm",
+    "passed": true
+  },
+  {
+    "name": "1440: dirty form programmatic submit blocked",
+    "passed": true
+  },
+  {
+    "name": "1440: saved quantity restores confirm",
+    "passed": true
+  },
+  {
+    "name": "1440: project change disables confirm",
+    "passed": true
+  },
+  {
+    "name": "1440: mapped project sent in original header",
+    "passed": true
+  },
+  {
+    "name": "1440: no JavaScript errors",
+    "passed": true
+  },
+  {
+    "name": "390: saved own quotation can confirm",
+    "passed": true
+  },
+  {
+    "name": "390: header edit disables confirm",
+    "passed": true
+  },
+  {
+    "name": "390: save restores confirm",
+    "passed": true
+  },
+  {
+    "name": "390: quantity edit disables confirm",
+    "passed": true
+  },
+  {
+    "name": "390: dirty form programmatic submit blocked",
+    "passed": true
+  },
+  {
+    "name": "390: saved quantity restores confirm",
+    "passed": true
+  },
+  {
+    "name": "390: project change disables confirm",
+    "passed": true
+  },
+  {
+    "name": "390: mapped project sent in original header",
+    "passed": true
+  },
+  {
+    "name": "390: no JavaScript errors",
+    "passed": true
+  }
+]

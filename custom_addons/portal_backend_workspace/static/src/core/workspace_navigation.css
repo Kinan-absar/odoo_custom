@@ -1,0 +1,78 @@
+/* v0.9.10: shared portal switch. No operational lists/forms are restyled. */
+.pbw-portal-switcher {
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+    padding: 0 0 16px;
+    margin: 0 0 10px;
+    border-bottom: 1px solid #e4ebee;
+}
+.pbw-portal-switch-link {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-height: 60px;
+    padding: 12px 14px;
+    border: 1px solid #cfe3e3;
+    border-radius: 13px;
+    background: #edf7f7;
+    color: #087f83;
+    text-decoration: none !important;
+    line-height: 1.35;
+    transition: background .15s ease, border-color .15s ease;
+}
+.pbw-portal-switch-link:hover {
+    background: #e0f1f0;
+    border-color: #087f83;
+    color: #06696d;
+}
+.pbw-portal-switch-link:focus-visible {
+    outline: 3px solid #087f83;
+    outline-offset: 3px;
+}
+.pbw-portal-switch-copy { display: block; min-width: 0; }
+.pbw-portal-switch-kicker {
+    display: block;
+    color: #526c76;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+}
+.pbw-portal-switch-name {
+    display: block;
+    color: #087f83;
+    font-size: 14px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+.pbw-portal-switch-arrow { flex: 0 0 22px; color: #087f83; }
+[dir="rtl"] .pbw-portal-switch-arrow { transform: rotate(180deg); }
+
+/* Only the home grid changes column count. All tile surfaces, sizing, icons,
+   hover, focus and reduced-motion styles come from the Accounting component. */
+.pbw-accounting-cards.pbw-workspace-home-cards {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+@media (max-width: 1100px) {
+    .pbw-accounting-cards.pbw-workspace-home-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (max-width: 480px) {
+    .pbw-accounting-cards.pbw-workspace-home-cards {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+@media (max-width: 768px) {
+    .pbw-portal-switcher { padding-bottom: 12px; margin-bottom: 6px; }
+    .pbw-portal-switch-link { min-height: 56px; padding: 10px 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .pbw-portal-switch-link { transition: none; }
+}

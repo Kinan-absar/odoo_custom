@@ -21,6 +21,8 @@
                 <field name="worked_hours"             string="Worked Hours" widget="float_time"/>
                 <field name="auto_checked_out"         string="Auto Checkout"/>
                 <field name="checkout_outside_location" string="Outside Location"/>
+                <field name="check_in_recorded_offline" string="Offline Check-in" optional="hide"/>
+                <field name="check_out_recorded_offline" string="Offline Check-out" optional="hide"/>
                 <field name="attendance_exception_state" string="Status"/>
             </list>
         </field>
@@ -61,6 +63,10 @@
                         <field name="checkout_outside_location"
                                string="Checked Out Outside Location"
                                readonly="1"/>
+                        <field name="check_in_recorded_offline" readonly="1"/>
+                        <field name="check_out_recorded_offline" readonly="1"/>
+                        <field name="offline_check_in_synced_at" readonly="1" invisible="not check_in_recorded_offline"/>
+                        <field name="offline_check_out_synced_at" readonly="1" invisible="not check_out_recorded_offline"/>
                         <field name="attendance_exception_state" readonly="1"/>
                     </group>
                 </sheet>

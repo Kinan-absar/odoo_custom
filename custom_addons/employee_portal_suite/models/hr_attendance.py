@@ -10,6 +10,19 @@ _logger = logging.getLogger(__name__)
 class HrAttendance(models.Model):
     _inherit = "hr.attendance"
 
+    _sql_constraints = [
+        (
+            'eps_offline_checkin_event_unique',
+            'unique(offline_check_in_event_id)',
+            'This offline check-in event has already been synchronized.',
+        ),
+        (
+            'eps_offline_checkout_event_unique',
+            'unique(offline_check_out_event_id)',
+            'This offline check-out event has already been synchronized.',
+        ),
+    ]
+
     in_mode = fields.Selection(
         selection_add=[('portal', 'Employee Portal')],
         ondelete={'portal': 'set default'},
@@ -22,6 +35,28 @@ class HrAttendance(models.Model):
     # ------------------------------------------------------------------
     # FIELD: flagged when employee checked out outside their work location
     # ------------------------------------------------------------------
+    # Offline PWA audit/idempotency. These fields are populated only when an
+    # attendance event was captured on the employee device while offline and
+    # synchronized later. They never change the normal online attendance flow.
+    check_in_recorded_offline = fields.Boolean(
+        string="Check-in Recorded Offline", default=False, readonly=True, index=True,
+    )
+    check_out_recorded_offline = fields.Boolean(
+        string="Check-out Recorded Offline", default=False, readonly=True, index=True,
+    )
+    offline_check_in_event_id = fields.Char(
+        string="Offline Check-in Event ID", readonly=True, copy=False, index=True,
+    )
+    offline_check_out_event_id = fields.Char(
+        string="Offline Check-out Event ID", readonly=True, copy=False, index=True,
+    )
+    offline_check_in_synced_at = fields.Datetime(
+        string="Offline Check-in Synced At", readonly=True, copy=False,
+    )
+    offline_check_out_synced_at = fields.Datetime(
+        string="Offline Check-out Synced At", readonly=True, copy=False,
+    )
+
     checkout_outside_location = fields.Boolean(
         string="Checked Out Outside Location",
         default=False,

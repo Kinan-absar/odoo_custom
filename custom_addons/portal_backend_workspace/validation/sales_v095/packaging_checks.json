@@ -1,0 +1,24 @@
+{
+  "python_files": 52,
+  "xml_files": 28,
+  "javascript_files": 28,
+  "declared_paths": 71,
+  "zip_integrity": {},
+  "errors": [],
+  "changed_source_files": [
+    "__manifest__.py",
+    "controllers/sales/portal_sales.py",
+    "controllers/sales/sales_lines.py",
+    "models/sales/portal_notifications.py",
+    "models/sales/report_approval.py",
+    "models/sales/res_partner.py",
+    "models/sales/sale_order.py",
+    "security/sales/groups.xml",
+    "static/src/sales/js/sales_lines.js",
+    "tests/__init__.py",
+    "tests/test_sales_policy.py",
+    "views/sales/portal_sales_templates.xml",
+    "views/sales/res_partner_views.xml",
+    "views/sales/sale_order_views.xml"
+  ]
+}
