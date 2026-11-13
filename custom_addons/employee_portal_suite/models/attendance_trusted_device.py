@@ -54,7 +54,7 @@ class EmployeePortalAttendanceDevice(models.Model):
         ]))
 
     @api.model
-    def register_or_check(self, employee, user, token, device_label=None, user_agent=None):
+    def register_or_check(self, employee, user, token, device_label=None, user_agent=None, request_change=False):
         token = (token or '').strip()
         if len(token) < 32 or len(token) > 512:
             return {'state': 'invalid', 'message': _('Invalid attendance device token.')}
@@ -69,9 +69,19 @@ class EmployeePortalAttendanceDevice(models.Model):
         }
         if device:
             device.write(vals)
+            # A rejected device is never silently re-submitted for review.
+            # The employee must explicitly request a replacement again.
+            if request_change and device.state == 'revoked' and Device._has_trusted_device(employee):
+                device.write({'state': 'pending', 'revoked_at': False, 'revoked_by': False})
+                device._notify_pending_managers()
             return {'state': device.state, 'device_id': device.id}
 
         has_trusted = Device._has_trusted_device(employee)
+        # Merely viewing Attendance or checking device status must not create
+        # a pending device or alert managers. First-device enrollment stays
+        # automatic, while later devices require an explicit request.
+        if has_trusted and not request_change:
+            return {'state': 'unregistered', 'device_id': False}
         state = 'pending' if has_trusted else 'trusted'
         device = Device.create({
             'name': (device_label or 'Attendance Device')[:128],

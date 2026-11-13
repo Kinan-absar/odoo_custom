@@ -140,14 +140,18 @@
 
         const banner = $("eps-attendance-offline-banner");
         if (banner) {
-            if (device.state === "pending") {
+            if (device.state === "unregistered") {
                 banner.hidden = false;
                 banner.className = "portal-alert error";
-                banner.innerHTML = '<i class="fa fa-mobile" aria-hidden="true"></i><span><strong>This phone is not approved for attendance.</strong> A trusted phone is already registered. Ask the Attendance Manager to approve this device and replace the old one.</span>';
+                banner.innerHTML = '<i class="fa fa-mobile" aria-hidden="true"></i><span><strong>Attendance is not enabled on this device.</strong> Use the Request Device Change button below to ask for approval. Your existing phone remains active.</span>';
+            } else if (device.state === "pending") {
+                banner.hidden = false;
+                banner.className = "portal-alert error";
+                banner.innerHTML = '<i class="fa fa-mobile" aria-hidden="true"></i><span><strong>This phone is not approved for attendance.</strong> A device change request is awaiting approval. Your original phone remains active until approval.</span>';
             } else if (device.state === "revoked") {
                 banner.hidden = false;
                 banner.className = "portal-alert error";
-                banner.innerHTML = '<i class="fa fa-ban" aria-hidden="true"></i><span><strong>This attendance device has been revoked.</strong> Ask the Attendance Manager to approve this phone again.</span>';
+                banner.innerHTML = '<i class="fa fa-ban" aria-hidden="true"></i><span><strong>This attendance device has been revoked.</strong> Use Request Device Change below to ask the Attendance Manager to approve this phone again.</span>';
             } else if (!trusted && !isOnline) {
                 banner.hidden = false;
                 banner.className = "portal-alert error";
@@ -176,7 +180,7 @@
 
         document.querySelectorAll(".eps-attendance-sync-state").forEach((badge) => {
             if (!trusted) {
-                badge.textContent = device.state === "pending" ? "Device approval needed" : "Verifying device";
+                badge.textContent = device.state === "pending" ? "Approval pending" : (device.state === "unregistered" || device.state === "revoked") ? "Device change required" : "Verifying device";
                 badge.dataset.state = "failed";
             } else if (failed.length) {
                 badge.textContent = "Sync attention needed";
