@@ -357,6 +357,39 @@ class EmployeePortalAttendance(http.Controller):
         return response
 
     # ---------------------------------------------------------
+    # EXPLICIT DEVICE CHANGE REQUEST (no registration on page visit)
+    # ---------------------------------------------------------
+    @http.route(
+        '/my/employee/attendance/device/request_change',
+        type='http', auth='user', website=True, methods=['POST'], csrf=True,
+    )
+    def portal_attendance_device_request_change(self, **post):
+        user = request.env.user
+        if not user.share or not user.has_group('employee_portal_suite.group_portal_attendance_user'):
+            return request.redirect('/my/employee')
+        employee = user.employee_id
+        if not employee:
+            return request.redirect('/my/employee')
+
+        # Only the browser that possesses the attendance device cookie can
+        # request registration for that device. Never trust a posted token.
+        token = (request.httprequest.cookies.get('eps_attendance_device_v1') or '').strip()
+        if len(token) < 32 or len(token) > 512:
+            return request.redirect('/my/employee/attendance?error=device_cookie_missing')
+        label = request.httprequest.headers.get('Sec-CH-UA-Platform') or 'Attendance Device'
+        user_agent = request.httprequest.headers.get('User-Agent', '')
+        result = request.env['employee.portal.attendance.device'].sudo().register_or_check(
+            employee, user, token, device_label=label, user_agent=user_agent,
+            request_change=True,
+        )
+        state = result.get('state')
+        if state == 'pending':
+            return request.redirect('/my/employee/attendance?success=device_request_submitted')
+        if state == 'trusted':
+            return request.redirect('/my/employee/attendance?success=device_already_trusted')
+        return request.redirect('/my/employee/attendance?error=device_request_failed')
+
+    # ---------------------------------------------------------
     # OFFLINE PWA SYNC
     # ---------------------------------------------------------
     @http.route(
