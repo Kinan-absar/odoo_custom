@@ -1,0 +1,45 @@
+Request,Example,Approval stage / outcome,Quotations attached,No PO Required,Invoice document status,Notes
+Employee,Leave request — draft,draft,,False,,
+Employee,Annual leave — manager approval,Direct Manager,,False,,
+Employee,Salary certificate — HR approval,HR,,False,,
+Employee,Salary advance — finance approval,Finance,,False,,
+Employee,Housing allowance — CEO approval,CEO,,False,,
+Employee,Annual leave — fully approved,approved,,False,,
+Employee,Salary advance — returned for correction,Finance / returned,,False,,
+Employee,Training request — rejected,HR / rejected,,False,,
+Employee,Business travel — manager approval,Direct Manager,,False,,
+Employee,Medical reimbursement — finance approval,Finance,,False,,
+Employee,Bank account change — HR approval,HR,,False,,
+Employee,Equipment request — CEO approval,CEO,,False,,
+Employee,Transfer request — returned by HR,HR / returned,,False,,
+Employee,Vacation settlement — approved,approved,,False,,
+Employee,Employment letter — approved with override,approved,,False,,override
+Employee,Clearance request — overdue at HR,HR,,False,,overdue
+Material,Site consumables — draft,draft,0,False,pending,
+Material,Concrete materials — purchase approval,Purchase Representative,0,False,pending,
+Material,Safety equipment — store approval,Store Manager,1,False,pending,
+Material,Electrical supplies — project manager approval,Project Manager,2,False,pending,
+Material,Plumbing materials — director approval,Projects Director,3,False,pending,
+Material,Finishing materials — CEO approval,CEO,3,False,pending,
+Material,"Cement supply — approved, quotations 0 of 3",approved,0,False,pending,
+Material,"Cable supply — approved, quotations 1 of 3",approved,1,False,pending,
+Material,"Steel supply — approved, quotations 2 of 3",approved,2,False,pending,
+Material,"Paint supply — quotations 3 of 3, PO required",approved,3,False,pending,
+Material,"Small tools — no PO required, invoice pending",approved,0,True,pending,
+Material,"Site consumables — no PO, invoice submitted",approved,0,True,submitted,
+Material,Safety consumables — accounting received,approved,3,False,received,
+Material,Electrical delivery — more invoice documents needed,approved,3,False,need_more,
+Material,Plumbing supplies — documents processed,approved,3,False,processed,
+Material,Finish samples — invoice documents rejected,approved,3,False,rejected,
+Material,Special fitting — single source approved,approved,1,False,pending,single_source_approved
+Material,Urgent repair — quotation exception approved,approved,2,False,pending,exception_approved
+Material,Door hardware — returned for specification correction,Project Manager / returned,2,False,pending,
+Material,Duplicate materials — rejected by purchasing,Purchase Representative / rejected,0,False,pending,
+Material,Pump specification — awaiting requester clarification,Project Manager,2,False,pending,clarification
+Material,Pump specification — requester replied,Project Manager,2,False,pending,replied
+Material,Site lighting — overdue at project manager,Project Manager,2,False,pending,overdue
+Material,Urgent safety supplies — approved with CEO override,approved,3,False,pending,override
+Material,"Site tools — invoice uploaded, not submitted",approved,3,True,pending,uploaded
+Material,Delivery paperwork — new document after submission,approved,3,False,submitted,extra_doc
+Material,Cable procurement — linked draft RFQ,approved,3,False,pending,rfq
+Material,"Small purchase — no PO, linked draft vendor bill",approved,1,True,received,bill

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_recording_demo_form" model="ir.ui.view">
+        <field name="name">employee.portal.recording.demo.form</field>
+        <field name="model">employee.portal.recording.demo</field>
+        <field name="arch" type="xml">
+            <form string="Recording Demo Setup">
+                <header>
+                    <button name="action_create_samples" type="object" string="Create Recording Examples" class="btn-primary" invisible="state == 'ready'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box" invisible="state != 'ready'">
+                        <button name="action_view_employee" type="object" class="oe_stat_button" icon="fa-users"><field name="employee_count" widget="statinfo" string="Employee Requests"/></button>
+                        <button name="action_view_material" type="object" class="oe_stat_button" icon="fa-cubes"><field name="material_count" widget="statinfo" string="Material Requests"/></button>
+                    </div>
+                    <div class="alert alert-info" invisible="state == 'ready'">
+                        Create 16 employee requests and 28 material requests across two sample projects.
+                        Includes approvals, corrections, rejection, clarification, quotation progress and invoice-document examples.
+                        Sample records appear in ordinary request lists and reports. Use a development/demo database.
+                        Installation alone does not create any examples.
+                    </div>
+                    <div class="alert alert-success" invisible="state != 'ready'">
+                        Examples are ready. Use the buttons above to open the original request dashboards.
+                        Enable the optional Demo Scenario column to identify each recording case.
+                        All sample quotation, invoice and supporting PDFs are marked DEMO SAMPLE.
+                    </div>
+                    <group>
+                        <field name="name" readonly="state == 'ready'"/>
+                        <field name="company_id" readonly="state == 'ready'" options="{'no_create': True}"/>
+                        <field name="include_draft_documents" readonly="state == 'ready'"/>
+                        <field name="confirmed_demo" readonly="state == 'ready'"/>
+                        <field name="code" invisible="state != 'ready'"/>
+                    </group>
+                    <notebook invisible="state != 'ready'">
+                        <page string="Summary"><field name="result_summary" nolabel="1"/></page>
+                        <page string="Sample Portal Logins" groups="base.group_system">
+                            <p>All accounts below are newly created portal users. Use this shared sample password only for these demo accounts. No existing user's password is changed.</p>
+                            <group><field name="demo_password"/></group>
+                            <field name="login_summary" nolabel="1"/>
+                        </page>
+                        <page string="Employee Examples">
+                            <field name="employee_request_ids" nolabel="1"><list create="0" delete="0" edit="0"><field name="name"/><field name="employee_id"/><field name="recording_demo_scenario"/><field name="approval_status_label"/></list></field>
+                        </page>
+                        <page string="Material Examples">
+                            <field name="material_request_ids" nolabel="1"><list create="0" delete="0" edit="0"><field name="name"/><field name="recording_demo_scenario"/><field name="display_state"/><field name="quotation_attachment_count"/><field name="no_po_required"/><field name="accounting_docs_status"/></list></field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="view_recording_demo_list" model="ir.ui.view">
+        <field name="name">employee.portal.recording.demo.list</field>
+        <field name="model">employee.portal.recording.demo</field>
+        <field name="arch" type="xml"><list><field name="name"/><field name="company_id"/><field name="state"/><field name="employee_count"/><field name="material_count"/></list></field>
+    </record>
+    <record id="action_recording_demo" model="ir.actions.act_window">
+        <field name="name">Recording Demo Setup</field>
+        <field name="res_model">employee.portal.recording.demo</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_recording_demo" name="Recording Demo Setup" parent="employee_portal_suite.menu_employee_portal_root" action="action_recording_demo" sequence="46" groups="base.group_system"/>
+    <record id="view_employee_demo_column" model="ir.ui.view">
+        <field name="name">employee.request.recording.demo.column</field>
+        <field name="model">employee.request</field>
+        <field name="inherit_id" ref="employee_portal_suite.view_employee_request_list"/>
+        <field name="arch" type="xml"><xpath expr="//list/field[@name='name']" position="after"><field name="recording_demo_scenario" optional="hide" groups="base.group_system"/></xpath></field>
+    </record>
+    <record id="view_material_demo_column" model="ir.ui.view">
+        <field name="name">material.request.recording.demo.column</field>
+        <field name="model">material.request</field>
+        <field name="inherit_id" ref="employee_portal_suite.view_material_request_list"/>
+        <field name="arch" type="xml"><xpath expr="//list/field[@name='name']" position="after"><field name="recording_demo_scenario" optional="hide" groups="base.group_system"/></xpath></field>
+    </record>
+</odoo>
