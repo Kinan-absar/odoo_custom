@@ -72,3 +72,30 @@ class TestRecordingDemo(TransactionCase):
         self.assertFalse(batch.employee_request_ids.mapped('employee_id.user_id'))
         self.assertTrue(all(line.approver_user_ids == self.admin for line in
                             batch.material_request_ids.approval_line_ids))
+
+    def test_saved_setup_with_missing_approvers(self):
+        batch = self.env['employee.portal.recording.demo'].with_user(self.admin).create({
+            'name': 'Saved setup with empty upgrade fields', 'confirmed_demo': True,
+            'include_draft_documents': False,
+            'manager_user_id': False, 'hr_user_id': False, 'finance_user_id': False,
+            'ceo_user_id': False, 'purchase_user_id': False, 'store_user_id': False,
+            'project_manager_user_id': False, 'director_user_id': False,
+        })
+        user_model = type(self.env['res.users'])
+        with patch.object(user_model, 'create', side_effect=AssertionError('Must not create users')):
+            with patch.object(user_model, 'write', side_effect=AssertionError('Must not change users')):
+                batch.action_create_samples()
+        self.assertEqual(batch.state, 'ready')
+        self.assertEqual(batch.manager_user_id, self.admin)
+        self.assertEqual(len(batch.employee_request_ids), 16)
+        self.assertEqual(len(batch.material_request_ids), 28)
+
+    def test_inactive_saved_approver_is_repaired(self):
+        batch = self.env['employee.portal.recording.demo'].with_user(self.admin).create({
+            'name': 'Inactive migrated approver', 'manager_user_id': self.env.ref('base.user_root').id,
+        })
+        users = batch._resolve_demo_approvers()
+        # In standard Odoo the root/OdooBot account is inactive. Whichever saved
+        # user was selected, the resolved result must be active and company-valid.
+        self.assertTrue(users['manager'].active)
+        self.assertIn(batch.company_id, users['manager'].company_ids)

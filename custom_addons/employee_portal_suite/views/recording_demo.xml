@@ -33,8 +33,8 @@
                         <field name="confirmed_demo" readonly="state == 'ready'"/>
                         <field name="code" invisible="state != 'ready'"/>
                     </group>
-                    <group string="Existing Approval Accounts" readonly="state == 'ready'">
-                        <div class="alert alert-info" colspan="2">Select existing users for each step. All steps default to your current account for backend demonstrations. No users are created and no access groups are changed. Sample requesting employees have no portal logins.</div>
+                    <group string="Existing Approval Accounts">
+                        <div class="alert alert-info" colspan="2">Select existing users for each step, or leave them empty. Missing or ineligible saved choices are filled from your current eligible account or an existing company administrator when you create the examples. No users are created and no access groups are changed. Sample requesting employees have no portal logins.</div>
                         <group><field name="manager_user_id" readonly="state == 'ready'" options="{'no_create': True}"/><field name="hr_user_id" readonly="state == 'ready'" options="{'no_create': True}"/><field name="finance_user_id" readonly="state == 'ready'" options="{'no_create': True}"/><field name="ceo_user_id" readonly="state == 'ready'" options="{'no_create': True}"/></group>
                         <group><field name="purchase_user_id" readonly="state == 'ready'" options="{'no_create': True}"/><field name="store_user_id" readonly="state == 'ready'" options="{'no_create': True}"/><field name="project_manager_user_id" readonly="state == 'ready'" options="{'no_create': True}"/><field name="director_user_id" readonly="state == 'ready'" options="{'no_create': True}"/></group>
                     </group>

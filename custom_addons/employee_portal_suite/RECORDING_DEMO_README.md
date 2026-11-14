@@ -1,4 +1,4 @@
-# Employee Portal Suite 18.0.1.20.138 — Complete Module
+# Employee Portal Suite 18.0.1.20.139 — Complete Module
 
 Full Employee Portal Suite based on the supplied `employee_portal_suite(20261114-085957).zip` (18.0.1.20.135), with Recording Demo Setup integrated into the existing module. No separate recording add-on is needed.
 
@@ -55,8 +55,14 @@ The integrated generator sets synthetic statuses at record creation, rather than
 There is no cleanup/delete button. Reuse this batch while filming. Use a disposable development database or restore its backup when the samples are no longer needed. Uninstalling Employee Portal Suite is not a cleanup procedure for these samples.
 
 
-## Backend-only user-type correction in 18.0.1.20.138
+## Backend-only user-type correction in 18.0.1.20.139
 
 The setup does not call res.users.create or res.users.write, and it does not link sample employees to login accounts. This removes login provisioning and inherited-user-type validation from the recording generator. Existing users are used only as selected workflow approvers.
 
 Upgrade this complete module, reopen your Not Created setup, verify the eight existing approver fields and click Create Recording Examples. All 44 backend request cases and their attachments remain included. These new requester employees cannot sign into the portal; use your existing real/demo portal accounts for separate portal recordings.
+
+## Saved setup approver repair in 18.0.1.20.139
+
+Older saved setup records may have missing approver fields, or an inactive technical user assigned during module upgrade. On Create Recording Examples, missing/inactive/out-of-company choices are filled with the current active user when eligible; otherwise an existing active Settings administrator for the chosen company is used. Existing valid choices are preserved. Only this demo setup record is updated; no user's access is changed.
+
+Upgrade Employee Portal Suite from Apps after deploying the replacement folder, then reload the page. The form must show Generator Version 18.0.1.20.139. Reuse the existing Not Created setup and press Create Recording Examples.

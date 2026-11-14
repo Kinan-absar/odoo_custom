@@ -44,18 +44,18 @@ class RecordingDemo(models.Model):
     result_summary = fields.Text(readonly=True)
     generator_version = fields.Char(string='Generator Version', compute='_compute_counts')
 
-    manager_user_id = fields.Many2one('res.users', string='Direct Manager', required=True, default=lambda self: self.env.user, domain="[('active', '=', True), ('company_ids', 'in', [company_id])]")
-    hr_user_id = fields.Many2one('res.users', string='HR', required=True, default=lambda self: self.env.user, domain="[('active', '=', True), ('company_ids', 'in', [company_id])]")
-    finance_user_id = fields.Many2one('res.users', string='Finance', required=True, default=lambda self: self.env.user, domain="[('active', '=', True), ('company_ids', 'in', [company_id])]")
-    ceo_user_id = fields.Many2one('res.users', string='CEO', required=True, default=lambda self: self.env.user, domain="[('active', '=', True), ('company_ids', 'in', [company_id])]")
-    purchase_user_id = fields.Many2one('res.users', string='Purchase Representative', required=True, default=lambda self: self.env.user, domain="[('active', '=', True), ('company_ids', 'in', [company_id])]")
-    store_user_id = fields.Many2one('res.users', string='Store Manager', required=True, default=lambda self: self.env.user, domain="[('active', '=', True), ('company_ids', 'in', [company_id])]")
-    project_manager_user_id = fields.Many2one('res.users', string='Project Manager', required=True, default=lambda self: self.env.user, domain="[('active', '=', True), ('company_ids', 'in', [company_id])]")
-    director_user_id = fields.Many2one('res.users', string='Projects Director', required=True, default=lambda self: self.env.user, domain="[('active', '=', True), ('company_ids', 'in', [company_id])]")
+    manager_user_id = fields.Many2one('res.users', string='Direct Manager', default=lambda self: self.env.user, domain="[('active', '=', True), ('company_ids', 'in', [company_id])]")
+    hr_user_id = fields.Many2one('res.users', string='HR', default=lambda self: self.env.user, domain="[('active', '=', True), ('company_ids', 'in', [company_id])]")
+    finance_user_id = fields.Many2one('res.users', string='Finance', default=lambda self: self.env.user, domain="[('active', '=', True), ('company_ids', 'in', [company_id])]")
+    ceo_user_id = fields.Many2one('res.users', string='CEO', default=lambda self: self.env.user, domain="[('active', '=', True), ('company_ids', 'in', [company_id])]")
+    purchase_user_id = fields.Many2one('res.users', string='Purchase Representative', default=lambda self: self.env.user, domain="[('active', '=', True), ('company_ids', 'in', [company_id])]")
+    store_user_id = fields.Many2one('res.users', string='Store Manager', default=lambda self: self.env.user, domain="[('active', '=', True), ('company_ids', 'in', [company_id])]")
+    project_manager_user_id = fields.Many2one('res.users', string='Project Manager', default=lambda self: self.env.user, domain="[('active', '=', True), ('company_ids', 'in', [company_id])]")
+    director_user_id = fields.Many2one('res.users', string='Projects Director', default=lambda self: self.env.user, domain="[('active', '=', True), ('company_ids', 'in', [company_id])]")
 
     def _compute_counts(self):
         for rec in self:
-            rec.generator_version = '18.0.1.20.138'
+            rec.generator_version = '18.0.1.20.139'
             rec.employee_count = len(rec.employee_request_ids)
             rec.material_count = len(rec.material_request_ids)
 
@@ -64,6 +64,39 @@ class RecordingDemo(models.Model):
             raise AccessError(_('Only a Settings administrator can create recording samples.'))
         if self.company_id not in self.env.companies:
             raise AccessError(_('Enable the selected company in your current session.'))
+
+    def _resolve_demo_approvers(self):
+        """Repair old saved setups whose added approver fields are empty/inactive.
+
+        This writes only the setup record, never res.users or security groups.
+        Existing eligible choices remain unchanged. Current active company user is
+        preferred; an existing company administrator is the secondary fallback.
+        """
+        self.ensure_one()
+        self._check_admin()
+        current = self.env.user.sudo()
+        fallback = current if current.active and self.company_id in current.company_ids else False
+        if not fallback:
+            fallback = self.env['res.users'].sudo().search([
+                ('active', '=', True), ('company_ids', 'in', self.company_id.ids),
+                ('groups_id', 'in', self.env.ref('base.group_system').ids),
+            ], order='id', limit=1)
+        keys = ('manager', 'hr', 'finance', 'ceo', 'purchase', 'store', 'project_manager', 'director')
+        users, updates = {}, {}
+        for key in keys:
+            field_name = key + '_user_id'
+            selected = self[field_name].sudo()
+            if selected and selected.active and self.company_id in selected.company_ids:
+                users[key] = selected
+                continue
+            if not fallback:
+                label = self._fields[field_name].string
+                raise UserError(_('No active company administrator is available for %s. Select an existing active approver with access to the chosen company.') % label)
+            users[key] = fallback
+            updates[field_name] = fallback.id
+        if updates:
+            self.write(updates)
+        return users
 
     def _workflow(self, env, project, applies_to, steps, users):
         workflow = env['employee.portal.workflow'].sudo().create({
@@ -155,14 +188,11 @@ class RecordingDemo(models.Model):
             ('project_manager', 'James Taylor', 'group_mr_project_manager'),
             ('director', 'Sofia Martin', 'group_mr_projects_director'),
         ]
-        users, role_employees = {}, {}
+        users = self._resolve_demo_approvers()
+        role_employees = {}
         for key, name, group in roles:
             # Backend recording fixtures never create, edit, or regroup login accounts.
             # Existing accounts can be selected as approvers in this setup.
-            user = self[key + '_user_id']
-            if not user or not user.active or self.company_id not in user.company_ids:
-                raise UserError(_('Select an active approver with access to this company for: %s') % key)
-            users[key] = user
             role_employees[key] = env['hr.employee'].sudo().create({
                 'name': name + ' (Demo)', 'user_id': False, 'job_title': dict(EMPLOYEE_STEPS + MATERIAL_STEPS)[key],
                 'company_id': self.company_id.id,
