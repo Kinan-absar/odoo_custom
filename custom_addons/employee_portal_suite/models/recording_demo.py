@@ -59,12 +59,24 @@ class RecordingDemo(models.Model):
                   'employee_portal_suite.group_employee_portal_employee']
         if group:
             xmlids.append('employee_portal_suite.' + group)
-        return env['res.users'].sudo().create({
+        # Odoo's UsersImplied.create expands transitive role groups before validating
+        # user types. Older/custom role implications can therefore introduce Internal
+        # User alongside Portal. Create the portal identity first, then apply only the
+        # explicit demo role set using Odoo's supported no-add-implied write context.
+        # Never modify global group definitions or any existing user's memberships.
+        portal = env.ref('base.group_portal')
+        groups = env['res.groups'].sudo().browse([env.ref(xmlid).id for xmlid in xmlids])
+        user = env['res.users'].sudo().with_context(no_add_implied_groups=True).create({
             'name': name + ' (Demo)', 'login': 'recording.%s.%s@example.invalid' % (code, key),
             'password': password, 'email': False,
             'company_id': self.company_id.id, 'company_ids': [(6, 0, self.company_id.ids)],
-            'groups_id': [(6, 0, [env.ref(xmlid).id for xmlid in xmlids])],
+            'groups_id': [(6, 0, portal.ids)],
         })
+        user.with_context(no_add_implied_groups=True).write({'groups_id': [(6, 0, groups.ids)]})
+        if (not user.has_group('base.group_portal') or user.has_group('base.group_user')
+                or user.has_group('base.group_public')):
+            raise UserError(_('The demo account could not be created as a portal-only user. No sample batch was saved.'))
+        return user
 
     def _workflow(self, env, project, applies_to, steps, users):
         workflow = env['employee.portal.workflow'].sudo().create({
@@ -140,7 +152,8 @@ class RecordingDemo(models.Model):
             raise UserError(_('Confirm this is a demo database. The sample requests appear in normal operational reports.'))
         company_env = self.with_company(self.company_id).env
         env = company_env(context=dict(company_env.context, tracking_disable=True, mail_create_nosubscribe=True,
-                                   mail_create_nolog=True, no_reset_password=True, mail_notrack=True))
+                                   mail_create_nolog=True, no_reset_password=True, mail_notrack=True,
+                                   no_add_implied_groups=True))
         # Request status is set at creation to avoid transition notifications; no approval actions,
         # PDF finalization mails, Telegram calls, or real accounting postings are invoked.
         code = secrets.token_hex(6)

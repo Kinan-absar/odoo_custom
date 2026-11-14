@@ -57,3 +57,27 @@ class TestRecordingDemo(TransactionCase):
         self.assertFalse(requester.has_group('base.group_user'))
         with self.assertRaises(AccessError):
             self.batch.with_user(requester).action_create_samples()
+
+    def test_demo_role_with_internal_implication(self):
+        # Reproduce legacy role inheritance without changing any shared role.
+        group = self.env['res.groups'].create({
+            'name': 'Test conflicting demo role',
+            'implied_ids': [(4, self.env.ref('base.group_user').id)],
+        })
+        self.env['ir.model.data'].create({
+            'module': 'employee_portal_suite', 'name': 'test_conflicting_demo_role',
+            'model': 'res.groups', 'res_id': group.id,
+        })
+        user = self.batch._seed_user(
+            self.env, 'test-conflict', 'role', 'Test Portal Reviewer',
+            'test_conflicting_demo_role', 'DemoPassword-ForTests-123')
+        self.assertIn(group, user.groups_id)
+        self.assertTrue(user.has_group('base.group_portal'))
+        self.assertFalse(user.has_group('base.group_user'))
+        self.assertFalse(user.has_group('base.group_public'))
+        # Simulate HR's baseline group synchronization on that same account.
+        self.env['hr.employee'].with_context(no_add_implied_groups=True).create({
+            'name': 'Test Portal Reviewer', 'user_id': user.id,
+            'company_id': self.env.company.id,
+        })
+        self.assertFalse(user.has_group('base.group_user'))

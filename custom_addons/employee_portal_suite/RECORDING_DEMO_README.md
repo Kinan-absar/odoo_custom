@@ -1,4 +1,4 @@
-# Employee Portal Suite 18.0.1.20.136 — Complete Module
+# Employee Portal Suite 18.0.1.20.137 — Complete Module
 
 Full Employee Portal Suite based on the supplied `employee_portal_suite(20261114-085957).zip` (18.0.1.20.135), with Recording Demo Setup integrated into the existing module. No separate recording add-on is needed.
 
@@ -53,3 +53,9 @@ Python compilation, XML parsing, inherited-view anchors, referenced suite fields
 The integrated generator sets synthetic statuses at record creation, rather than calling submission/final-approval actions. It does not send invitation emails, confirm orders, post bills or update existing users/requests. Existing workflows remain unchanged; the new workflows apply only to the two new sample projects.
 
 There is no cleanup/delete button. Reuse this batch while filming. Use a disposable development database or restore its backup when the samples are no longer needed. Uninstalling Employee Portal Suite is not a cleanup procedure for these samples.
+
+## User-type fix in 18.0.1.20.137
+
+Recording demo users are created first with Portal access only. Demo roles are then assigned as an explicit group set with Odoo's no-add-implied-groups write context. This prevents legacy/custom role inheritance from adding Internal User or Public User to a demo portal identity. The same context is retained during employee-to-user baseline synchronization in this generator. No existing user or shared group definition is changed.
+
+Upgrade Employee Portal Suite, reopen the existing Not Created setup and click Create Recording Examples again. The failed transaction rolled back its sample records.
