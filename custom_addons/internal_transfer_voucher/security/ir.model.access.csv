@@ -28,3 +28,4 @@ access_cash_plan_review_manager,cash.plan.review manager,model_cash_plan_review,
 access_cash_plan_review_line_manager,cash.plan.review.line manager,model_cash_plan_review_line,internal_transfer_voucher.group_weekly_payment_plan_manager,1,1,1,1
 access_cash_plan_review_execution,cash.plan.review execution,model_cash_plan_review,internal_transfer_voucher.group_payment_execution_manager,1,1,1,1
 access_cash_plan_review_line_execution,cash.plan.review.line execution,model_cash_plan_review_line,internal_transfer_voucher.group_payment_execution_manager,1,1,1,1
+access_voucher_recording_demo_manager,voucher.recording.demo manager,model_voucher_recording_demo,account.group_account_manager,1,1,1,0

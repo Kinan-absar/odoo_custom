@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_voucher_recording_demo_form" model="ir.ui.view">
+        <field name="name">voucher.recording.demo.form</field>
+        <field name="model">voucher.recording.demo</field>
+        <field name="arch" type="xml">
+            <form string="Voucher Recording Demo Setup" duplicate="false" delete="false">
+                <header>
+                    <button name="action_create_examples" type="object" string="Create Recording Examples" class="oe_highlight" invisible="state == 'ready'" confirm="Create fictional examples including posted accounting entries in this company? Use only a development/demo database. Existing records and user permissions will not be changed."/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-info" role="alert">
+                        Populate Payment and Receipt Voucher with fictional recording examples: payment and receipt vouchers, three weekly plans, several transaction types, sample CEO decisions, bill and invoice reconciliation, unbilled POs and a live Payment Review snapshot. Examples appear in ordinary accounting reports. Installation alone creates no examples.
+                    </div>
+                    <group>
+                        <field name="name" readonly="state == 'ready'"/>
+                        <field name="company_id" readonly="state == 'ready'" groups="base.group_multi_company" options="{'no_create': True}"/>
+                        <field name="confirmed_demo" readonly="state == 'ready'"/>
+                        <field name="created_by" invisible="state != 'ready'"/>
+                        <field name="created_on" invisible="state != 'ready'"/>
+                    </group>
+                    <group invisible="state != 'ready'">
+                        <field name="summary" nolabel="1"/>
+                    </group>
+                    <group string="Open Recording Examples" invisible="state != 'ready'" col="2">
+                        <button name="action_open_examples" type="object" string="Payment Vouchers" context="{'demo_model': 'account.payment.voucher'}"/>
+                        <button name="action_open_examples" type="object" string="Receipt Vouchers" context="{'demo_model': 'account.receipt.voucher'}"/>
+                        <button name="action_open_examples" type="object" string="Weekly Plans" context="{'demo_model': 'cash.plan.run'}"/>
+                        <button name="action_open_examples" type="object" string="Planned Payments and Receipts" context="{'demo_model': 'cash.plan.line'}"/>
+                        <button name="action_open_examples" type="object" string="Payment Review" context="{'demo_model': 'cash.plan.review'}"/>
+                        <button name="action_open_examples" type="object" string="Purchase Orders" context="{'demo_model': 'purchase.order'}"/>
+                        <button name="action_open_examples" type="object" string="Bills and Customer Invoices" context="{'demo_model': 'account.move'}"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="view_voucher_recording_demo_list" model="ir.ui.view">
+        <field name="name">voucher.recording.demo.list</field>
+        <field name="model">voucher.recording.demo</field>
+        <field name="arch" type="xml">
+            <list><field name="name"/><field name="company_id" groups="base.group_multi_company"/><field name="state"/><field name="created_on"/></list>
+        </field>
+    </record>
+    <record id="action_voucher_recording_demo" model="ir.actions.act_window">
+        <field name="name">Recording Demo Setup</field>
+        <field name="res_model">voucher.recording.demo</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="rule_voucher_recording_demo_company" model="ir.rule">
+        <field name="name">Voucher recording setup: allowed companies</field>
+        <field name="model_id" ref="model_voucher_recording_demo"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <menuitem id="menu_voucher_recording_demo" name="Recording Demo Setup" parent="menu_vouchers_root" action="action_voucher_recording_demo" sequence="95" groups="account.group_account_manager"/>
+</odoo>

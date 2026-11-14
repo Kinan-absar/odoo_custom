@@ -18,3 +18,5 @@ from . import payment_review_agent
 from . import payment_review_action
 
 from . import backend_card_counts
+
+from . import recording_demo
