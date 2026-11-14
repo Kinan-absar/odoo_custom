@@ -1,3 +1,4 @@
+from unittest.mock import patch
 from odoo.tests import TransactionCase, tagged
 from odoo.exceptions import AccessError
 
@@ -53,31 +54,21 @@ class TestRecordingDemo(TransactionCase):
         ids = self.batch.material_request_ids.ids
         self.batch.action_create_samples()
         self.assertEqual(self.batch.material_request_ids.ids, ids)
-        requester = self.batch.employee_request_ids[0].employee_id.user_id
-        self.assertFalse(requester.has_group('base.group_user'))
+        self.assertFalse(any(self.batch.employee_request_ids.mapped('employee_id.user_id')))
         with self.assertRaises(AccessError):
-            self.batch.with_user(requester).action_create_samples()
+            self.batch.with_user(self.env.ref('base.public_user')).action_create_samples()
 
-    def test_demo_role_with_internal_implication(self):
-        # Reproduce legacy role inheritance without changing any shared role.
-        group = self.env['res.groups'].create({
-            'name': 'Test conflicting demo role',
-            'implied_ids': [(4, self.env.ref('base.group_user').id)],
+    def test_generator_never_provisions_accounts(self):
+        batch = self.env['employee.portal.recording.demo'].with_user(self.admin).create({
+            'name': 'No account provisioning regression', 'confirmed_demo': True,
+            'include_draft_documents': False,
         })
-        self.env['ir.model.data'].create({
-            'module': 'employee_portal_suite', 'name': 'test_conflicting_demo_role',
-            'model': 'res.groups', 'res_id': group.id,
-        })
-        user = self.batch._seed_user(
-            self.env, 'test-conflict', 'role', 'Test Portal Reviewer',
-            'test_conflicting_demo_role', 'DemoPassword-ForTests-123')
-        self.assertIn(group, user.groups_id)
-        self.assertTrue(user.has_group('base.group_portal'))
-        self.assertFalse(user.has_group('base.group_user'))
-        self.assertFalse(user.has_group('base.group_public'))
-        # Simulate HR's baseline group synchronization on that same account.
-        self.env['hr.employee'].with_context(no_add_implied_groups=True).create({
-            'name': 'Test Portal Reviewer', 'user_id': user.id,
-            'company_id': self.env.company.id,
-        })
-        self.assertFalse(user.has_group('base.group_user'))
+        user_model = type(self.env['res.users'])
+        with patch.object(user_model, 'create', side_effect=AssertionError('Must not create users')):
+            with patch.object(user_model, 'write', side_effect=AssertionError('Must not change users')):
+                batch.action_create_samples()
+        self.assertEqual(len(batch.employee_request_ids), 16)
+        self.assertEqual(len(batch.material_request_ids), 28)
+        self.assertFalse(batch.employee_request_ids.mapped('employee_id.user_id'))
+        self.assertTrue(all(line.approver_user_ids == self.admin for line in
+                            batch.material_request_ids.approval_line_ids))

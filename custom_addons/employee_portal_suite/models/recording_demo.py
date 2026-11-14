@@ -42,9 +42,20 @@ class RecordingDemo(models.Model):
     material_count = fields.Integer(compute='_compute_counts')
     include_draft_documents = fields.Boolean(string='Include draft RFQ and draft vendor bill', default=True)
     result_summary = fields.Text(readonly=True)
+    generator_version = fields.Char(string='Generator Version', compute='_compute_counts')
+
+    manager_user_id = fields.Many2one('res.users', string='Direct Manager', required=True, default=lambda self: self.env.user, domain="[('active', '=', True), ('company_ids', 'in', [company_id])]")
+    hr_user_id = fields.Many2one('res.users', string='HR', required=True, default=lambda self: self.env.user, domain="[('active', '=', True), ('company_ids', 'in', [company_id])]")
+    finance_user_id = fields.Many2one('res.users', string='Finance', required=True, default=lambda self: self.env.user, domain="[('active', '=', True), ('company_ids', 'in', [company_id])]")
+    ceo_user_id = fields.Many2one('res.users', string='CEO', required=True, default=lambda self: self.env.user, domain="[('active', '=', True), ('company_ids', 'in', [company_id])]")
+    purchase_user_id = fields.Many2one('res.users', string='Purchase Representative', required=True, default=lambda self: self.env.user, domain="[('active', '=', True), ('company_ids', 'in', [company_id])]")
+    store_user_id = fields.Many2one('res.users', string='Store Manager', required=True, default=lambda self: self.env.user, domain="[('active', '=', True), ('company_ids', 'in', [company_id])]")
+    project_manager_user_id = fields.Many2one('res.users', string='Project Manager', required=True, default=lambda self: self.env.user, domain="[('active', '=', True), ('company_ids', 'in', [company_id])]")
+    director_user_id = fields.Many2one('res.users', string='Projects Director', required=True, default=lambda self: self.env.user, domain="[('active', '=', True), ('company_ids', 'in', [company_id])]")
 
     def _compute_counts(self):
         for rec in self:
+            rec.generator_version = '18.0.1.20.138'
             rec.employee_count = len(rec.employee_request_ids)
             rec.material_count = len(rec.material_request_ids)
 
@@ -53,30 +64,6 @@ class RecordingDemo(models.Model):
             raise AccessError(_('Only a Settings administrator can create recording samples.'))
         if self.company_id not in self.env.companies:
             raise AccessError(_('Enable the selected company in your current session.'))
-
-    def _seed_user(self, env, code, key, name, group, password):
-        xmlids = ['base.group_portal', 'employee_portal_suite.group_employee_portal',
-                  'employee_portal_suite.group_employee_portal_employee']
-        if group:
-            xmlids.append('employee_portal_suite.' + group)
-        # Odoo's UsersImplied.create expands transitive role groups before validating
-        # user types. Older/custom role implications can therefore introduce Internal
-        # User alongside Portal. Create the portal identity first, then apply only the
-        # explicit demo role set using Odoo's supported no-add-implied write context.
-        # Never modify global group definitions or any existing user's memberships.
-        portal = env.ref('base.group_portal')
-        groups = env['res.groups'].sudo().browse([env.ref(xmlid).id for xmlid in xmlids])
-        user = env['res.users'].sudo().with_context(no_add_implied_groups=True).create({
-            'name': name + ' (Demo)', 'login': 'recording.%s.%s@example.invalid' % (code, key),
-            'password': password, 'email': False,
-            'company_id': self.company_id.id, 'company_ids': [(6, 0, self.company_id.ids)],
-            'groups_id': [(6, 0, portal.ids)],
-        })
-        user.with_context(no_add_implied_groups=True).write({'groups_id': [(6, 0, groups.ids)]})
-        if (not user.has_group('base.group_portal') or user.has_group('base.group_user')
-                or user.has_group('base.group_public')):
-            raise UserError(_('The demo account could not be created as a portal-only user. No sample batch was saved.'))
-        return user
 
     def _workflow(self, env, project, applies_to, steps, users):
         workflow = env['employee.portal.workflow'].sudo().create({
@@ -152,12 +139,10 @@ class RecordingDemo(models.Model):
             raise UserError(_('Confirm this is a demo database. The sample requests appear in normal operational reports.'))
         company_env = self.with_company(self.company_id).env
         env = company_env(context=dict(company_env.context, tracking_disable=True, mail_create_nosubscribe=True,
-                                   mail_create_nolog=True, no_reset_password=True, mail_notrack=True,
-                                   no_add_implied_groups=True))
+                                   mail_create_nolog=True, no_reset_password=True, mail_notrack=True))
         # Request status is set at creation to avoid transition notifications; no approval actions,
         # PDF finalization mails, Telegram calls, or real accounting postings are invoked.
         code = secrets.token_hex(6)
-        password = secrets.token_urlsafe(18)
         now = fields.Datetime.now()
         today = fields.Date.context_today(self)
         roles = [
@@ -170,15 +155,18 @@ class RecordingDemo(models.Model):
             ('project_manager', 'James Taylor', 'group_mr_project_manager'),
             ('director', 'Sofia Martin', 'group_mr_projects_director'),
         ]
-        users, role_employees, logins = {}, {}, []
+        users, role_employees = {}, {}
         for key, name, group in roles:
-            user = self._seed_user(env, code, key, name, group, password)
+            # Backend recording fixtures never create, edit, or regroup login accounts.
+            # Existing accounts can be selected as approvers in this setup.
+            user = self[key + '_user_id']
+            if not user or not user.active or self.company_id not in user.company_ids:
+                raise UserError(_('Select an active approver with access to this company for: %s') % key)
             users[key] = user
             role_employees[key] = env['hr.employee'].sudo().create({
-                'name': name + ' (Demo)', 'user_id': user.id, 'job_title': dict(EMPLOYEE_STEPS + MATERIAL_STEPS)[key],
+                'name': name + ' (Demo)', 'user_id': False, 'job_title': dict(EMPLOYEE_STEPS + MATERIAL_STEPS)[key],
                 'company_id': self.company_id.id,
             })
-            logins.append('%s: %s' % (key, user.login))
         projects, locations, workflows = [], [], []
         for label in ['Riverside Fit-Out', 'Northgate Site Development']:
             project = env['project.project'].sudo().create({
@@ -201,15 +189,13 @@ class RecordingDemo(models.Model):
             })
         employees = []
         for index, name in enumerate(['Alex Morgan', 'Maya Adams', 'Liam Parker', 'Zara Khan']):
-            user = self._seed_user(env, code, 'employee%s' % (index + 1), name, None, password)
             employees.append(env['hr.employee'].sudo().create({
-                'name': name + ' (Demo)', 'user_id': user.id, 'company_id': self.company_id.id,
+                'name': name + ' (Demo)', 'user_id': False, 'company_id': self.company_id.id,
                 'job_title': ['Site Engineer', 'Project Coordinator', 'Site Supervisor', 'Quantity Surveyor'][index],
                 'parent_id': role_employees['manager'].id,
                 'work_location_id': locations[index % 2].id,
                 'work_location_ids': [(6, 0, [locations[index % 2].id])],
             }))
-            logins.append('%s: %s' % (name, user.login))
         for model, cases, steps in [('employee.request', EMPLOYEE_CASES, EMPLOYEE_STEPS),
                                     ('material.request', MATERIAL_CASES, MATERIAL_STEPS)]:
             for index, case in enumerate(cases):
@@ -249,9 +235,9 @@ class RecordingDemo(models.Model):
                                      message_type='comment', subtype_xmlid='mail.mt_note')
                 if model == 'material.request':
                     self._material_documents(env, request, case, users, now, code, index)
-        self.write({'state': 'ready', 'code': code, 'demo_password': password,
-                    'login_summary': '\n'.join(logins),
-                    'result_summary': 'Created %s employee requests and %s material requests, 2 projects, 4 requesters and 8 portal approvers. '
+        self.write({'state': 'ready', 'code': code, 'demo_password': False,
+                    'login_summary': 'Backend recording mode: no login accounts were created or changed.',
+                    'result_summary': 'Created %s employee requests and %s material requests, 2 projects and 4 requesting employees. Existing selected users are the workflow approvers; no login accounts were created or changed. '
                                       'Includes real sample PDFs, seeded approval history, corrections, clarification, overdue steps and accounting-document tracking. '
                                       'No journal entries, confirmed purchase orders or stock receipts were posted.' % (len(EMPLOYEE_CASES), len(MATERIAL_CASES))})
         return self._reopen()
