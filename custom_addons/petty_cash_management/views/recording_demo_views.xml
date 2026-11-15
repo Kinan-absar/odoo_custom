@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_petty_cash_recording_form" model="ir.ui.view">
+        <field name="name">petty.cash.recording.demo.form</field>
+        <field name="model">petty.cash.recording.demo</field>
+        <field name="arch" type="xml">
+            <form string="Petty Cash Recording Demo Setup" duplicate="false" delete="false">
+                <header>
+                    <button name="action_create_examples" type="object" string="Create Recording Examples" class="oe_highlight" invisible="state == 'ready'" confirm="Create fictional petty cash reports and accounting entries in this company? Use a development/demo database only. If enabled, selected accounts receive petty cash roles; their Portal/Internal user type is not changed."/>
+                    <button name="action_open_reports" type="object" string="Open Sample Reports" invisible="state != 'ready'"/>
+                    <button name="action_open_entries" type="object" string="Open Sample Entries" invisible="state != 'ready'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-info" role="alert">Create 12 fictional reports per selected submitter, with 3 expense lines each, receipt PDFs, VAT/no-VAT, analytic categories, PO/MR references, correction and rejection examples, three review stages, and linked accounting entries. Installation alone creates no samples. Samples appear in ordinary lists and reports.</div>
+                    <group name="demo_identity">
+                        <field name="name" readonly="state == 'ready'"/>
+                        <field name="company_id" readonly="state == 'ready'" options="{'no_create': True}"/>
+                        <field name="backend_user_id" readonly="state == 'ready'" options="{'no_create': True}"/>
+                    </group>
+                    <group name="demo_reviewers" string="Existing Recording Accounts">
+                        <field name="reviewer_id" readonly="state == 'ready'" domain="[('active','=',True),('company_ids','in',company_id)]" options="{'no_create': True}"/>
+                        <field name="supervisor_id" readonly="state == 'ready'" domain="[('active','=',True),('company_ids','in',company_id)]" options="{'no_create': True}"/>
+                        <field name="approver_id" readonly="state == 'ready'" domain="[('active','=',True),('company_ids','in',company_id)]" options="{'no_create': True}"/>
+                        <field name="prepare_roles" readonly="state == 'ready'"/>
+                    </group>
+                    <group name="demo_options">
+                        <field name="include_posted" readonly="state == 'ready'"/>
+                        <field name="confirmed_demo" readonly="state == 'ready'"/>
+                        <field name="created_by" invisible="state != 'ready'"/>
+                        <field name="created_on" invisible="state != 'ready'"/>
+                    </group>
+                    <field name="summary" nolabel="1" invisible="state != 'ready'"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="view_petty_cash_recording_setup_list" model="ir.ui.view">
+        <field name="name">petty.cash.recording.demo.list</field>
+        <field name="model">petty.cash.recording.demo</field>
+        <field name="arch" type="xml"><list><field name="name"/><field name="company_id"/><field name="state"/></list></field>
+    </record>
+    <record id="view_petty_cash_recording_list" model="ir.ui.view">
+        <field name="name">petty.cash.recording.examples.list</field>
+        <field name="model">petty.cash</field>
+        <field name="arch" type="xml"><list create="false"><field name="name"/><field name="recording_demo_label"/><field name="user_id"/><field name="date"/><field name="amount_untaxed"/><field name="amount_vat"/><field name="amount_total"/><field name="state" widget="badge"/><field name="journal_entry_id"/></list></field>
+    </record>
+    <record id="view_petty_cash_form_recording_label" model="ir.ui.view">
+        <field name="name">petty.cash.form.recording.label</field>
+        <field name="model">petty.cash</field>
+        <field name="inherit_id" ref="view_petty_cash_form"/>
+        <field name="arch" type="xml"><xpath expr="//sheet/group/field[@name='date']" position="after"><field name="recording_demo_id" invisible="1"/><field name="recording_demo_label" invisible="not recording_demo_id"/></xpath></field>
+    </record>
+    <record id="rule_petty_cash_recording_company" model="ir.rule">
+        <field name="name">Petty cash recording setup: allowed companies</field>
+        <field name="model_id" ref="model_petty_cash_recording_demo"/>
+        <field name="domain_force">[('company_id','in',company_ids)]</field>
+    </record>
+    <record id="action_petty_cash_recording_demo" model="ir.actions.act_window">
+        <field name="name">Recording Demo Setup</field>
+        <field name="res_model">petty.cash.recording.demo</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_petty_cash_recording_demo" name="Recording Demo Setup" parent="petty_cash_main_app" action="action_petty_cash_recording_demo" sequence="90" groups="account.group_account_manager"/>
+</odoo>

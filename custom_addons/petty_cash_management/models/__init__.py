@@ -8,3 +8,5 @@ from . import review_workflow
 from . import account_move
 
 from . import backend_card_counts
+
+from . import recording_demo

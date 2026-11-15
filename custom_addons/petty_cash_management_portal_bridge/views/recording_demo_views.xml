@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_petty_cash_recording_portal" model="ir.ui.view">
+        <field name="name">petty.cash.recording.demo.portal</field>
+        <field name="model">petty.cash.recording.demo</field>
+        <field name="inherit_id" ref="petty_cash_management.view_petty_cash_recording_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='demo_identity']" position="after">
+                <group name="demo_portal" string="Employee Portal Recording">
+                    <field name="include_portal" readonly="state == 'ready'"/>
+                    <field name="portal_user_id" invisible="not include_portal" required="include_portal" readonly="state == 'ready'" options="{'no_create': True}"/>
+                    <field name="portal_recording_url" invisible="not include_portal"/>
+                    <div class="text-muted" invisible="not include_portal">Select the existing Employee Portal login you will record with. Its own reports will be populated. Sign in as that user in a separate browser/session to view them. No user is created and no Portal/Internal conversion occurs. Existing accounting mappings are preserved.</div>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>
