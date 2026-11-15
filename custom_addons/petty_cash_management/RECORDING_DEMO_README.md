@@ -1,6 +1,6 @@
 # Petty Cash Management — Recording Demo
 
-Full Odoo 18 module, version 18.0.1.3.11. Optional Employee Portal Bridge version 18.0.1.3.4 adds portal recording examples to the same setup. No sample records are created during installation or upgrade.
+Full Odoo 18 module, version 18.0.1.3.12. Optional Employee Portal Bridge version 18.0.1.3.4 adds portal recording examples to the same setup. No sample records are created during installation or upgrade.
 
 ## Start
 
@@ -70,3 +70,7 @@ On a disposable Odoo 18 test database, run:
 `--test-enable --test-tags /petty_cash_management:TestPettyCashRecordingDemo,/petty_cash_management_portal_bridge:TestPettyCashPortalRecordingDemo -u petty_cash_management,petty_cash_management_portal_bridge --stop-after-init`
 
 Keep the technical folder names `petty_cash_management` and `petty_cash_management_portal_bridge` unchanged.
+
+## Matching backend list design
+
+The recording-examples list uses the same `petty_cash_filter_list` renderer, status cards, scoped counters, filters and SCSS assets as the ordinary reports list. Status badges are colored on both lists. Existing sample records are preserved; do not create the recording examples again. Upgrade Petty Cash Management and hard-refresh the browser. The existing 18.0.1.3.4 bridge remains compatible.

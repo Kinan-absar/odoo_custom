@@ -43,7 +43,7 @@
     <record id="view_petty_cash_recording_list" model="ir.ui.view">
         <field name="name">petty.cash.recording.examples.list</field>
         <field name="model">petty.cash</field>
-        <field name="arch" type="xml"><list create="false"><field name="name"/><field name="recording_demo_label"/><field name="user_id"/><field name="date"/><field name="amount_untaxed"/><field name="amount_vat"/><field name="amount_total"/><field name="state" widget="badge"/><field name="journal_entry_id"/></list></field>
+        <field name="arch" type="xml"><list create="false" js_class="petty_cash_filter_list"><field name="name"/><field name="recording_demo_label"/><field name="user_id"/><field name="date"/><field name="amount_untaxed"/><field name="amount_vat"/><field name="amount_total"/><field name="state" widget="badge" decoration-success="state == 'approved'" decoration-warning="state == 'manager_approval'" decoration-info="state == 'submitted'" decoration-primary="state == 'review_2'" decoration-danger="state == 'refused'" decoration-muted="state == 'draft'"/><field name="journal_entry_id"/></list></field>
     </record>
     <record id="view_petty_cash_form_recording_label" model="ir.ui.view">
         <field name="name">petty.cash.form.recording.label</field>
