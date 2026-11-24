@@ -6,7 +6,7 @@ from html import escape
 import requests
 
 from odoo import _, api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 
 _logger = logging.getLogger(__name__)
 
@@ -37,6 +37,9 @@ class ResUsers(models.Model):
         return self.telegram_link_token
 
     def action_connect_telegram(self):
+        if (not self.env.user._is_internal()
+                or (self != self.env.user and not self.env.user.has_group('base.group_system'))):
+            raise AccessError(_('You can manage only your own Telegram connection.'))
         self.ensure_one()
         # A connected user should not see/use the connect action again.
         if self.telegram_connected:
@@ -54,6 +57,9 @@ class ResUsers(models.Model):
         }
 
     def action_disconnect_telegram(self):
+        if (not self.env.user._is_internal()
+                or (self != self.env.user and not self.env.user.has_group('base.group_system'))):
+            raise AccessError(_('You can manage only your own Telegram connection.'))
         self.sudo().write({
             'telegram_chat_id': False,
             'telegram_username': False,
@@ -163,7 +169,7 @@ class EmployeePortalTelegramService(models.AbstractModel):
         Telegram delivery has been retired. All notifications are delivered
         through the Employee Portal Web Push service only.
         """
-        if not user or not user.active:
+        if not user or not user.active or not user._is_internal():
             return False
         if self.env.context.get('skip_webpush'):
             return False

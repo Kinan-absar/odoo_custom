@@ -44,13 +44,13 @@ class PortalTreasury(http.Controller):
             domain.append(('run_id', '=', False))
         return domain
 
-    @http.route('/my/employee/treasury', type='http', auth='user', website=True)
+    @http.route('/my/employee/treasury', type='http', auth='absar_internal', website=True)
     def treasury_home(self, **kw):
         if not self._is_ceo():
             return request.redirect('/my/employee')
         return request.redirect('/my/employee/treasury/payments?status=pending')
 
-    @http.route('/my/employee/treasury/payments', type='http', auth='user', website=True)
+    @http.route('/my/employee/treasury/payments', type='http', auth='absar_internal', website=True)
     def treasury_payment_approvals(self, status='pending', **kw):
         if not self._is_ceo():
             return request.redirect('/my/employee')
@@ -105,7 +105,7 @@ class PortalTreasury(http.Controller):
             })
         return day_groups
 
-    @http.route('/my/employee/treasury/plans', type='http', auth='user', website=True)
+    @http.route('/my/employee/treasury/plans', type='http', auth='absar_internal', website=True)
     def treasury_plans(self, **kw):
         if not self._is_ceo():
             return request.redirect('/my/employee')
@@ -117,7 +117,7 @@ class PortalTreasury(http.Controller):
             'page_name': 'treasury_plans',
         })
 
-    @http.route('/my/employee/treasury/plans/<int:run_id>', type='http', auth='user', website=True)
+    @http.route('/my/employee/treasury/plans/<int:run_id>', type='http', auth='absar_internal', website=True)
     def treasury_plan_detail(self, run_id, **kw):
         if not self._is_ceo():
             return request.redirect('/my/employee')
@@ -177,7 +177,7 @@ class PortalTreasury(http.Controller):
 
     @http.route(
         '/my/employee/treasury/lines/<int:line_id>/review',
-        type='http', auth='user', website=True, methods=['POST'], csrf=True
+        type='http', auth='absar_internal', website=True, methods=['POST'], csrf=True
     )
     def treasury_line_review(self, line_id, **post):
         if not self._is_ceo():
@@ -218,7 +218,7 @@ class PortalTreasury(http.Controller):
 
     @http.route(
         '/my/employee/treasury/lines/<int:line_id>/add-to-plan',
-        type='http', auth='user', website=True, methods=['POST'], csrf=True
+        type='http', auth='absar_internal', website=True, methods=['POST'], csrf=True
     )
     def treasury_line_add_to_plan(self, line_id, **post):
         if not self._is_ceo():
@@ -255,7 +255,7 @@ class PortalTreasuryPurchaseOrder(PurchaseCustomerPortal):
 
     @http.route(
         '/my/employee/treasury/purchase-order/<int:order_id>',
-        type='http', auth='user', website=True
+        type='http', auth='absar_internal', website=True
     )
     def treasury_purchase_order_view(self, order_id, **kw):
         user = request.env.user

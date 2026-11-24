@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="internal_only_construction_advance" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_construction_advance"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_construction_contract" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_construction_contract"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_construction_contract_boq_line" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_construction_contract_boq_line"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_construction_contract_order" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_construction_contract_order"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_construction_dashboard" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_construction_dashboard"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_construction_ipc" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_construction_ipc"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_construction_ipc_line" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_construction_ipc_line"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_construction_ipc_link_move_wizard" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_construction_ipc_link_move_wizard"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_construction_measurement" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_construction_measurement"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_construction_measurement_line" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_construction_measurement_line"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_construction_retention_release" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_construction_retention_release"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_construction_variation" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_construction_variation"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_construction_variation_line" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_construction_variation_line"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_id:id" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_id:id"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_sale_construction_contract_wizard" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_sale_construction_contract_wizard"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+</odoo>

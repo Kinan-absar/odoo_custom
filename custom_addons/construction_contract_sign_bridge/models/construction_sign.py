@@ -8,7 +8,7 @@ except ImportError:
 from odoo.addons.absar_sign_workflow_core.tools.signature_anchors import resolve_signature_placements
 
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 
 
 SIGNATURE_STATES = [
@@ -103,10 +103,16 @@ class ConstructionContract(models.Model):
     revision = fields.Integer(default=0, tracking=True, copy=False)
 
     def action_open_signature_status(self):
+        self.check_access('read')
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         return _open_signature(self)
 
 
     def action_send_to_sign(self):
+        self.check_access('write')
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one()
         if self.state not in ("approved", "active", "completed", "closed"):
             raise UserError(_("Only an approved or active/completed construction contract can be sent to Sign."))
@@ -158,10 +164,16 @@ class ConstructionMeasurement(models.Model):
     revision = fields.Integer(default=0, tracking=True, copy=False)
 
     def action_open_signature_status(self):
+        self.check_access('read')
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         return _open_signature(self)
 
 
     def action_send_to_sign(self):
+        self.check_access('write')
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one()
         if self.state != "approved":
             raise UserError(_("Only an approved measurement can be sent to Sign."))
@@ -203,10 +215,16 @@ class ConstructionIPC(models.Model):
     revision = fields.Integer(default=0, tracking=True, copy=False)
 
     def action_open_signature_status(self):
+        self.check_access('read')
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         return _open_signature(self)
 
 
     def action_send_to_sign(self):
+        self.check_access('write')
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one()
         if self.state not in ("approved", "done"):
             raise UserError(_("Only an approved or done IPC can be sent to Sign."))

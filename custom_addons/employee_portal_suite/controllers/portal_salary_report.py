@@ -12,18 +12,20 @@ class EmployeePortalSalaryReport(CustomerPortal):
 
     def _check_salary_report_viewer(self):
         return bool(
-            request.env.user.share
+            request.env.user._is_internal()
             and request.env.user.has_group('employee_portal_suite.group_salary_report_viewer')
         )
 
     def _salary_report_domain(self):
-        return [('state', 'in', ['generated', 'batch_created'])]
+        return [
+            ('state', 'in', ['generated', 'batch_created']),
+            ('company_id', 'in', request.env.companies.ids),
+        ]
 
     def _get_portal_salary_report(self, report_id):
-        report = request.env['employee.attendance.salary.report'].sudo().browse(report_id)
-        if not report.exists() or report.state not in ('generated', 'batch_created'):
-            return False
-        return report
+        return request.env['employee.attendance.salary.report'].sudo().search(
+            self._salary_report_domain() + [('id', '=', report_id)], limit=1,
+        )
 
     def _parse_amount(self, value):
         try:
@@ -31,7 +33,7 @@ class EmployeePortalSalaryReport(CustomerPortal):
         except (TypeError, ValueError):
             return 0.0
 
-    @http.route('/my/employee/salary-reports', type='http', auth='user', website=True)
+    @http.route('/my/employee/salary-reports', type='http', auth='absar_internal', website=True)
     def portal_salary_reports(self, page=1, **kw):
         if not self._check_salary_report_viewer():
             return request.redirect('/my/employee')
@@ -57,13 +59,13 @@ class EmployeePortalSalaryReport(CustomerPortal):
             'page_name': 'salary_reports',
         })
 
-    @http.route('/my/employee/salary-reports/<int:report_id>', type='http', auth='user', website=True)
+    @http.route('/my/employee/salary-reports/<int:report_id>', type='http', auth='absar_internal', website=True)
     def portal_salary_report_detail(self, report_id, **kw):
         if not self._check_salary_report_viewer():
             return request.redirect('/my/employee')
 
-        report = request.env['employee.attendance.salary.report'].sudo().browse(report_id)
-        if not report.exists() or report.state not in ('generated', 'batch_created'):
+        report = self._get_portal_salary_report(report_id)
+        if not report:
             return request.not_found()
 
         return request.render('employee_portal_suite.portal_salary_report_detail', {
@@ -73,7 +75,7 @@ class EmployeePortalSalaryReport(CustomerPortal):
             'can_edit_salary_lines': not report.batch_created,
         })
 
-    @http.route('/my/employee/salary-reports/<int:report_id>/lines/<int:line_id>/update', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    @http.route('/my/employee/salary-reports/<int:report_id>/lines/<int:line_id>/update', type='http', auth='absar_internal', website=True, methods=['POST'], csrf=True)
     def portal_salary_report_line_update(self, report_id, line_id, **post):
         if not self._check_salary_report_viewer():
             return request.redirect('/my/employee')
@@ -94,7 +96,7 @@ class EmployeePortalSalaryReport(CustomerPortal):
         })
         return request.redirect('/my/employee/salary-reports/%s?updated=1' % report.id)
 
-    @http.route('/my/employee/salary-reports/<int:report_id>/lines/<int:line_id>/delete', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    @http.route('/my/employee/salary-reports/<int:report_id>/lines/<int:line_id>/delete', type='http', auth='absar_internal', website=True, methods=['POST'], csrf=True)
     def portal_salary_report_line_delete(self, report_id, line_id, **post):
         if not self._check_salary_report_viewer():
             return request.redirect('/my/employee')
@@ -112,13 +114,13 @@ class EmployeePortalSalaryReport(CustomerPortal):
         line.unlink()
         return request.redirect('/my/employee/salary-reports/%s?deleted=1' % report.id)
 
-    @http.route('/my/employee/salary-reports/<int:report_id>/print', type='http', auth='user', website=True)
+    @http.route('/my/employee/salary-reports/<int:report_id>/print', type='http', auth='absar_internal', website=True)
     def portal_salary_report_print(self, report_id, **kw):
         if not self._check_salary_report_viewer():
             return request.redirect('/my/employee')
 
-        report = request.env['employee.attendance.salary.report'].sudo().browse(report_id)
-        if not report.exists() or report.state not in ('generated', 'batch_created'):
+        report = self._get_portal_salary_report(report_id)
+        if not report:
             return request.not_found()
 
         pdf, _ = request.env['ir.actions.report'].sudo()._render_qweb_pdf(
@@ -133,7 +135,7 @@ class EmployeePortalSalaryReport(CustomerPortal):
         return request.make_response(pdf, headers=headers)
 
 
-    @http.route('/my/employee/salary-reports/<int:report_id>/excel', type='http', auth='user', website=True)
+    @http.route('/my/employee/salary-reports/<int:report_id>/excel', type='http', auth='absar_internal', website=True)
     def portal_salary_report_excel(self, report_id, **kw):
         if not self._check_salary_report_viewer():
             return request.redirect('/my/employee')

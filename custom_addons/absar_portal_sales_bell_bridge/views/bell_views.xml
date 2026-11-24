@@ -1,0 +1,20 @@
+<odoo>
+  <template id="sales_bell_inbox" name="Sales review notifications">
+    <t t-call="employee_portal_suite.employee_portal_layout">
+      <div class="container py-4">
+        <h3>Sales Approvals &amp; Decisions</h3>
+        <p class="text-muted">Select a notification to open the quotation. Notifications are marked read individually.</p>
+        <div class="list-group">
+          <t t-foreach="events" t-as="item">
+            <a t-att-href="'/my/employee/sales/notifications/%s' % item.id" class="list-group-item list-group-item-action">
+              <span t-att-class="'fw-bold' if not item.is_read else ''" t-esc="item.title"/>
+              <small class="text-muted d-block" t-esc="item.create_date"/>
+              <span t-if="not item.is_read" class="badge bg-info">New</span>
+            </a>
+          </t>
+          <p t-if="not events" class="text-muted">No Sales notifications yet.</p>
+        </div>
+      </div>
+    </t>
+  </template>
+</odoo>

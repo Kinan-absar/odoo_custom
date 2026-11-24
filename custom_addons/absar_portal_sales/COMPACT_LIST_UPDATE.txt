@@ -1,0 +1,7 @@
+18.0.1.4.6 — 2026-10-21
+Compact portal list rows replace the tall, stacked cards. Information is divided
+into aligned columns with one heading row. Rows have a 48px minimum height and
+9px vertical padding; long text uses ellipsis and narrow screens can scroll
+horizontally. Whole-row click and Enter/Space opening remain available.
+Document details, filters, grouping, paging, checkbox guards and roles are preserved.
+No model, controller, security, Employee Portal Suite or revision changes.

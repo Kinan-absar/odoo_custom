@@ -48,7 +48,7 @@ class EmployeePortalPurchaseOrder(http.Controller):
     @http.route(
         '/my/employee/purchase-order/<int:purchase_order_id>/signed',
         type='http',
-        auth='user',
+        auth='absar_internal',
         website=True,
         sitemap=False,
     )

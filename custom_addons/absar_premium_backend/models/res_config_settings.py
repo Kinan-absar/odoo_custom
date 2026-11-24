@@ -1,7 +1,7 @@
 import re
 
 from odoo import api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
 
 HEX_COLOR_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
 
@@ -113,6 +113,8 @@ class ResConfigSettings(models.TransientModel):
         return values
 
     def set_values(self):
+        if not self.env.user.has_group('base.group_system'):
+            raise AccessError('Only Settings administrators can change backend styling.')
         super().set_values()
         params = self.env["ir.config_parameter"].sudo()
         params.set_param(
@@ -149,6 +151,8 @@ class ResConfigSettings(models.TransientModel):
                     )
 
     def action_absar_reset_theme(self):
+        if not self.env.user.has_group('base.group_system'):
+            raise AccessError('Only Settings administrators can change backend styling.')
         keys = [
             "absar_premium_backend.primary_color",
             "absar_premium_backend.primary_hover_color",

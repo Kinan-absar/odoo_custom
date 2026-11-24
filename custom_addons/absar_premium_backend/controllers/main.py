@@ -1,3 +1,4 @@
+from werkzeug.exceptions import Forbidden
 from odoo import http
 from odoo.http import request
 
@@ -37,6 +38,8 @@ class AbsarThemeController(http.Controller):
 
     @http.route("/absar_premium_backend/theme_config", type="json", auth="user")
     def theme_config(self):
+        if not request.env.user._is_internal():
+            raise Forbidden()
         params = request.env["ir.config_parameter"].sudo()
         backend_font = params.get_param("absar_premium_backend.backend_font", "odoo")
         return {

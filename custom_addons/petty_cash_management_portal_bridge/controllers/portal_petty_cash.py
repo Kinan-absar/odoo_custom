@@ -72,7 +72,7 @@ class PortalPettyCash(CustomerPortal):
     # -------------------------------
     # MY REPORTS
     # -------------------------------
-    @http.route(['/my/employee/petty-cash'], type='http', auth="user", website=True)
+    @http.route(['/my/employee/petty-cash'], type='http', auth='absar_internal', website=True)
     def portal_my_petty_cash(self, **kwargs):
         request.env['portal.report.seen'].sudo()._mark_seen(request.env.user.id,'petty_result')
         reports = request.env['petty.cash'].sudo().search([
@@ -92,7 +92,7 @@ class PortalPettyCash(CustomerPortal):
     # -------------------------------
     # APPROVAL QUEUE
     # -------------------------------
-    @http.route(['/my/employee/petty-cash/approvals'], type='http', auth='user', website=True)
+    @http.route(['/my/employee/petty-cash/approvals'], type='http', auth='absar_internal', website=True)
     def portal_petty_cash_approvals(self, status='submitted', **kwargs):
         if not self._is_portal_approver():
             return request.redirect('/my')
@@ -127,7 +127,7 @@ class PortalPettyCash(CustomerPortal):
     # -------------------------------
     # DETAIL
     # -------------------------------
-    @http.route(['/my/employee/petty-cash/<int:report_id>'], type='http', auth="user", website=True)
+    @http.route(['/my/employee/petty-cash/<int:report_id>'], type='http', auth='absar_internal', website=True)
     def portal_petty_cash_detail(self, report_id, **kwargs):
         report = self._get_report_for_view(report_id)
         if not report:
@@ -160,7 +160,7 @@ class PortalPettyCash(CustomerPortal):
     # -------------------------------
     # CREATE REPORT
     # -------------------------------
-    @http.route('/my/employee/petty-cash/create', type='http', auth='user', website=True, methods=['POST'])
+    @http.route('/my/employee/petty-cash/create', type='http', auth='absar_internal', website=True, methods=['POST'])
     def portal_petty_cash_create(self, **post):
         if not request.env.user.has_group('petty_cash_management.group_portal_petty_cash_user'):
             return request.redirect('/my')
@@ -182,7 +182,7 @@ class PortalPettyCash(CustomerPortal):
     # -------------------------------
     # ADD LINE
     # -------------------------------
-    @http.route('/my/employee/petty-cash/<int:report_id>/add-line', type='http', auth='user', website=True, methods=['POST'])
+    @http.route('/my/employee/petty-cash/<int:report_id>/add-line', type='http', auth='absar_internal', website=True, methods=['POST'])
     def portal_add_line_post(self, report_id, **post):
         report = self._get_report_for_view(report_id, allow_approver=False)
         if not report:
@@ -212,7 +212,7 @@ class PortalPettyCash(CustomerPortal):
 
         return request.redirect('/my/employee/petty-cash/%s' % report.id)
 
-    @http.route('/my/employee/petty-cash/<int:report_id>/submit', type='http', auth='user', website=True, methods=['POST'])
+    @http.route('/my/employee/petty-cash/<int:report_id>/submit', type='http', auth='absar_internal', website=True, methods=['POST'])
     def portal_submit_report(self, report_id, **post):
         report = self._get_report_for_view(report_id, allow_approver=False)
         if not report:
@@ -225,7 +225,7 @@ class PortalPettyCash(CustomerPortal):
         report.with_user(request.env.user).action_submit()
         return request.redirect(f'/my/employee/petty-cash/{report_id}')
 
-    @http.route('/my/employee/petty-cash/<int:report_id>/upload-attachment', type='http', auth='user', website=True, methods=['POST'])
+    @http.route('/my/employee/petty-cash/<int:report_id>/upload-attachment', type='http', auth='absar_internal', website=True, methods=['POST'])
     def portal_upload_attachment(self, report_id, **post):
         report = self._get_report_for_view(report_id, allow_approver=False)
         if not report:
@@ -253,7 +253,7 @@ class PortalPettyCash(CustomerPortal):
 
         return request.redirect(f'/my/employee/petty-cash/{report_id}?success=uploaded')
 
-    @http.route('/my/employee/petty-cash/attachment/<int:attachment_id>/download', type='http', auth='user', website=True)
+    @http.route('/my/employee/petty-cash/attachment/<int:attachment_id>/download', type='http', auth='absar_internal', website=True)
     def portal_download_attachment(self, attachment_id, **kw):
         attachment = request.env['ir.attachment'].sudo().browse(attachment_id).exists()
         if not attachment:
@@ -287,7 +287,7 @@ class PortalPettyCash(CustomerPortal):
         ]
         return request.make_response(raw, headers=headers)
 
-    @http.route('/my/employee/petty-cash/attachment/<int:attachment_id>/delete', type='http', auth='user', website=True, methods=['POST'])
+    @http.route('/my/employee/petty-cash/attachment/<int:attachment_id>/delete', type='http', auth='absar_internal', website=True, methods=['POST'])
     def portal_delete_attachment(self, attachment_id, **kw):
         attachment = request.env['ir.attachment'].sudo().browse(attachment_id).exists()
         if not attachment or attachment.res_model != 'petty.cash':
@@ -306,7 +306,7 @@ class PortalPettyCash(CustomerPortal):
     # -------------------------------
     # APPROVE / REJECT
     # -------------------------------
-    @http.route('/my/employee/petty-cash/<int:report_id>/approve', type='http', auth='user', website=True, methods=['POST'])
+    @http.route('/my/employee/petty-cash/<int:report_id>/approve', type='http', auth='absar_internal', website=True, methods=['POST'])
     def portal_approve_report(self, report_id, **post):
         if not self._is_portal_approver():
             return request.redirect('/my')
@@ -323,7 +323,7 @@ class PortalPettyCash(CustomerPortal):
             return request.redirect('/my/employee/petty-cash/%s?' % report.id + urlencode({'error':str(exc)}))
         return request.redirect(f'/my/employee/petty-cash/{report.id}?decision=approved')
 
-    @http.route('/my/employee/petty-cash/<int:report_id>/reject', type='http', auth='user', website=True, methods=['POST'])
+    @http.route('/my/employee/petty-cash/<int:report_id>/reject', type='http', auth='absar_internal', website=True, methods=['POST'])
     def portal_reject_report(self, report_id, **post):
         if not self._is_portal_approver():
             return request.redirect('/my')
@@ -340,7 +340,7 @@ class PortalPettyCash(CustomerPortal):
             return request.redirect('/my/employee/petty-cash/%s?' % report.id + urlencode({'error':str(exc)}))
         return request.redirect(f'/my/employee/petty-cash/{report.id}?decision=rejected')
 
-    @http.route('/my/employee/petty-cash/<int:report_id>/return', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    @http.route('/my/employee/petty-cash/<int:report_id>/return', type='http', auth='absar_internal', website=True, methods=['POST'], csrf=True)
     def portal_return_report(self, report_id, **post):
         report=self._get_report_for_view(report_id,allow_owner=False)
         if not report:raise Forbidden()
@@ -351,7 +351,7 @@ class PortalPettyCash(CustomerPortal):
             return request.redirect('/my/employee/petty-cash/%s?' % report.id + urlencode({'error':str(exc)}))
         return request.redirect('/my/employee/petty-cash/approvals')
 
-    @http.route('/my/employee/petty-cash/<int:report_id>/create-voucher', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    @http.route('/my/employee/petty-cash/<int:report_id>/create-voucher', type='http', auth='absar_internal', website=True, methods=['POST'], csrf=True)
     def portal_create_voucher(self, report_id, **post):
         report=self._get_report_for_view(report_id,allow_owner=False)
         if not report:raise Forbidden()
@@ -363,7 +363,7 @@ class PortalPettyCash(CustomerPortal):
             return request.redirect('/my/employee/petty-cash/%s?' % report.id + urlencode({'error':str(exc)}))
         return request.redirect('/my/employee/petty-cash/%s/voucher' % report.id)
 
-    @http.route('/my/employee/petty-cash/<int:report_id>/voucher', type='http', auth='user', website=True, methods=['GET'])
+    @http.route('/my/employee/petty-cash/<int:report_id>/voucher', type='http', auth='absar_internal', website=True, methods=['GET'])
     def portal_view_voucher(self, report_id, **kw):
         report=self._get_report_for_view(report_id,allow_owner=False)
         if not report or not self._is_portal_approver() or not report.journal_entry_id:raise Forbidden()

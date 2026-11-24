@@ -1,0 +1,19 @@
+<odoo>
+    <record id="report_journal" model="ir.actions.report">
+        <field name="name">Journal Voucher</field><field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field><field name="report_name">absar_portal_accounting.journal_document</field>
+        <field name="report_file">absar_portal_accounting.journal_document</field>
+        <field name="print_report_name">'Journal Voucher - %s' % object.name</field>
+    </record>
+    <template id="journal_document"><t t-call="web.html_container"><t t-foreach="docs" t-as="o"><t t-call="web.external_layout">
+        <div class="page"><h2 style="color:#144b55">Journal Voucher / قيد يومية</h2><h3 t-out="o.name"/>
+            <table class="table table-sm" style="border:1px solid #78b7b9"><tr><td>Accounting Date: <span t-field="o.date"/></td><td>Journal: <span t-field="o.journal_id"/></td></tr>
+                <tr><td>Reference: <span t-field="o.ref"/></td><td>Company: <span t-field="o.company_id"/></td></tr></table>
+            <table class="table table-sm" style="border:1px solid #78b7b9"><thead style="background:#e6f2f2"><tr><th>Account</th><th>Partner</th><th>Description</th><th class="text-end">Debit</th><th class="text-end">Credit</th></tr></thead><tbody>
+                <tr t-foreach="o.line_ids" t-as="line"><td><span t-field="line.account_id"/></td><td><span t-field="line.partner_id"/></td><td><span t-field="line.name"/></td>
+                    <td class="text-end"><span t-field="line.debit"/></td><td class="text-end"><span t-field="line.credit"/></td></tr>
+                <tr><td colspan="3"><strong>Total</strong></td><td class="text-end" t-out="'{:,.2f}'.format(sum(o.line_ids.mapped('debit')))"/><td class="text-end" t-out="'{:,.2f}'.format(sum(o.line_ids.mapped('credit')))"/></tr>
+            </tbody></table>
+        </div>
+    </t></t></t></template>
+</odoo>

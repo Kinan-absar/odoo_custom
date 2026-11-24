@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 from odoo.osv import expression
 from datetime import timedelta
 from odoo.exceptions import ValidationError
@@ -226,6 +226,8 @@ class MaterialRequest(models.Model):
         return self._get_accounting_attachment_count() > self.accounting_docs_submitted_attachment_count
 
     def action_submit_docs_to_accounting(self, note=False):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         for rec in self:
             attachment_count = rec._get_accounting_attachment_count()
             if not attachment_count or attachment_count <= rec.accounting_docs_submitted_attachment_count:
@@ -290,6 +292,8 @@ class MaterialRequest(models.Model):
         return lines
 
     def action_create_vendor_bill(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one()
 
         if not self.no_po_required:
@@ -309,6 +313,8 @@ class MaterialRequest(models.Model):
         }
 
     def action_open_vendor_bills(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one()
 
         bills = self.vendor_bill_ids.filtered(lambda move: move.move_type == "in_invoice")
@@ -705,7 +711,7 @@ class MaterialRequest(models.Model):
     # NOTIFY / ACTIVITY HELPERS
     # ---------------------------------------------------------
     def _notify_user(self, user, subject, body):
-        if not user:
+        if not user or not user.active or not user._is_internal():
             return
         if user.partner_id.email:
             mail_values = {
@@ -720,6 +726,8 @@ class MaterialRequest(models.Model):
         )
 
     def _schedule_activity(self, user, summary, note):
+        if not user or not user.active or not user._is_internal():
+            return
         self.activity_schedule(
             "mail.mail_activity_data_todo",
             user_id=user.id,
@@ -804,13 +812,15 @@ class MaterialRequest(models.Model):
             )
 
     def action_workflow_approve(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         for rec in self:
             if rec.state != 'workflow':
                 raise UserError(_('This Material Request is not in configurable workflow approval.'))
             line = rec.current_approval_line_id.sudo()
             if not line:
                 raise UserError(_('No pending workflow step was found.'))
-            actor = self.env['res.users'].browse(self.env.context.get('workflow_actor_user_id')) or self.env.user
+            actor = self.env.user
             if not line.can_user_approve(actor):
                 raise UserError(_('You are not an eligible approver for the current workflow step.'))
             line.write({
@@ -829,11 +839,13 @@ class MaterialRequest(models.Model):
         return True
 
     def action_workflow_reject(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         for rec in self:
             if rec.state != 'workflow':
                 raise UserError(_('This Material Request is not in configurable workflow approval.'))
             line = rec.current_approval_line_id.sudo()
-            actor = self.env['res.users'].browse(self.env.context.get('workflow_actor_user_id')) or self.env.user
+            actor = self.env.user
             if not line or not line.can_user_approve(actor):
                 raise UserError(_('You are not allowed to reject the current workflow step.'))
             line.write({
@@ -967,6 +979,8 @@ class MaterialRequest(models.Model):
         return True
 
     def action_submit(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self._check_delivery_date()
         for rec in self:
             if rec.state != "draft":
@@ -1002,6 +1016,8 @@ class MaterialRequest(models.Model):
                     )
 
     def action_purchase(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         for rec in self:
             rec._check_approval(
                 required_state="purchase",
@@ -1016,6 +1032,8 @@ class MaterialRequest(models.Model):
             )
 
     def action_store(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         for rec in self:
             rec._check_approval(
                 required_state="store",
@@ -1030,6 +1048,8 @@ class MaterialRequest(models.Model):
             )
 
     def action_project_manager(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         for rec in self:
             rec._check_approval(
                 required_state="project_manager",
@@ -1044,6 +1064,8 @@ class MaterialRequest(models.Model):
             )
 
     def action_director(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         for rec in self:
             rec._check_approval(
                 required_state="director",
@@ -1059,6 +1081,8 @@ class MaterialRequest(models.Model):
 
 
     def action_ceo(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         for rec in self:
             rec._check_approval(
                 required_state="ceo",
@@ -1086,6 +1110,8 @@ class MaterialRequest(models.Model):
                 )
 
     def action_reject(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         for rec in self:
             stage_group_map = {
                 "purchase": "employee_portal_suite.group_mr_purchase_rep",
@@ -1246,6 +1272,8 @@ class MaterialRequest(models.Model):
 
     #Purchase Extension 
     def action_create_po(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one()
 
         return {
@@ -1326,6 +1354,8 @@ class MaterialRequest(models.Model):
             rec.po_status = mapping.get(po.state, po.state)
 
     def action_open_po(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one()
 
         if not self.purchase_order_ids:
@@ -1379,7 +1409,7 @@ class MaterialRequest(models.Model):
         emails = set()
 
         def _add_user(user):
-            if not user or not user.partner_id:
+            if not user or not user.active or not user._is_internal() or not user.partner_id:
                 return
             partners.add(user.partner_id.id)
             if user.partner_id.email:
@@ -1417,19 +1447,3 @@ class MaterialRequest(models.Model):
                 'author_id': self.env.user.partner_id.id,
             })
             mail.send()
-
-
-
-        
-from odoo import models, api
-
-class IrAttachment(models.Model):
-    _inherit = 'ir.attachment'
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        records = super().create(vals_list)
-        for att in records:
-            if att.res_model == 'material.request':
-                att.public = True
-        return records

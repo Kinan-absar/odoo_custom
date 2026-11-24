@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.osv import expression
 import base64
 
@@ -247,7 +247,7 @@ class EmployeeRequest(models.Model):
     # NOTIFICATION HELPERS
     # ---------------------------------------------------------
     def _notify_user(self, user, subject, body):
-        if not user:
+        if not user or not user.active or not user._is_internal():
             return
         if user.partner_id.email:
             mail_values = {
@@ -262,6 +262,8 @@ class EmployeeRequest(models.Model):
         )
 
     def _schedule_activity(self, user, summary, note):
+        if not user or not user.active or not user._is_internal():
+            return
         self.activity_schedule(
             'mail.mail_activity_data_todo',
             user_id=user.id,
@@ -377,13 +379,15 @@ class EmployeeRequest(models.Model):
             )
 
     def action_workflow_approve(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         for rec in self:
             if rec.state != 'workflow':
                 raise UserError(_('This request is not in configurable workflow approval.'))
             line = rec.current_approval_line_id.sudo()
             if not line:
                 raise UserError(_('No pending workflow step was found.'))
-            actor = self.env['res.users'].browse(self.env.context.get('workflow_actor_user_id')) or self.env.user
+            actor = self.env.user
             if not line.can_user_approve(actor):
                 raise UserError(_('You are not an eligible approver for the current workflow step.'))
             line.write({
@@ -402,11 +406,13 @@ class EmployeeRequest(models.Model):
         return True
 
     def action_workflow_reject(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         for rec in self:
             if rec.state != 'workflow':
                 raise UserError(_('This request is not in configurable workflow approval.'))
             line = rec.current_approval_line_id.sudo()
-            actor = self.env['res.users'].browse(self.env.context.get('workflow_actor_user_id')) or self.env.user
+            actor = self.env.user
             if not line or not line.can_user_approve(actor):
                 raise UserError(_('You are not allowed to reject the current workflow step.'))
             line.write({
@@ -518,6 +524,8 @@ class EmployeeRequest(models.Model):
     # USER ACTIONS
     # ---------------------------------------------------------
     def action_submit(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         for rec in self:
             if rec.state != 'draft':
                 raise UserError(_("Only draft requests can be submitted."))
@@ -544,6 +552,8 @@ class EmployeeRequest(models.Model):
                 )
 
     def action_manager_approve(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         for rec in self:
             rec._check_approval(
                 required_state="manager",
@@ -558,6 +568,8 @@ class EmployeeRequest(models.Model):
             )
 
     def action_hr_approve(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         for rec in self:
             rec._check_approval(
                 required_state="hr",
@@ -572,6 +584,8 @@ class EmployeeRequest(models.Model):
             )
 
     def action_finance_approve(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         for rec in self:
             rec._check_approval(
                 required_state="finance",
@@ -586,6 +600,8 @@ class EmployeeRequest(models.Model):
             )
 
     def action_ceo_approve(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         for rec in self:
             rec._check_approval(
                 required_state="ceo",
@@ -634,6 +650,8 @@ class EmployeeRequest(models.Model):
             )
 
     def action_create_time_off(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one()
 
         if not self._user_can_create_time_off():
@@ -673,6 +691,8 @@ class EmployeeRequest(models.Model):
         }
 
     def action_open_time_off(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one()
         if not self.time_off_id:
             raise UserError(_("No Time Off record has been created for this request yet."))
@@ -689,6 +709,8 @@ class EmployeeRequest(models.Model):
     # REJECTION ACTION — FIXED
     # ---------------------------------------------------------
     def action_reject(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         for rec in self:
             stage_group_map = {
                 "manager": "employee_portal_suite.group_employee_portal_manager",
@@ -867,7 +889,7 @@ class EmployeeRequest(models.Model):
         emails = set()
 
         def _add_user(user):
-            if not user or not user.partner_id:
+            if not user or not user.active or not user._is_internal() or not user.partner_id:
                 return
             partners.add(user.partner_id.id)
             if user.partner_id.email:

@@ -19,7 +19,7 @@ class HrEmployee(models.Model):
 
     def _ensure_employee_portal_base_access(self):
         groups = self._employee_portal_base_groups()
-        users = self.mapped("user_id").sudo().filtered(lambda u: u.active)
+        users = self.mapped("user_id").sudo().filtered(lambda u: u.active and u._is_internal())
         for user in users:
             missing = groups - user.groups_id
             if missing:

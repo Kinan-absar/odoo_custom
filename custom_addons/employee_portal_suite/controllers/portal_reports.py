@@ -28,7 +28,7 @@ class EmployeePortalReports(CustomerPortal):
             raise MissingError('Report not found or not available for your account.')
         return report
 
-    @http.route('/my/employee/reports', type='http', auth='user', website=True)
+    @http.route('/my/employee/reports', type='http', auth='absar_internal', website=True)
     def portal_reports_list(self, page=1, **kw):
         Report = request.env['portal.report.document'].sudo()
         domain = self._portal_report_domain()
@@ -51,7 +51,7 @@ class EmployeePortalReports(CustomerPortal):
             'page_name': 'portal_reports',
         })
 
-    @http.route('/my/employee/reports/<int:report_id>', type='http', auth='user', website=True)
+    @http.route('/my/employee/reports/<int:report_id>', type='http', auth='absar_internal', website=True)
     def portal_report_detail(self, report_id, **kw):
         report = self._get_accessible_report(report_id)
         return request.render('employee_portal_suite.portal_report_detail', {
@@ -59,7 +59,7 @@ class EmployeePortalReports(CustomerPortal):
             'page_name': 'portal_reports',
         })
 
-    @http.route('/my/employee/reports/<int:report_id>/view', type='http', auth='user', website=True)
+    @http.route('/my/employee/reports/<int:report_id>/view', type='http', auth='absar_internal', website=True)
     def portal_report_view(self, report_id, **kw):
         report = self._get_accessible_report(report_id)
         if not report.file:
@@ -75,7 +75,7 @@ class EmployeePortalReports(CustomerPortal):
         ]
         return request.make_response(content, headers=headers)
 
-    @http.route('/my/employee/reports/<int:report_id>/download', type='http', auth='user', website=True)
+    @http.route('/my/employee/reports/<int:report_id>/download', type='http', auth='absar_internal', website=True)
     def portal_report_download(self, report_id, **kw):
         report = self._get_accessible_report(report_id)
         if not report.file:

@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from markupsafe import Markup, escape
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tools.safe_eval import safe_eval
 
 
@@ -72,6 +72,8 @@ class EmployeePortalWorkflow(models.Model):
         return errors, warnings
 
     def action_validate_workflow(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         for rec in self:
             errors, warnings = rec._validation_lines()
             if errors:
@@ -95,6 +97,8 @@ class EmployeePortalWorkflow(models.Model):
         }
 
     def action_open_test_wizard(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one()
         return {
             'type': 'ir.actions.act_window',
@@ -190,6 +194,8 @@ class EmployeePortalApprovalDelegation(models.Model):
 
     @api.model
     def delegates_for(self, original_users, approval_role=False, date=None):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         if not original_users:
             return self.env['res.users']
         date = date or fields.Date.context_today(self)
@@ -277,7 +283,7 @@ class EmployeePortalWorkflowApprovalLine(models.Model):
             self.approver_user_ids,
             approval_role=self.approval_role_id,
         )
-        return self.approver_user_ids | delegates
+        return (self.approver_user_ids | delegates).filtered(lambda user: user.active and user._is_internal())
 
     def is_user_direct_approver(self, user=None):
         self.ensure_one()
@@ -285,6 +291,8 @@ class EmployeePortalWorkflowApprovalLine(models.Model):
         return self.state == 'pending' and user in self._effective_users()
 
     def delegated_from_for(self, user):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one()
         if user in self.approver_user_ids:
             return self.env['res.users']
@@ -338,6 +346,8 @@ class EmployeePortalWorkflowApprovalLine(models.Model):
         Legacy group access is handled by callers; this method covers dynamic
         workflow assignments, history, and active delegation.
         """
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         field_name = {
             'employee_request': 'employee_request_id',
             'material_request': 'material_request_id',
@@ -350,6 +360,8 @@ class EmployeePortalWorkflowApprovalLine(models.Model):
     @api.model
     def request_ids_for_user(self, user, request_kind):
         """Dynamic workflow request ids visible to a user through involvement."""
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         field_name = {
             'employee_request': 'employee_request_id',
             'material_request': 'material_request_id',
@@ -404,6 +416,8 @@ class EmployeePortalWorkflowTestWizard(models.TransientModel):
     result = fields.Text(readonly=True)
 
     def action_test(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one()
         workflow = self.workflow_id
         if workflow.applies_to == 'employee_request':
@@ -447,6 +461,8 @@ class EmployeePortalWorkflowReturnWizard(models.TransientModel):
     reason = fields.Text(required=True)
 
     def action_confirm(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one()
         model = self.env.context.get('active_model')
         record_id = self.env.context.get('active_id')
@@ -464,6 +480,8 @@ class EmployeePortalWorkflowOverrideWizard(models.TransientModel):
     reason = fields.Text(required=True, string='Override Reason')
 
     def action_confirm(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one()
         model = self.env.context.get('active_model')
         record_id = self.env.context.get('active_id')
@@ -580,7 +598,9 @@ class WorkflowRequestMixin(models.AbstractModel):
         prepared = []
         for step in steps:
             applies = step.sudo().applies_to_record(self)
-            users = step.sudo().resolve_users(self) if applies else self.env['res.users']
+            users = step.sudo().resolve_users(self).filtered(
+                lambda user: user.active and user._is_internal()
+            ) if applies else self.env['res.users']
             if applies and not users:
                 raise UserError(_('Workflow step "%s" has no approver.') % step.name)
             prepared.append((step, applies, users))
@@ -625,9 +645,11 @@ class WorkflowRequestMixin(models.AbstractModel):
         return True
 
     def action_workflow_return(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one()
         line = self.current_approval_line_id.sudo()
-        actor = self.env['res.users'].browse(self.env.context.get('workflow_actor_user_id')) or self.env.user
+        actor = self.env.user
         if self.state != 'workflow' or not line or not line.can_user_approve(actor):
             raise UserError(_('You are not allowed to return this workflow request.'))
         return {
@@ -642,7 +664,7 @@ class WorkflowRequestMixin(models.AbstractModel):
     def _workflow_return_confirm(self, reason):
         self.ensure_one()
         line = self.current_approval_line_id.sudo()
-        actor = self.env['res.users'].browse(self.env.context.get('workflow_actor_user_id')) or self.env.user
+        actor = self.env.user
         if self.state != 'workflow' or not line or not line.can_user_approve(actor):
             raise UserError(_('You are not allowed to return this workflow request.'))
         line.write({
@@ -659,6 +681,8 @@ class WorkflowRequestMixin(models.AbstractModel):
         return True
 
     def action_workflow_resubmit(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         for rec in self:
             if rec.state != 'returned' or not rec.workflow_id:
                 raise UserError(_('Only a returned configurable-workflow request can be resubmitted.'))
@@ -725,13 +749,15 @@ class EmployeeRequestWorkflowV2(models.Model):
         self._workflow_notify_line(pending)
 
     def action_workflow_approve(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         for rec in self:
             if rec.state != 'workflow':
                 raise UserError(_('This request is not in configurable workflow approval.'))
             line = rec.current_approval_line_id.sudo()
             if not line:
                 raise UserError(_('No pending workflow step was found.'))
-            actor = self.env['res.users'].browse(self.env.context.get('workflow_actor_user_id')) or self.env.user
+            actor = self.env.user
             if not line.can_user_approve(actor):
                 raise UserError(_('You are not an eligible approver for the current workflow step.'))
             override_action = rec._workflow_prepare_override(line, actor)
@@ -750,6 +776,8 @@ class EmployeeRequestWorkflowV2(models.Model):
         return True
 
     def action_submit(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         returned = self.filtered(lambda r: r.state == 'returned' and r.workflow_id)
         if returned:
             returned.action_workflow_resubmit()
@@ -800,6 +828,8 @@ class MaterialRequestWorkflowV2(models.Model):
         self._workflow_notify_line(pending)
 
     def action_workflow_approve(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         for rec in self:
             if rec.needs_clarification:
                 raise UserError(_('Wait for the requester to reply before approving.'))
@@ -808,7 +838,7 @@ class MaterialRequestWorkflowV2(models.Model):
             line = rec.current_approval_line_id.sudo()
             if not line:
                 raise UserError(_('No pending workflow step was found.'))
-            actor = self.env['res.users'].browse(self.env.context.get('workflow_actor_user_id')) or self.env.user
+            actor = self.env.user
             if not line.can_user_approve(actor):
                 raise UserError(_('You are not an eligible approver for the current workflow step.'))
             override_action = rec._workflow_prepare_override(line, actor)
@@ -827,6 +857,8 @@ class MaterialRequestWorkflowV2(models.Model):
         return True
 
     def action_submit(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         returned = self.filtered(lambda r: r.state == 'returned' and r.workflow_id)
         if returned:
             returned.action_workflow_resubmit()

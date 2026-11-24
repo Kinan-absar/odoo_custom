@@ -59,12 +59,12 @@ class EmployeePortalRequests(http.Controller):
     # ---------------------------------------------------------
     def _get_employee(self):
         user = request.env.user
-        return user.employee_id if user.share else request.env['hr.employee']
+        return user.employee_id
 
     # ---------------------------------------------------------
     # EMPLOYEE — LIST OWN REQUESTS
     # ---------------------------------------------------------
-    @http.route('/my/employee/requests', type='http', auth='user', website=True)
+    @http.route('/my/employee/requests', type='http', auth='absar_internal', website=True)
     def portal_list(self, **kw):
         emp = self._get_employee()
         if not emp:
@@ -95,7 +95,7 @@ class EmployeePortalRequests(http.Controller):
     # ---------------------------------------------------------
     # EMPLOYEE — VIEW SINGLE REQUEST
     # ---------------------------------------------------------
-    @http.route('/my/employee/requests/<int:req_id>', type='http', auth='user', website=True)
+    @http.route('/my/employee/requests/<int:req_id>', type='http', auth='absar_internal', website=True)
     def portal_detail(self, req_id, **kw):
         emp = self._get_employee()
         rec = request.env['employee.request'].sudo().browse(req_id)
@@ -111,7 +111,7 @@ class EmployeePortalRequests(http.Controller):
     # ---------------------------------------------------------
     # EMPLOYEE — NEW FORM
     # ---------------------------------------------------------
-    @http.route('/my/employee/requests/new', type='http', auth='user', website=True)
+    @http.route('/my/employee/requests/new', type='http', auth='absar_internal', website=True)
     def portal_new(self, **kw):
         emp = self._get_employee()
         if not emp:
@@ -126,7 +126,7 @@ class EmployeePortalRequests(http.Controller):
     # ---------------------------------------------------------
     # EMPLOYEE — CREATE REQUEST
     # ---------------------------------------------------------
-    @http.route('/my/employee/requests/create', type='http', auth='user', website=True, csrf=True)
+    @http.route('/my/employee/requests/create', type='http', auth='absar_internal', website=True, csrf=True)
     def portal_create(self, **post):
         emp = self._get_employee()
         if not emp:
@@ -183,7 +183,7 @@ class EmployeePortalRequests(http.Controller):
     # ---------------------------------------------------------
     # MANAGER — APPROVAL LIST
     # ---------------------------------------------------------
-    @http.route('/my/employee/approvals', type='http', auth='user', website=True)
+    @http.route('/my/employee/approvals', type='http', auth='absar_internal', website=True)
     def employee_approvals(self, **kw):
         user = request.env.user
         EmployeeReq = request.env['employee.request'].sudo()
@@ -297,7 +297,7 @@ class EmployeePortalRequests(http.Controller):
     # ---------------------------------------------------------
     # MANAGER — APPROVAL DETAIL
     # ---------------------------------------------------------
-    @http.route('/my/employee/approvals/<int:req_id>', type='http', auth='user', website=True)
+    @http.route('/my/employee/approvals/<int:req_id>', type='http', auth='absar_internal', website=True)
     def portal_approval_detail(self, req_id, **kw):
         user = request.env.user
         rec = request.env['employee.request'].sudo().browse(req_id)
@@ -318,7 +318,7 @@ class EmployeePortalRequests(http.Controller):
    # ---------------------------------------------------------
 # PORTAL APPROVE (Manager / HR / Finance / CEO)
 # ---------------------------------------------------------
-    @http.route('/my/employee/requests/approve', type='http', auth='user', website=True, csrf=True)
+    @http.route('/my/employee/requests/approve', type='http', auth='absar_internal', website=True, csrf=True)
     def portal_approve(self, **post):
         req_id = int(post.get("req_id"))
         comment = post.get("comment") or ""
@@ -335,7 +335,7 @@ class EmployeePortalRequests(http.Controller):
         if rec.state == 'workflow':
             if rec.current_approval_line_id:
                 rec.current_approval_line_id.sudo().comment = post.get('comment') or False
-            rec.with_context(workflow_actor_user_id=user.id).action_workflow_approve()
+            rec.action_workflow_approve()
 
         elif rec.state == "manager":
             rec.manager_comment = comment
@@ -359,7 +359,7 @@ class EmployeePortalRequests(http.Controller):
     # ---------------------------------------------------------
     # PORTAL RETURN FOR CORRECTION (configurable workflow only)
     # ---------------------------------------------------------
-    @http.route('/my/employee/requests/return', type='http', auth='user', website=True, csrf=True)
+    @http.route('/my/employee/requests/return', type='http', auth='absar_internal', website=True, csrf=True)
     def portal_return_for_correction(self, **post):
         req_id = int(post.get('req_id'))
         reason = (post.get('reason') or '').strip()
@@ -375,14 +375,14 @@ class EmployeePortalRequests(http.Controller):
         if not reason:
             return request.redirect(f'/my/employee/approvals/{rec.id}')
 
-        rec.with_context(workflow_actor_user_id=user.id)._workflow_return_confirm(reason)
+        rec._workflow_return_confirm(reason)
         return request.redirect('/my/employee/approvals')
 
 
         # ---------------------------------------------------------
     # PORTAL REJECT (Manager / HR / Finance / CEO)
     # ---------------------------------------------------------
-    @http.route('/my/employee/requests/reject', type='http', auth='user', website=True, csrf=True)
+    @http.route('/my/employee/requests/reject', type='http', auth='absar_internal', website=True, csrf=True)
     def portal_reject(self, **post):
         req_id = int(post.get("req_id"))
         comment = (post.get("comment") or "").strip()
@@ -405,7 +405,7 @@ class EmployeePortalRequests(http.Controller):
         if rec.state == 'workflow':
             if rec.current_approval_line_id:
                 rec.current_approval_line_id.sudo().comment = comment
-            rec.with_context(workflow_actor_user_id=user.id).action_workflow_reject()
+            rec.action_workflow_reject()
             return request.redirect('/my/employee/approvals')
         elif rec.state == 'manager':
             rec.manager_comment = comment

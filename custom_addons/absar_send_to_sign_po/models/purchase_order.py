@@ -4,7 +4,7 @@ import io
 from odoo.addons.absar_sign_workflow_core.tools.signature_anchors import resolve_signature_placements
 
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 
 try:
     from pypdf import PdfReader, PdfWriter
@@ -259,6 +259,8 @@ class PurchaseOrder(models.Model):
         template.write({"tag_ids": [(4, tag.id)]})
 
     def action_send_to_sign(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one()
         self.check_access_rights("write")
         self.check_access_rule("write")
@@ -320,6 +322,8 @@ class PurchaseOrder(models.Model):
         return self._absar_send_prepared_po(template, workflow)
 
     def action_open_signature_status(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one()
         return self.env["absar.sign.workflow.service"].open_status(self)
 

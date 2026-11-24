@@ -17,9 +17,6 @@
                             </a>
                         </li>
                         <li class="mb-1">
-                            <a href="/vendor/invoice/upload" class="d-flex align-items-center gap-2 text-decoration-none py-1 px-2 rounded" style="color:#2e7d52;font-weight:600">
-                                <i class="fa fa-upload fa-fw"/> <span t-translate="yes">Upload Invoice</span>
-                            </a>
                         </li>
                         <li class="mb-1">
                             <a href="/vendor/pos" class="d-flex align-items-center gap-2 text-decoration-none py-1 px-2 rounded" style="color:#1a3a5c">

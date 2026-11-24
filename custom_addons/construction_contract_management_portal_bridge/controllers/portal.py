@@ -33,7 +33,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
     # CONTRACTS
     # =========================================================
     @http.route(['/my/employee/contracts', '/my/employee/contracts/page/<int:page>'],
-                type='http', auth='user', website=True)
+                type='http', auth='absar_internal', website=True)
     def portal_employee_contracts(self, page=1, sortby=None, filterby=None, **kw):
         values = self._prepare_portal_layout_values()
         ConstructionContract = request.env['construction.contract'].sudo()
@@ -100,7 +100,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
         })
         return request.render("construction_contract_management_portal_bridge.portal_employee_contracts", values)
 
-    @http.route(['/my/employee/contract/<int:contract_id>'], type='http', auth='user', website=True)
+    @http.route(['/my/employee/contract/<int:contract_id>'], type='http', auth='absar_internal', website=True)
     def portal_employee_contract_detail(self, contract_id, access_token=None, report_type=None, download=False, **kw):
         contract = self._portal_visible_contracts().filtered(lambda c: c.id == contract_id)[:1]
         if not contract:
@@ -120,7 +120,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
             'page_name': 'construction_contract',
         })
 
-    @http.route(['/my/employee/contract-order/<int:order_id>'], type='http', auth='user', website=True)
+    @http.route(['/my/employee/contract-order/<int:order_id>'], type='http', auth='absar_internal', website=True)
     def portal_employee_contract_order_detail(self, order_id, **kw):
         allowed_contract_ids = self._portal_visible_contract_ids()
         order = request.env['construction.contract.order'].sudo().search([
@@ -139,7 +139,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
     # IPCs
     # =========================================================
     @http.route(['/my/employee/ipcs', '/my/employee/ipcs/page/<int:page>'],
-                type='http', auth='user', website=True)
+                type='http', auth='absar_internal', website=True)
     def portal_employee_ipcs(self, page=1, sortby=None, filterby=None, **kw):
         values = self._prepare_portal_layout_values()
         ConstructionIPC = request.env['construction.ipc'].sudo()
@@ -219,7 +219,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
         })
         return request.render("construction_contract_management_portal_bridge.portal_employee_ipcs", values)
 
-    @http.route(['/my/employee/ipc/<int:ipc_id>'], type='http', auth='user', website=True)
+    @http.route(['/my/employee/ipc/<int:ipc_id>'], type='http', auth='absar_internal', website=True)
     def portal_employee_ipc_detail(self, ipc_id, access_token=None, report_type=None, download=False, **kw):
         try:
             ipc_sudo = self._document_check_access('construction.ipc', ipc_id, access_token)
@@ -243,7 +243,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
     # VARIATIONS
     # =========================================================
     @http.route(['/my/employee/variations', '/my/employee/variations/page/<int:page>'],
-                type='http', auth='user', website=True)
+                type='http', auth='absar_internal', website=True)
     def portal_employee_variations(self, page=1, sortby=None, filterby=None, **kw):
         values = self._prepare_portal_layout_values()
         ConstructionVariation = request.env['construction.variation'].sudo()
@@ -321,7 +321,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
         })
         return request.render("construction_contract_management_portal_bridge.portal_employee_variations", values)
 
-    @http.route(['/my/employee/variation/<int:variation_id>'], type='http', auth='user', website=True)
+    @http.route(['/my/employee/variation/<int:variation_id>'], type='http', auth='absar_internal', website=True)
     def portal_employee_variation_detail(self, variation_id, access_token=None, report_type=None, download=False, **kw):
         try:
             variation_sudo = self._document_check_access('construction.variation', variation_id, access_token)
@@ -357,7 +357,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
         })
 
     @http.route(['/my/employee/variation/<int:variation_id>/add_line'],
-                type='http', auth='user', website=True, methods=['POST'], csrf=True)
+                type='http', auth='absar_internal', website=True, methods=['POST'], csrf=True)
     def portal_employee_variation_add_line(self, variation_id, **post):
         try:
             allowed_contract_ids = self._portal_visible_contracts().ids
@@ -449,7 +449,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
     # MEASUREMENTS LIST
     # =========================================================
     @http.route(['/my/employee/measurements', '/my/employee/measurements/page/<int:page>'],
-                type='http', auth='user', website=True)
+                type='http', auth='absar_internal', website=True)
     def portal_employee_measurements(self, page=1, sortby=None, filterby=None, **kw):
         values = self._prepare_portal_layout_values()
         Measurement = request.env['construction.measurement'].sudo()
@@ -530,7 +530,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
     # =========================================================
     # NEW MEASUREMENT
     # =========================================================
-    @http.route(['/my/employee/measurement/new'], type='http', auth='user', website=True, methods=['GET', 'POST'])
+    @http.route(['/my/employee/measurement/new'], type='http', auth='absar_internal', website=True, methods=['GET', 'POST'])
     def portal_construction_measurement_new(self, **post):
         def _measurement_new_values(error_message=None):
             contracts = self._portal_visible_contracts()
@@ -597,7 +597,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
     # =========================================================
     # MEASUREMENT DETAIL
     # =========================================================
-    @http.route(['/my/employee/measurement/<int:measurement_id>'], type='http', auth='user', website=True)
+    @http.route(['/my/employee/measurement/<int:measurement_id>'], type='http', auth='absar_internal', website=True)
     def portal_construction_measurement_detail(self, measurement_id, report_type=None, download=False, **kw):
         error = request.params.get('error')
         success = request.params.get('success')
@@ -675,7 +675,7 @@ class ConstructionPortalEmployeeSuite(CustomerPortal):
     # SAVE / SUBMIT MEASUREMENT LINES
     # =========================================================
     @http.route(['/my/employee/measurement/<int:measurement_id>/add_lines'],
-                type='http', auth='user', website=True, methods=['POST'], csrf=True)
+                type='http', auth='absar_internal', website=True, methods=['POST'], csrf=True)
     def portal_construction_measurement_add_lines(self, measurement_id, **post):
         try:
             allowed_contract_ids = self._portal_visible_contracts().ids

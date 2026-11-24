@@ -78,7 +78,7 @@ class PrintStation(models.Model):
 
     def action_pair(self):
         self.ensure_one()
-        if not self.env.user.has_group('absar_direct_print.group_print_manager'):
+        if not self.env.user._is_internal() or not self.env.user.has_group('absar_direct_print.group_print_manager'):
             raise AccessError(_('Only print managers can pair a station.'))
         token = secrets.token_urlsafe(48)
         self.token_hash = hashlib.sha256(token.encode()).hexdigest()
@@ -86,7 +86,7 @@ class PrintStation(models.Model):
         return {'type':'ir.actions.act_window', 'res_model':pair._name, 'res_id':pair.id,
                 'view_mode':'form', 'views':[(False, 'form')], 'target':'new'}
     def action_revoke(self):
-        if not self.env.user.has_group('absar_direct_print.group_print_manager'):
+        if not self.env.user._is_internal() or not self.env.user.has_group('absar_direct_print.group_print_manager'):
             raise AccessError(_('Only print managers can revoke a station.'))
         self.write({'token_hash': False})
     def _check_sender(self):
@@ -137,7 +137,9 @@ class PrintUser(models.Model):
         return super().SELF_WRITEABLE_FIELDS + ['absar_print_enabled', 'absar_print_station_id']
     @api.model
     def absar_print_preferences(self):
-        return {'enabled': self.env.user.absar_print_enabled and self.env.user.has_group('absar_direct_print.group_print_user')}
+        user = self.env.user
+        return {'enabled': user._is_internal() and user.absar_print_enabled
+                and user.has_group('absar_direct_print.group_print_user')}
 
 class PrintJob(models.Model):
     _name = 'absar.print.job'
@@ -171,7 +173,7 @@ class PrintJob(models.Model):
                 raise UserError(_('The station has already picked up this job.'))
             r.sudo().write({'state':'cancelled', 'pdf_data':False})
     def action_retry(self):
-        if not self.env.user.has_group('absar_direct_print.group_print_manager'):
+        if not self.env.user._is_internal() or not self.env.user.has_group('absar_direct_print.group_print_manager'):
             raise AccessError(_('Only a print manager can retry a job.'))
         for r in self:
             self.env.cr.execute('SELECT id FROM absar_print_job WHERE id=%s FOR UPDATE', [r.id])
@@ -238,7 +240,7 @@ class PrintWizard(models.TransientModel):
 
     @api.model
     def available_reports(self, model_name, view_type, record_ids=None):
-        if not self.env.user.has_group('absar_direct_print.group_print_user'):
+        if not self.env.user._is_internal() or not self.env.user.has_group('absar_direct_print.group_print_user'):
             return []
         if model_name not in self.env or view_type not in ('form', 'list'):
             return []
@@ -306,7 +308,9 @@ class PrintWizard(models.TransientModel):
 
     @api.model
     def open_report(self, action):
-        if not self.env.user.has_group('absar_direct_print.group_print_user'):
+        if not self.env.user._is_internal() or not self.env.user.has_group('absar_direct_print.group_print_user'):
+            raise AccessError(_('Direct printing requires the internal Direct Print User role.'))
+        if not self.env.user._is_internal() or not self.env.user.has_group('absar_direct_print.group_print_user'):
             raise AccessError(_('Direct Print access is required.'))
         if not isinstance(action, dict) or action.get('report_type') != 'qweb-pdf':
             raise UserError(_('Only PDF reports are supported.'))
@@ -323,6 +327,8 @@ class PrintWizard(models.TransientModel):
         w._report_args()  # validate model access before opening preview or queueing
         return {'name':_('Print'),'type':'ir.actions.act_window','res_model':self._name,'res_id':w.id,'view_mode':'form','views':[(False, 'form')],'target':'new'}
     def _report_args(self):
+        if not self.env.user._is_internal() or not self.env.user.has_group('absar_direct_print.group_print_user'):
+            raise AccessError(_('Direct printing requires the internal Direct Print User role.'))
         self.ensure_one()
         self.check_access('read')
         if self.create_uid != self.env.user:

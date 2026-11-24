@@ -1,5 +1,5 @@
 {'name': 'Construction Contract Management - Employee Portal Bridge',
- 'version': '18.0.1.2.1',
+ 'version': '18.0.1.2.2',
  'summary': 'Exposes Construction Contract Management (contracts, IPCs, variations, measurements) inside the '
             'Employee Portal Suite portal.',
  'description': '\n'

@@ -1,0 +1,5 @@
+18.0.1.6.7 — 2026-10-21
+Sales-style record cards and whole-row opening for portal lists.
+Keyboard Enter/Space works; links, selection checkboxes and details remain interactive.
+Record access, approval policy, accounting posting and receipt logic are unchanged.
+Employee Portal Suite is not modified.

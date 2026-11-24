@@ -10,9 +10,22 @@ class TestDirectPrint(TransactionCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.user = new_test_user(cls.env, login='print_test_user', groups='absar_direct_print.group_print_user')
-        cls.other = new_test_user(cls.env, login='print_test_other', groups='absar_direct_print.group_print_user')
+        cls.user = new_test_user(cls.env, login='print_test_user', groups='base.group_user,absar_direct_print.group_print_user')
+        cls.other = new_test_user(cls.env, login='print_test_other', groups='base.group_user,absar_direct_print.group_print_user')
         cls.station = cls.env['absar.print.station'].create({'name':'Test Office','company_id':cls.env.company.id,'allowed_user_ids':[(6,0,[cls.user.id])]})
+    def test_portal_print_role_grants_no_internal_access(self):
+        portal = new_test_user(
+            self.env, login='print_test_portal',
+            groups='base.group_portal,absar_direct_print.group_print_user',
+        )
+        self.assertFalse(portal._is_internal())
+        with self.assertRaises(AccessError):
+            self.station.with_user(portal).check_access('read')
+        wizard = self.env['absar.print.wizard'].with_user(portal)
+        self.assertEqual(wizard.available_reports('res.partner', 'form'), [])
+        with self.assertRaises(AccessError):
+            wizard.open_report({'report_type': 'qweb-pdf'})
+
     def test_station_sender_permissions(self):
         self.station.with_user(self.user)._check_sender()
         with self.assertRaises(AccessError):self.station.with_user(self.other)._check_sender()

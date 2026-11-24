@@ -14,8 +14,8 @@
     <record id="vendor_invoice_portal_rule" model="ir.rule">
         <field name="name">Vendor Access to Own Invoices</field>
         <field name="model_id" ref="model_portal_vendor_invoice"/>
-        <field name="groups" eval="[(4, ref('customer_vendor_portal.group_vendor_portal'))]"/>
-        <field name="domain_force">[('partner_id', '=', user.partner_id.id)]</field>
+        <field name="groups" eval="[(5, 0, 0)]"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [('partner_id', '=', user.partner_id.id), ('partner_id.supplier_rank', '&gt;', 0)]</field>
     </record>
 
     <!-- =======================

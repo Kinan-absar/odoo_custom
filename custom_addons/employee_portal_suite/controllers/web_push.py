@@ -27,7 +27,7 @@ class EmployeePortalWebPushController(http.Controller):
             ],
         )
 
-    @http.route('/employee_portal/push/config', type='http', auth='user', methods=['GET'], csrf=False)
+    @http.route('/employee_portal/push/config', type='http', auth='absar_internal', methods=['GET'], csrf=False)
     def push_config(self, **kwargs):
         user = self._employee_user()
         if not user:
@@ -38,7 +38,7 @@ class EmployeePortalWebPushController(http.Controller):
         ])
         return self._json_response({'ok': True, 'public_key': public_key, 'active_subscriptions': active})
 
-    @http.route('/employee_portal/push/subscribe', type='http', auth='user', methods=['POST'], csrf=False)
+    @http.route('/employee_portal/push/subscribe', type='http', auth='absar_internal', methods=['POST'], csrf=False)
     def push_subscribe(self, **kwargs):
         user = self._employee_user()
         if not user:
@@ -58,7 +58,7 @@ class EmployeePortalWebPushController(http.Controller):
             return self._json_response({'ok': False, 'error': 'Invalid push subscription.'}, status=400)
         return self._json_response({'ok': True})
 
-    @http.route('/employee_portal/push/unsubscribe', type='http', auth='user', methods=['POST'], csrf=False)
+    @http.route('/employee_portal/push/unsubscribe', type='http', auth='absar_internal', methods=['POST'], csrf=False)
     def push_unsubscribe(self, **kwargs):
         user = self._employee_user()
         if not user:
@@ -74,7 +74,7 @@ class EmployeePortalWebPushController(http.Controller):
         request.env['employee.portal.push.subscription'].sudo().search(domain).write({'active': False})
         return self._json_response({'ok': True})
 
-    @http.route('/employee_portal/push/test', type='http', auth='user', methods=['POST'], csrf=False)
+    @http.route('/employee_portal/push/test', type='http', auth='absar_internal', methods=['POST'], csrf=False)
     def push_test(self, **kwargs):
         user = self._employee_user()
         if not user:

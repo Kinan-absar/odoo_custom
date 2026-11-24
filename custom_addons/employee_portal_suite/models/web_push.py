@@ -13,6 +13,7 @@ from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from odoo import api, fields, models
+from odoo.exceptions import AccessError
 
 _logger = logging.getLogger(__name__)
 
@@ -68,6 +69,8 @@ class EmployeePortalPushSubscription(models.Model):
 
     @api.model
     def register_subscription(self, user, subscription, user_agent=None, device_label=None):
+        if not self.env.user._is_internal() or user != self.env.user:
+            raise AccessError('Push subscriptions require the current internal account.')
         endpoint = (subscription or {}).get('endpoint') or ''
         keys = (subscription or {}).get('keys') or {}
         p256dh = keys.get('p256dh') or ''
@@ -245,6 +248,8 @@ class EmployeePortalWebPushService(models.AbstractModel):
         return path
 
     def send_to_user(self, user, title, body, path=None, kind='message', tag=None, urgency=None):
+        if not user or not user._is_internal():
+            return False
         if not user or not user.active:
             return False
         subscriptions = self.env['employee.portal.push.subscription'].sudo().search([

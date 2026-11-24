@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 from datetime import datetime, time, timedelta
 
 
@@ -145,6 +145,11 @@ class AttendanceSalaryReport(models.Model):
         return False
 
     def action_create_payroll_batch(self):
+        self.check_access('write')
+        self.env['hr.payslip.run'].check_access_rights('create')
+        self.env['hr.payslip'].check_access_rights('create')
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one()
         if 'hr.payslip.run' not in self.env.registry or 'hr.payslip' not in self.env.registry:
             raise UserError(_('Payroll is not installed.'))

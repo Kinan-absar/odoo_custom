@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="internal_only_id:id" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_id:id"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_petty_cash" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_petty_cash"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_petty_cash_category" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_petty_cash_category"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_petty_cash_import_wizard" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_petty_cash_import_wizard"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_petty_cash_line" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_petty_cash_line"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_petty_cash_review_return" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_petty_cash_review_return"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_petty_cash_user_config" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_petty_cash_user_config"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+</odoo>

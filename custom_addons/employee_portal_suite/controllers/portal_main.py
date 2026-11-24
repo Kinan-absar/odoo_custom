@@ -56,13 +56,9 @@ class EmployeePortalMain(CustomerPortal):
     # ---------------------------------------------------------
     # EMPLOYEE PORTAL DASHBOARD (MAIN /my/employee)
     # ---------------------------------------------------------
-    @http.route('/my/employee', type='http', auth='user', website=True)
+    @http.route('/my/employee', type='http', auth='absar_internal', website=True)
     def employee_portal_dashboard(self, **kw):
         user = request.env.user
-        # The Employee Portal is for share/portal employee accounts only.
-        # Internal Odoo users must stay in the backend even when linked to hr.employee.
-        if not user.share:
-            return request.redirect('/web')
         employee = user.employee_id
         if not employee:
             return request.redirect('/my')
@@ -194,11 +190,9 @@ class EmployeePortalMain(CustomerPortal):
             "can_use_attendance": can_use_attendance,
         })
 
-    @http.route('/my/employee/profile', type='http', auth='user', website=True, methods=['GET', 'POST'], csrf=True)
+    @http.route('/my/employee/profile', type='http', auth='absar_internal', website=True, methods=['GET', 'POST'], csrf=True)
     def employee_profile(self, **post):
         user = request.env.user
-        if not user.share:
-            return request.redirect('/web')
         employee = user.employee_id.sudo()
         if not employee:
             return request.redirect('/my')

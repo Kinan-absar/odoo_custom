@@ -11,18 +11,9 @@ class CustomerPortalExtended(CustomerPortal):
     # ---------------------------------------------------------
     @http.route(['/my/statements'], type='http', auth='user', website=True)
     def portal_my_statements(self, **kwargs):
-        partner = request.env.user.partner_id
-
-        # Load your Module 1 statement lines
-        Statement = request.env['customer.statement.line']
-        domain = [('partner_id', '=', partner.id)]
-        lines = Statement.sudo().search(domain, order='date asc')
-
-        values = {
-            'statement_lines': lines,
-            'page_name': 'customer_statements',
-        }
-        return request.render('customer_vendor_portal.customer_statement_page', values)
+        # Accounting statement workspaces can include drafts, opening balances
+        # and other internal adjustments. The portal presents posted invoices.
+        return request.redirect('/my/customer_invoices')
 
     # ---------------------------------------------------------
     # CUSTOMER INVOICE LIST
@@ -34,6 +25,8 @@ class CustomerPortalExtended(CustomerPortal):
         Invoice = request.env['account.move']
         domain = [
             ('move_type', '=', 'out_invoice'),
+            ('state', '=', 'posted'),
+            ('company_id', 'in', request.env.user.company_ids.ids),
             ('partner_id', '=', partner.id),
         ]
 
@@ -62,7 +55,11 @@ class CustomerPortalExtended(CustomerPortal):
         partner = request.env.user.partner_id
 
         SaleOrder = request.env['sale.order']
-        domain = [('partner_id', '=', partner.id)]
+        domain = [
+            ('partner_id', '=', partner.id),
+            ('state', 'in', ['sent', 'sale', 'done']),
+            ('company_id', 'in', request.env.user.company_ids.ids),
+        ]
 
         sales_count = SaleOrder.sudo().search_count(domain)
         pager = portal_pager(

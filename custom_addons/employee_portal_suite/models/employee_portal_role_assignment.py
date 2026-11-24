@@ -30,7 +30,8 @@ class EmployeePortalRoleAssignment(models.Model):
     user_count = fields.Integer(compute='_compute_user_count', string='Users')
 
     def _check_superadmin(self):
-        if not self.env.user.has_group('employee_portal_suite.group_employee_portal_superadmin'):
+        if (not self.env.user._is_internal()
+                or not self.env.user.has_group('employee_portal_suite.group_employee_portal_superadmin')):
             raise AccessError(_('Only an Employee Portal Super Administrator can manage roles and permissions.'))
 
     def _group(self):
@@ -54,6 +55,8 @@ class EmployeePortalRoleAssignment(models.Model):
             group = rec._group()
             if not group:
                 continue
+            if any(not user._is_internal() for user in rec.user_ids.sudo()):
+                raise AccessError(_('These employee workflow roles require an internal account.'))
             # Roles are intentionally independent. In particular, Super
             # Administrator does not imply or force Administrator membership.
             group.sudo().write({'users': [(6, 0, rec.user_ids.sudo().ids)]})

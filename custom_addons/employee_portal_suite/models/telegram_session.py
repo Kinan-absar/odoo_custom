@@ -14,7 +14,7 @@ class IrHttp(models.AbstractModel):
         info.update({
             'employee_portal_telegram_connected': bool(user.telegram_chat_id),
             'employee_portal_telegram_connect_available': bool(
-                not user._is_public() and config and config.bot_username
+                user._is_internal() and config and config.bot_username
             ),
         })
         return info

@@ -78,7 +78,7 @@ class EmployeePortalMaterialRequests(http.Controller):
     # ---------------------------------------------------------
     # LIST OWN MATERIAL REQUESTS  (Employee View)
     # ---------------------------------------------------------
-    @http.route("/my/employee/material", type="http", auth="user", website=True)
+    @http.route("/my/employee/material", type="http", auth='absar_internal', website=True)
     def list_material(self, **kw):
         emp = self._employee()
         if not emp:
@@ -114,7 +114,7 @@ class EmployeePortalMaterialRequests(http.Controller):
     # ---------------------------------------------------------
     # DETAIL PAGE
     # ---------------------------------------------------------
-    @http.route("/my/employee/material/<int:req_id>", type="http", auth="user", website=True)
+    @http.route("/my/employee/material/<int:req_id>", type="http", auth='absar_internal', website=True)
     def material_detail(self, req_id, **kw):
         emp = self._employee()
         rec = request.env["material.request"].sudo().browse(req_id)
@@ -138,7 +138,7 @@ class EmployeePortalMaterialRequests(http.Controller):
     # ---------------------------------------------------------
     # NEW FORM
     # ---------------------------------------------------------
-    @http.route("/my/employee/material/new", type="http", auth="user", website=True)
+    @http.route("/my/employee/material/new", type="http", auth='absar_internal', website=True)
     def material_new(self, **kw):
         emp = self._employee()
         if not emp:
@@ -156,7 +156,7 @@ class EmployeePortalMaterialRequests(http.Controller):
     # ---------------------------------------------------------
     # CREATE REQUEST
     # ---------------------------------------------------------
-    @http.route("/my/employee/material/create", type="http", auth="user", website=True, csrf=True)
+    @http.route("/my/employee/material/create", type="http", auth='absar_internal', website=True, csrf=True)
     def material_create(self, **post):
         emp = self._employee()
         if not emp:
@@ -235,7 +235,7 @@ class EmployeePortalMaterialRequests(http.Controller):
                 "res_id": rec.id,
                 "type": "binary",
                 "description": tag,
-                "public": True,   # ← THIS IS THE MAGIC FIX
+                "public": False,
             })
 
         return request.redirect(f"/my/employee/material/{rec.id}")
@@ -243,7 +243,7 @@ class EmployeePortalMaterialRequests(http.Controller):
     # ---------------------------------------------------------
     # MATERIAL REQUEST — APPROVAL LIST (PENDING / APPROVED / REJECTED / ALL)
     # ---------------------------------------------------------
-    @http.route("/my/employee/material/approvals", type="http", auth="user", website=True)
+    @http.route("/my/employee/material/approvals", type="http", auth='absar_internal', website=True)
     def material_approvals(self, **kw):
         user = request.env.user
         Material = request.env["material.request"].sudo()
@@ -407,7 +407,7 @@ class EmployeePortalMaterialRequests(http.Controller):
     # ---------------------------------------------------------
     # APPROVAL DETAIL PAGE
     # ---------------------------------------------------------
-    @http.route("/my/employee/material/approvals/<int:req_id>", type="http", auth="user", website=True)
+    @http.route("/my/employee/material/approvals/<int:req_id>", type="http", auth='absar_internal', website=True)
     def material_approval_detail(self, req_id, **kw):
         rec = request.env["material.request"].sudo().browse(req_id)
 
@@ -454,7 +454,7 @@ class EmployeePortalMaterialRequests(http.Controller):
     # ---------------------------------------------------------
     # APPROVE
     # ---------------------------------------------------------
-    @http.route("/my/employee/material/requests/approve", type="http", auth="user", website=True, csrf=True)
+    @http.route("/my/employee/material/requests/approve", type="http", auth='absar_internal', website=True, csrf=True)
     def material_approve(self, **post):
         user = request.env.user
         rec = request.env["material.request"].sudo().browse(int(post.get("req_id")))
@@ -469,7 +469,7 @@ class EmployeePortalMaterialRequests(http.Controller):
         if rec.state == 'workflow':
             if rec.current_approval_line_id:
                 rec.current_approval_line_id.sudo().comment = comment or False
-            rec.with_context(workflow_actor_user_id=user.id).action_workflow_approve()
+            rec.action_workflow_approve()
 
         elif rec.state == "purchase":
             rec.purchase_comment = comment
@@ -497,7 +497,7 @@ class EmployeePortalMaterialRequests(http.Controller):
     # ---------------------------------------------------------
     # RETURN FOR CORRECTION (configurable workflow only)
     # ---------------------------------------------------------
-    @http.route("/my/employee/material/requests/return", type="http", auth="user", website=True, csrf=True)
+    @http.route("/my/employee/material/requests/return", type="http", auth='absar_internal', website=True, csrf=True)
     def material_return_for_correction(self, **post):
         user = request.env.user
         rec = request.env["material.request"].sudo().browse(int(post.get("req_id")))
@@ -512,13 +512,13 @@ class EmployeePortalMaterialRequests(http.Controller):
         if not reason:
             return request.redirect(f"/my/employee/material/approvals/{rec.id}")
 
-        rec.with_context(workflow_actor_user_id=user.id)._workflow_return_confirm(reason)
+        rec._workflow_return_confirm(reason)
         return request.redirect("/my/employee/material/approvals")
 
     # ---------------------------------------------------------
     # REJECT
     # ---------------------------------------------------------
-    @http.route("/my/employee/material/requests/reject", type="http", auth="user", website=True, csrf=True)
+    @http.route("/my/employee/material/requests/reject", type="http", auth='absar_internal', website=True, csrf=True)
     def material_reject(self, **post):
         user = request.env.user
         rec = request.env["material.request"].sudo().browse(int(post.get("req_id")))
@@ -538,7 +538,7 @@ class EmployeePortalMaterialRequests(http.Controller):
         if rec.state == 'workflow':
             if rec.current_approval_line_id:
                 rec.current_approval_line_id.sudo().comment = comment
-            rec.with_context(workflow_actor_user_id=user.id).action_workflow_reject()
+            rec.action_workflow_reject()
             return request.redirect('/my/employee/material/approvals')
         elif rec.state == "purchase":
             rec.purchase_comment = comment
@@ -556,7 +556,7 @@ class EmployeePortalMaterialRequests(http.Controller):
         return request.redirect("/my/employee/material/approvals")
 
     # PDF MATERIAL REQUEST EXPORT
-    @http.route("/my/employee/material/pdf/<int:req_id>", type="http", auth="user", website=True)
+    @http.route("/my/employee/material/pdf/<int:req_id>", type="http", auth='absar_internal', website=True)
     def portal_material_request_pdf(self, req_id, **kw):
 
         rec = request.env["material.request"].sudo().browse(req_id)
@@ -590,7 +590,7 @@ class EmployeePortalMaterialRequests(http.Controller):
     @http.route(
         "/my/employee/material/requests/set_clarification",
         type="http",
-        auth="user",
+        auth='absar_internal',
         website=True,
         csrf=True,
     )
@@ -601,7 +601,7 @@ class EmployeePortalMaterialRequests(http.Controller):
     @http.route(
         "/my/employee/material/submit_docs_to_accounting",
         type="http",
-        auth="user",
+        auth='absar_internal',
         website=True,
         methods=["POST"],
         csrf=True,
@@ -632,7 +632,7 @@ class EmployeePortalMaterialRequests(http.Controller):
     @http.route(
         '/my/employee/material/attachment/upload',
         type='http',
-        auth='user',
+        auth='absar_internal',
         website=True,
         methods=['POST']
     )
@@ -689,7 +689,7 @@ class EmployeePortalMaterialRequests(http.Controller):
                 "res_id": rec.id,
                 "type": "binary",
                 "description": tag,
-                "public": True,   # ← THIS IS THE MAGIC FIX
+                "public": False,
             })
             uploaded_names.append(filename)
 
@@ -721,7 +721,7 @@ class EmployeePortalMaterialRequests(http.Controller):
     @http.route(
         '/my/employee/material/attachment/delete/<int:att_id>/<int:req_id>',
         type='http',
-        auth='user',
+        auth='absar_internal',
         website=True,
     )
     def delete_material_attachment(self, att_id, req_id, **kw):
@@ -755,7 +755,7 @@ class EmployeePortalMaterialRequests(http.Controller):
         else:
             return request.redirect(f"/my/employee/material/{req_id}")
 
-    @http.route('/my/employee/material/<int:request_id>/message', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    @http.route('/my/employee/material/<int:request_id>/message', type='http', auth='absar_internal', website=True, methods=['POST'], csrf=True)
     def post_message(self, request_id, **post):
         record = request.env['material.request'].sudo().browse(request_id).exists()
         if not record or not record._portal_conversation_allowed(request.env.user):

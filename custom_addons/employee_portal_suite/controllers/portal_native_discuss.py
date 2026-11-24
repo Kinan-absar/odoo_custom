@@ -323,7 +323,7 @@ class EmployeePortalNativeDiscussController(http.Controller):
             ),
         })
 
-    @http.route('/my/employee/discuss', type='http', auth='user', website=True, methods=['GET'])
+    @http.route('/my/employee/discuss', type='http', auth='absar_internal', website=True, methods=['GET'])
     def employee_discuss_entry(self, **kwargs):
         """Stable Chats/PWA root.
 
@@ -341,7 +341,7 @@ class EmployeePortalNativeDiscussController(http.Controller):
             self._discuss_home_values(user),
         )
 
-    @http.route('/my/employee/discuss/manage', type='http', auth='user', website=True, methods=['GET'])
+    @http.route('/my/employee/discuss/manage', type='http', auth='absar_internal', website=True, methods=['GET'])
     def employee_discuss_hub(self, **kwargs):
         user = self._employee_user()
         if not user:
@@ -351,7 +351,7 @@ class EmployeePortalNativeDiscussController(http.Controller):
             self._discuss_home_values(user),
         )
 
-    @http.route('/my/employee/discuss/start', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    @http.route('/my/employee/discuss/start', type='http', auth='absar_internal', website=True, methods=['POST'], csrf=True)
     def employee_discuss_start(self, participant_ids=None, group_name=None, **post):
         user = self._employee_user()
         if not user:
@@ -368,7 +368,7 @@ class EmployeePortalNativeDiscussController(http.Controller):
             return request.redirect('/my/employee/discuss')
         return request.redirect(f'/my/employee/discuss?open_channel={channel.id}')
 
-    @http.route('/my/employee/discuss/channel/<int:channel_id>', type='http', auth='user', website=True, methods=['GET'])
+    @http.route('/my/employee/discuss/channel/<int:channel_id>', type='http', auth='absar_internal', website=True, methods=['GET'])
     def employee_discuss_channel(self, channel_id, **kwargs):
         user = self._employee_user()
         if not user:
@@ -497,8 +497,7 @@ self.addEventListener("notificationclick", (event) => {
     @http.route('/my/employee/sw.js', type='http', auth='public', methods=['GET'], csrf=False)
     def employee_portal_service_worker(self, **kwargs):
         script = r'''
-const CACHE_NAME = "employee-portal-pwa-v51";
-const OFFLINE_PAGES = new Set(["/my/employee", "/my/employee/attendance"]);
+const CACHE_NAME = "employee-portal-pwa-v52";
 self.addEventListener("install", () => { self.skipWaiting(); });
 self.addEventListener("activate", (event) => {
     event.waitUntil((async () => {
@@ -507,24 +506,6 @@ self.addEventListener("activate", (event) => {
         await self.clients.claim();
     })());
 });
-
-async function cachePortalPage(req) {
-    const url = new URL(req.url);
-    const canonical = new Request(url.origin + url.pathname, { credentials: "same-origin" });
-    try {
-        const response = await fetch(req);
-        const finalUrl = new URL(response.url || req.url);
-        if (response.ok && !response.redirected && finalUrl.origin === url.origin && OFFLINE_PAGES.has(url.pathname)) {
-            const cache = await caches.open(CACHE_NAME);
-            await cache.put(canonical, response.clone());
-        }
-        return response;
-    } catch (_) {
-        const cached = await caches.match(canonical);
-        if (cached) return cached;
-        throw _;
-    }
-}
 
 async function cacheAsset(req) {
     const cached = await caches.match(req);
@@ -541,24 +522,16 @@ self.addEventListener("message", (event) => {
     const data = event.data || {};
     if (data.type !== "CACHE_ATTENDANCE_OFFLINE") return;
     event.waitUntil((async () => {
-        let pageOk = true;
-        const pageUrls = ["/my/employee", "/my/employee/attendance"];
-        for (const path of pageUrls) {
-            try {
-                await cachePortalPage(new Request(self.location.origin + path, { credentials: "same-origin" }));
-                const cached = await caches.match(new Request(self.location.origin + path, { credentials: "same-origin" }));
-                if (!cached) pageOk = false;
-            } catch (_) { pageOk = false; }
-        }
         let assetFailures = 0;
         for (const value of (data.assets || []).slice(0, 120)) {
             try {
                 const url = new URL(value, self.location.origin);
-                if (url.origin !== self.location.origin) continue;
+                if (url.origin !== self.location.origin ||
+                    !(url.pathname.startsWith("/web/assets/") || url.pathname.includes("/static/"))) continue;
                 await cacheAsset(new Request(url.href, { credentials: "same-origin" }));
             } catch (_) { assetFailures += 1; }
         }
-        try { event.ports?.[0]?.postMessage({ok: pageOk, asset_failures: assetFailures}); } catch (_) {}
+        try { event.ports?.[0]?.postMessage({ok: false, asset_failures: assetFailures}); } catch (_) {}
     })());
 });
 
@@ -579,12 +552,8 @@ self.addEventListener("fetch", (event) => {
 
     if (req.method !== "GET") return;
 
-    if (req.mode === "navigate" && OFFLINE_PAGES.has(url.pathname)) {
-        event.respondWith(cachePortalPage(req));
-        return;
-    }
-
-    if (["script", "style", "image", "font"].includes(req.destination)) {
+    if (["script", "style", "image", "font"].includes(req.destination) &&
+        (url.pathname.startsWith("/web/assets/") || url.pathname.includes("/static/"))) {
         event.respondWith(cacheAsset(req));
     }
 });
@@ -625,7 +594,7 @@ self.addEventListener("notificationclick", (event) => {
             ('Service-Worker-Allowed', '/my/employee/'),
         ])
 
-    @http.route('/employee_portal/discuss/people_all', type='json', auth='user')
+    @http.route('/employee_portal/discuss/people_all', type='json', auth='absar_internal')
     def employee_discuss_people_all(self):
         """Employee directory for the native Discuss sidebar new-chat dialog."""
         user = self._employee_user()
@@ -643,7 +612,7 @@ self.addEventListener("notificationclick", (event) => {
             })
         return {'people': people}
 
-    @http.route('/employee_portal/discuss/start_json', type='json', auth='user')
+    @http.route('/employee_portal/discuss/start_json', type='json', auth='absar_internal')
     def employee_discuss_start_json(self, user_ids=None, group_name=None):
         """Create/open a native DM or employee group without leaving Discuss."""
         user = self._employee_user()
@@ -666,7 +635,7 @@ self.addEventListener("notificationclick", (event) => {
             'url': f'/my/employee/discuss/channel/{channel.id}',
         }
 
-    @http.route('/employee_portal/discuss/available_people', type='json', auth='user')
+    @http.route('/employee_portal/discuss/available_people', type='json', auth='absar_internal')
     def employee_discuss_available_people(self, channel_id=None):
         user = self._employee_user()
         if not user:
@@ -690,7 +659,7 @@ self.addEventListener("notificationclick", (event) => {
             })
         return {'people': people}
 
-    @http.route('/employee_portal/discuss/add_people', type='json', auth='user')
+    @http.route('/employee_portal/discuss/add_people', type='json', auth='absar_internal')
     def employee_discuss_add_people(self, channel_id=None, user_ids=None):
         user = self._employee_user()
         if not user:
@@ -745,7 +714,7 @@ self.addEventListener("notificationclick", (event) => {
         })
         return {'ok': True, 'channel_id': channel.id}
 
-    @http.route('/employee_portal/discuss/mark_read', type='json', auth='user', csrf=False)
+    @http.route('/employee_portal/discuss/mark_read', type='json', auth='absar_internal', csrf=False)
     def employee_discuss_mark_read(self, channel_id=None, last_message_id=None):
         """Mark a portal-visible native Discuss thread as read immediately."""
         user = self._employee_user()
@@ -776,14 +745,14 @@ self.addEventListener("notificationclick", (event) => {
             payload['ok'] = bool(ok)
         return payload
 
-    @http.route('/employee_portal/discuss/unread', type='json', auth='user')
+    @http.route('/employee_portal/discuss/unread', type='json', auth='absar_internal')
     def employee_discuss_unread(self):
         user = self._employee_user()
         if not user:
             return {'unread': 0}
         return self._unread_payload(user)
 
-    @http.route('/employee_portal/discuss/call/poll', type='json', auth='user', csrf=False)
+    @http.route('/employee_portal/discuss/call/poll', type='json', auth='absar_internal', csrf=False)
     def employee_discuss_call_poll(self):
         """Expose native Discuss RTC invitations to the employee portal shell.
 
@@ -817,7 +786,7 @@ self.addEventListener("notificationclick", (event) => {
             }
         }
 
-    @http.route('/employee_portal/discuss/call/decline', type='json', auth='user', csrf=False)
+    @http.route('/employee_portal/discuss/call/decline', type='json', auth='absar_internal', csrf=False)
     def employee_discuss_call_decline(self, channel_id=None):
         """Decline only the current employee's native RTC invitation."""
         user = self._employee_user()

@@ -73,12 +73,10 @@ class EmployeePortalAttendance(http.Controller):
     # ---------------------------------------------------------
     # ATTENDANCE PAGE
     # ---------------------------------------------------------
-    @http.route('/my/employee/attendance', type='http', auth='user', website=True)
+    @http.route('/my/employee/attendance', type='http', auth='absar_internal', website=True)
     def portal_attendance(self, **kw):
         user = request.env.user
 
-        if not user.share:
-            return request.redirect('/web')
         if not user.has_group('employee_portal_suite.group_portal_attendance_user'):
             return request.redirect('/my/employee')
 
@@ -162,12 +160,10 @@ class EmployeePortalAttendance(http.Controller):
     # ---------------------------------------------------------
     # CHECK-IN
     # ---------------------------------------------------------
-    @http.route('/my/employee/attendance/check_in', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    @http.route('/my/employee/attendance/check_in', type='http', auth='absar_internal', website=True, methods=['POST'], csrf=True)
     def portal_attendance_check_in(self, **post):
         user = request.env.user
 
-        if not user.share:
-            return request.redirect('/web')
         if not user.has_group('employee_portal_suite.group_portal_attendance_user'):
             return request.redirect('/my/employee')
 
@@ -237,12 +233,10 @@ class EmployeePortalAttendance(http.Controller):
     # ---------------------------------------------------------
     # CHECK-OUT
     # ---------------------------------------------------------
-    @http.route('/my/employee/attendance/check_out', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    @http.route('/my/employee/attendance/check_out', type='http', auth='absar_internal', website=True, methods=['POST'], csrf=True)
     def portal_attendance_check_out(self, **post):
         user = request.env.user
 
-        if not user.share:
-            return request.redirect('/web')
         if not user.has_group('employee_portal_suite.group_portal_attendance_user'):
             return request.redirect('/my/employee')
 
@@ -323,11 +317,11 @@ class EmployeePortalAttendance(http.Controller):
     # ---------------------------------------------------------
     @http.route(
         '/my/employee/attendance/device/status',
-        type='http', auth='user', methods=['POST'], csrf=False,
+        type='http', auth='absar_internal', methods=['POST'], csrf=False,
     )
     def portal_attendance_device_status(self, **kwargs):
         user = request.env.user
-        if not user.share or not user.has_group('employee_portal_suite.group_portal_attendance_user'):
+        if not user.has_group('employee_portal_suite.group_portal_attendance_user'):
             return _json_response({'error': 'forbidden'}, 403)
         employee = user.employee_id
         if not employee:
@@ -361,11 +355,11 @@ class EmployeePortalAttendance(http.Controller):
     # ---------------------------------------------------------
     @http.route(
         '/my/employee/attendance/device/request_change',
-        type='http', auth='user', website=True, methods=['POST'], csrf=True,
+        type='http', auth='absar_internal', website=True, methods=['POST'], csrf=True,
     )
     def portal_attendance_device_request_change(self, **post):
         user = request.env.user
-        if not user.share or not user.has_group('employee_portal_suite.group_portal_attendance_user'):
+        if not user.has_group('employee_portal_suite.group_portal_attendance_user'):
             return request.redirect('/my/employee')
         employee = user.employee_id
         if not employee:
@@ -394,11 +388,11 @@ class EmployeePortalAttendance(http.Controller):
     # ---------------------------------------------------------
     @http.route(
         '/my/employee/attendance/offline_sync',
-        type='http', auth='user', methods=['POST'], csrf=False,
+        type='http', auth='absar_internal', methods=['POST'], csrf=False,
     )
     def portal_attendance_offline_sync(self, **kwargs):
         user = request.env.user
-        if not user.share or not user.has_group('employee_portal_suite.group_portal_attendance_user'):
+        if not user.has_group('employee_portal_suite.group_portal_attendance_user'):
             return _json_response({'error': 'forbidden'}, 403)
         employee = user.employee_id
         if not employee:

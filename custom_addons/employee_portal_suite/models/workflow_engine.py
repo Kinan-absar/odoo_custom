@@ -1,5 +1,5 @@
 from odoo import api, fields, models, _
-from odoo.exceptions import ValidationError, UserError
+from odoo.exceptions import AccessError, ValidationError, UserError
 
 
 class EmployeePortalApprovalRole(models.Model):
@@ -33,6 +33,8 @@ class EmployeePortalApprovalRole(models.Model):
     ]
 
     def resolve_users(self, request_record):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one()
         project = getattr(request_record, 'project_id', False)
         if project:
@@ -128,6 +130,8 @@ class EmployeePortalWorkflow(models.Model):
             rec.step_count = len(rec.step_ids)
 
     def action_use_template(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one()
         if not self.is_template:
             raise UserError(_('Choose a workflow template first.'))
@@ -261,6 +265,8 @@ class EmployeePortalWorkflowStep(models.Model):
                 raise ValidationError(_('Select a Specific Approver for step "%s".') % rec.name)
 
     def resolve_users(self, request_record):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one()
         if self.approver_type == 'approval_role':
             return self.approval_role_id.sudo().resolve_users(request_record) if self.approval_role_id else self.env['res.users']

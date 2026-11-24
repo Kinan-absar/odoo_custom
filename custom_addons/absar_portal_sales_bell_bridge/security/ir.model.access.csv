@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sales_bell_creator,Sales Bell events creator,model_absar_sales_bell_event,absar_portal_sales.group_portal_sales_creator,1,0,0,0
+access_sales_bell_approver,Sales Bell events approver,model_absar_sales_bell_event,absar_portal_sales.group_portal_sales_approver,1,0,0,0

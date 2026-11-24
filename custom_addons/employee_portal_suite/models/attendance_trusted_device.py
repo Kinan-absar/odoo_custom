@@ -1,7 +1,7 @@
 import hashlib
 
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 
 
 class EmployeePortalAttendanceDevice(models.Model):
@@ -55,6 +55,8 @@ class EmployeePortalAttendanceDevice(models.Model):
 
     @api.model
     def register_or_check(self, employee, user, token, device_label=None, user_agent=None, request_change=False):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         token = (token or '').strip()
         if len(token) < 32 or len(token) > 512:
             return {'state': 'invalid', 'message': _('Invalid attendance device token.')}
@@ -139,6 +141,8 @@ class EmployeePortalAttendanceDevice(models.Model):
 
     @api.model
     def validate_token(self, employee, token, touch=True):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         device = self.sudo()._device_for_token(employee, token)
         if not device or device.state != 'trusted':
             return False
@@ -147,6 +151,9 @@ class EmployeePortalAttendanceDevice(models.Model):
         return device
 
     def action_trust_replace(self):
+        self.check_access('write')
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one()
         if self.state == 'trusted':
             return True
@@ -175,6 +182,9 @@ class EmployeePortalAttendanceDevice(models.Model):
         return True
 
     def action_revoke(self):
+        self.check_access('write')
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         now = fields.Datetime.now()
         for device in self:
             if device.state == 'revoked':

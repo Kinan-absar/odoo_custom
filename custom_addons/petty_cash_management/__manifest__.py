@@ -1,6 +1,6 @@
 {
     'name': 'Petty Cash Management',
-    'version': '18.0.1.3.10',
+    'version': '18.0.1.3.11',
     'author': 'Kinan',
     'website': 'absar-alomran.com',
     'category': 'Accounting',
@@ -41,7 +41,7 @@
     'depends': ['base', 'account', 'mail', 'web'],
     'data': [
         'security/security.xml',
-        'security/ir.model.access.csv',
+        'security/ir.model.access.csv', 'security/internal_record_rules.xml',
         'data/petty_cash_sequence.xml',
         # REPORTS MUST COME BEFORE VIEWS THAT USE THEM
         'reports/petty_cash_report_action.xml',

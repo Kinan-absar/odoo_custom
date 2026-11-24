@@ -1,3 +1,4 @@
+from . import ir_http
 from . import employee_request
 from . import hr_leave
 from . import approval_flow
@@ -25,7 +26,6 @@ from . import portal_call
 
 from . import portal_chat
 
-from . import res_partner_discuss
 
 from . import discuss_channel_portal
 

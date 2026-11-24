@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="internal_only_employee_attendance_salary_report" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_employee_attendance_salary_report"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_employee_attendance_salary_report_line" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_employee_attendance_salary_report_line"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_employee_portal_approval_delegation" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_employee_portal_approval_delegation"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_employee_portal_approval_role" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_employee_portal_approval_role"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_employee_portal_attendance_device" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_employee_portal_attendance_device"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_employee_portal_backend_filter_card" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_employee_portal_backend_filter_card"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_employee_portal_mr_clarification_wizard" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_employee_portal_mr_clarification_wizard"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_employee_portal_project_role_assignment" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_employee_portal_project_role_assignment"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_employee_portal_push_subscription" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_employee_portal_push_subscription"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_employee_portal_role_assignment" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_employee_portal_role_assignment"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_employee_portal_telegram_config" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_employee_portal_telegram_config"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_employee_portal_workflow" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_employee_portal_workflow"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_employee_portal_workflow_approval_line" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_employee_portal_workflow_approval_line"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_employee_portal_workflow_override_wizard" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_employee_portal_workflow_override_wizard"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_employee_portal_workflow_return_wizard" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_employee_portal_workflow_return_wizard"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_employee_portal_workflow_step" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_employee_portal_workflow_step"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_employee_portal_workflow_test_wizard" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_employee_portal_workflow_test_wizard"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_employee_request" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_employee_request"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_hr_work_location_project" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_hr_work_location_project"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_id:id" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_id:id"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_material_request" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_material_request"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_material_request_line" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_material_request_line"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_portal_announcement" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_portal_announcement"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_portal_call_contact" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_portal_call_contact"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_portal_call_session" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_portal_call_session"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_portal_call_signal" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_portal_call_signal"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_portal_chat_read" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_portal_chat_read"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_portal_chat_thread" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_portal_chat_thread"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_portal_report_document" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_portal_report_document"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+    <record id="internal_only_portal_report_seen" model="ir.rule">
+        <field name="name">Internal accounts only</field>
+        <field name="model_id" ref="model_portal_report_seen"/>
+        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
+    </record>
+</odoo>

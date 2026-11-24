@@ -2,7 +2,7 @@
 import logging
 from markupsafe import Markup
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 
 
 _logger = logging.getLogger(__name__)
@@ -165,9 +165,13 @@ class MaterialRequestClarification(models.Model):
         }
 
     def action_request_clarification(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         return self._clarification_wizard('request')
 
     def action_reply_clarification(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         return self._clarification_wizard('reply')
 
 
@@ -181,6 +185,8 @@ class MaterialClarificationWizard(models.TransientModel):
     text = fields.Text(string='Message', required=True)
 
     def action_send(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one()
         if self.operation == 'request':
             self.request_id._request_clarification(self.text)

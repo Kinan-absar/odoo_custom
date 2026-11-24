@@ -40,17 +40,17 @@ class PettyCashReview(models.Model):
 
     def _is_review_user(self, user=None):
         user = user or self.env.user
-        return user.active and not user._is_public() and any(user.has_group(GROUP+name) for name in
+        return user.active and user._is_internal() and any(user.has_group(GROUP+name) for name in
                    ('group_petty_cash_reviewer_1','group_petty_cash_reviewer_2','group_petty_cash_manager'))
 
     def _review_company(self, user=None):
         self.ensure_one();user=user or self.env.user
-        if not user.active or user._is_public() or not self.company_id or self.company_id not in user.company_ids:
+        if not user.active or not user._is_internal() or not self.company_id or self.company_id not in user.company_ids:
             raise AccessError(_('This petty cash report is not available in your companies.'))
 
     def _can_review(self, user=None):
         self.ensure_one();user=user or self.env.user
-        if not user.active or user._is_public() or self.company_id not in user.company_ids or self.state not in STAGES:
+        if not user.active or not user._is_internal() or self.company_id not in user.company_ids or self.state not in STAGES:
             return False
         return user.has_group(GROUP+STAGES[self.state][0])
 
@@ -111,6 +111,8 @@ class PettyCashReview(models.Model):
         self._review_notify(users, _('%s: %s required') % (self.name,STAGES[self.state][1]))
 
     def action_submit(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         user=self.env.user
         for rec in self:
             rec._review_company(user);rec._review_lock()
@@ -171,6 +173,8 @@ class PettyCashReview(models.Model):
     def action_portal_refuse(self, reason=None):return self._return_or_refuse(reason,refused=True)
 
     def action_reset_to_draft(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         for rec in self:
             rec._review_company();rec._review_lock()
             if not self._is_review_user() or rec.state not in ('refused','approved') or rec.journal_entry_id:
@@ -179,6 +183,8 @@ class PettyCashReview(models.Model):
         return True
 
     def action_create_journal_entry(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one();self._review_company();self._review_lock()
         if not self._is_review_user() or self.state!='approved':
             raise AccessError(_('All three reviews must be completed before a reviewer or manager creates the voucher.'))
@@ -187,6 +193,8 @@ class PettyCashReview(models.Model):
         return super(PettyCashReview,self.sudo().with_company(self.company_id).with_context(_petty_review_token=_TOKEN)).action_create_journal_entry()
 
     def action_open_voucher(self):
+        if not self.env.user._is_internal():
+            raise AccessError(_('This operation requires an internal Odoo account.'))
         self.ensure_one();self._review_company()
         if not self._is_review_user() or not self.journal_entry_id:raise AccessError(_('Voucher is not available.'))
         return {'type':'ir.actions.act_window','res_model':'account.move','res_id':self.journal_entry_id.id,'view_mode':'form'}

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-import base64
-from odoo import http, _
+from odoo import http
+from werkzeug.exceptions import NotFound
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
 from odoo.addons.web.controllers.home import Home
@@ -14,7 +14,7 @@ class VendorPortalLogin(Home):
             return redirect
         user = request.env['res.users'].sudo().browse(uid)
         partner = user.partner_id
-        if partner.supplier_rank:
+        if user._is_portal() and partner.supplier_rank:
             if not partner.vendor_portal_onboarded:
                 return '/my/account'
             return '/vendor/dashboard'
@@ -28,7 +28,7 @@ class VendorPortal(CustomerPortal):
     # ---------------------------------------------------------
     @http.route(['/vendor'], type='http', auth='user', website=True)
     def vendor_home(self, **kw):
-        if not request.env.user.partner_id.supplier_rank:
+        if not request.env.user._is_portal() or not request.env.user.partner_id.supplier_rank:
             return request.redirect('/my/home')
         return request.redirect('/vendor/dashboard')
 
@@ -38,7 +38,7 @@ class VendorPortal(CustomerPortal):
     @http.route(['/my/home'], type='http', auth='user', website=True)
     def home(self, **kw):
         partner = request.env.user.partner_id
-        if partner.supplier_rank:
+        if request.env.user._is_portal() and partner.supplier_rank:
             return request.redirect('/vendor/dashboard')
         return super().home(**kw)
 
@@ -49,7 +49,7 @@ class VendorPortal(CustomerPortal):
     def account(self, redirect=None, **post):
         partner = request.env.user.partner_id
 
-        if partner.supplier_rank:
+        if request.env.user._is_portal() and partner.supplier_rank:
             if post:
                 super().account(redirect=None, **post)
                 if not partner.vendor_portal_onboarded:
@@ -64,23 +64,30 @@ class VendorPortal(CustomerPortal):
         return super().account(redirect=redirect, **post)
 
     # ---------------------------------------------------------
+    def _vendor_partner(self):
+        partner = request.env.user.partner_id
+        if not request.env.user._is_portal() or not partner.supplier_rank:
+            raise NotFound()
+        return partner
+
+    def _vendor_po_domain(self, partner):
+        return [
+            ('partner_id', '=', partner.id),
+            ('state', 'in', ['purchase', 'done']),
+            ('company_id', 'in', request.env.user.company_ids.ids),
+        ]
+
     # VENDOR DASHBOARD
     # ---------------------------------------------------------
     @http.route(['/vendor/dashboard'], type='http', auth='user', website=True)
     def vendor_dashboard(self, **kw):
-        partner = request.env.user.partner_id
-
-        if not partner.supplier_rank:
-            return request.redirect('/my')
+        partner = self._vendor_partner()
 
         Invoice = request.env['portal.vendor.invoice'].sudo()
         domain = [('partner_id', '=', partner.id)]
         all_invoices = Invoice.search(domain)
 
-        po_count = request.env['purchase.order'].sudo().search_count([
-            ('partner_id', '=', partner.id),
-            ('state', 'in', ['purchase', 'done']),
-        ])
+        po_count = request.env['purchase.order'].sudo().search_count(self._vendor_po_domain(partner))
 
         stats = {
             'total': len(all_invoices),
@@ -107,12 +114,10 @@ class VendorPortal(CustomerPortal):
     # ---------------------------------------------------------
     @http.route(['/vendor/pos'], type='http', auth='user', website=True)
     def vendor_po_list(self, page=1, **kw):
-        partner = request.env.user.partner_id
-        if not partner.supplier_rank:
-            return request.redirect('/vendor/dashboard')
+        partner = self._vendor_partner()
 
         PO = request.env['purchase.order'].sudo()
-        domain = [('partner_id', '=', partner.id), ('state', 'in', ['purchase', 'done'])]
+        domain = self._vendor_po_domain(partner)
         pos_count = PO.search_count(domain)
         pager = portal_pager(url='/vendor/pos', total=pos_count, page=page, step=10)
         pos = PO.search(domain, limit=10, offset=pager['offset'], order='date_approve desc')
@@ -126,9 +131,11 @@ class VendorPortal(CustomerPortal):
     # ---------------------------------------------------------
     @http.route(['/vendor/po/<int:po_id>'], type='http', auth='user', website=True)
     def vendor_po_detail(self, po_id, **kw):
-        partner = request.env.user.partner_id
-        po = request.env['purchase.order'].sudo().browse(po_id)
-        if not po.exists() or po.partner_id.id != partner.id or po.state not in ['purchase', 'done']:
+        partner = self._vendor_partner()
+        po = request.env['purchase.order'].sudo().search(
+            self._vendor_po_domain(partner) + [('id', '=', po_id)], limit=1,
+        )
+        if not po:
             return request.redirect('/vendor/pos')
         return request.render('customer_vendor_portal.vendor_po_detail', {
             'po': po, 'page_name': 'vendor_pos',
@@ -139,9 +146,7 @@ class VendorPortal(CustomerPortal):
     # ---------------------------------------------------------
     @http.route(['/vendor/invoices'], type='http', auth='user', website=True)
     def vendor_invoice_list(self, page=1, state=None, **kw):
-        partner = request.env.user.partner_id
-        if not partner.supplier_rank:
-            return request.redirect('/vendor/dashboard')
+        partner = self._vendor_partner()
 
         Invoice = request.env['portal.vendor.invoice'].sudo()
         domain = [('partner_id', '=', partner.id)]
@@ -157,13 +162,11 @@ class VendorPortal(CustomerPortal):
             step=15,
         )
         invoices = Invoice.search(domain, limit=15, offset=pager['offset'])
-        submitted = request.httprequest.args.get('submitted')
 
         return request.render('customer_vendor_portal.vendor_invoice_list', {
             'invoices': invoices,
             'pager': pager,
             'active_state': state or '',
-            'submitted': submitted,
             'page_name': 'vendor_invoices',
         })
 
@@ -172,7 +175,7 @@ class VendorPortal(CustomerPortal):
     # ---------------------------------------------------------
     @http.route(['/vendor/invoice/<int:invoice_id>'], type='http', auth='user', website=True)
     def vendor_invoice_detail(self, invoice_id, **kw):
-        partner = request.env.user.partner_id
+        partner = self._vendor_partner()
         inv = request.env['portal.vendor.invoice'].sudo().browse(invoice_id)
         if not inv.exists() or inv.partner_id.id != partner.id:
             return request.redirect('/vendor/invoices')
@@ -181,73 +184,7 @@ class VendorPortal(CustomerPortal):
             'page_name': 'vendor_invoices',
         })
 
-    # ---------------------------------------------------------
-    # UPLOAD VENDOR INVOICE (GET)
-    # ---------------------------------------------------------
     @http.route(['/vendor/invoice/upload'], type='http', auth='user', methods=['GET'], website=True)
     def vendor_invoice_upload_form(self, **kw):
-        partner = request.env.user.partner_id
-        if not partner.supplier_rank:
-            return request.redirect('/vendor/dashboard')
-
-        purchase_orders = request.env['purchase.order'].sudo().search([
-            ('partner_id', '=', partner.id),
-            ('state', 'in', ['purchase', 'done']),
-        ])
-        return request.render('customer_vendor_portal.vendor_invoice_upload_form', {
-            'purchase_orders': purchase_orders,
-            'page_name': 'vendor_upload',
-        })
-
-    # ---------------------------------------------------------
-    # SUBMIT INVOICE (POST)
-    # ---------------------------------------------------------
-    @http.route(['/vendor/invoice/upload'], type='http', auth='user',
-                methods=['POST'], website=True, csrf=True)
-    def vendor_invoice_upload(self, **post):
-        user = request.env.user
-        partner = user.partner_id
-
-        if not partner.supplier_rank:
-            return request.redirect('/vendor/dashboard')
-
-        po_id = int(post.get('po_id') or 0)
-        file = post.get('invoice_file')
-        attachment_id = False
-
-        if file and hasattr(file, 'filename') and file.filename:
-            file_data = file.read()
-            if file_data:
-                attachment_id = request.env['ir.attachment'].sudo().create({
-                    'name': file.filename,
-                    'datas': base64.b64encode(file_data).decode(),
-                    'type': 'binary',
-                    'res_model': 'portal.vendor.invoice',
-                    'res_id': 0,
-                }).id
-
-        try:
-            request.env['portal.vendor.invoice'].sudo().create({
-                'partner_id': partner.id,
-                'po_id': po_id or False,
-                'amount_total': float(post.get('amount_total') or 0),
-                'invoice_date': post.get('invoice_date') or False,
-                'notes': post.get('notes') or False,
-                'attachment_id': attachment_id or False,
-                'portal_user_id': user.id,
-                'vendor_invoice_number': post.get('vendor_invoice_number') or False,
-            })
-        except Exception:
-            request.env.cr.rollback()
-            purchase_orders = request.env['purchase.order'].sudo().search([
-                ('partner_id', '=', partner.id),
-                ('state', 'in', ['purchase', 'done']),
-            ])
-            return request.render('customer_vendor_portal.vendor_invoice_upload_form', {
-                'purchase_orders': purchase_orders,
-                'error_message': _('This invoice number already exists for your account. Please use a unique invoice number.'),
-                'form_data': post,
-                'page_name': 'vendor_upload',
-            })
-
-        return request.redirect('/vendor/invoices?submitted=1')
+        self._vendor_partner()
+        return request.redirect('/vendor/invoices')

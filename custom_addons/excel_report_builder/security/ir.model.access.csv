@@ -1,8 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_excel_report_template_user,excel.report.template user,model_excel_report_template,excel_report_builder.group_excel_report_user,1,0,0,0
-access_excel_report_template_manager,excel.report.template manager,model_excel_report_template,excel_report_builder.group_excel_report_manager,1,1,1,1
-access_excel_report_column_user,excel.report.column user,model_excel_report_column,excel_report_builder.group_excel_report_user,1,0,0,0
-access_excel_report_column_manager,excel.report.column manager,model_excel_report_column,excel_report_builder.group_excel_report_manager,1,1,1,1
-access_excel_report_filter_user,excel.report.filter user,model_excel_report_filter,excel_report_builder.group_excel_report_user,1,0,0,0
-access_excel_report_filter_manager,excel.report.filter manager,model_excel_report_filter,excel_report_builder.group_excel_report_manager,1,1,1,1
-access_excel_report_wizard_user,excel.report.wizard user,model_excel_report_wizard,excel_report_builder.group_excel_report_user,1,1,1,1

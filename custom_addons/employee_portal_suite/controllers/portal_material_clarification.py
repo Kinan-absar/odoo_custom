@@ -6,7 +6,7 @@ from urllib.parse import urlencode
 
 class MaterialClarificationPortal(http.Controller):
     @http.route('/my/employee/material/requests/clarification/<string:operation>',
-                type='http', auth='user', website=True, methods=['POST'], csrf=True)
+                type='http', auth='absar_internal', website=True, methods=['POST'], csrf=True)
     def clarification(self, operation, **post):
         if operation not in ('request', 'reply'):
             return request.not_found()
@@ -33,11 +33,11 @@ class MaterialClarificationPortal(http.Controller):
             return request.redirect(target + '?' + urlencode({'clarification_error': str(exc)}))
         return request.redirect(target + '?' + urlencode({'clarification_sent': operation}))
 
-    @http.route('/my/employee/material/notifications/summary', type='json', auth='user', methods=['POST'])
+    @http.route('/my/employee/material/notifications/summary', type='json', auth='absar_internal', methods=['POST'])
     def conversation_summary(self):
         return {'count': len(request.env['material.request']._portal_mr_unread(request.env.user))}
 
-    @http.route('/my/employee/material/notifications', type='http', auth='user', website=True)
+    @http.route('/my/employee/material/notifications', type='http', auth='absar_internal', website=True)
     def conversation_notifications(self):
         user = request.env.user
         notifications = request.env['material.request']._portal_mr_unread(user)

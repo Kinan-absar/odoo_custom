@@ -103,7 +103,7 @@ class PortalChatThread(models.Model):
                 channel.write(vals)
             return channel
 
-        users = self.participant_ids.sudo().filtered(lambda user: user.active and user.partner_id)
+        users = self.participant_ids.sudo().filtered(lambda user: user.active and user._is_internal() and user.partner_id)
         partner_ids = users.partner_id.ids
         if len(partner_ids) < 2:
             return self.env['discuss.channel']

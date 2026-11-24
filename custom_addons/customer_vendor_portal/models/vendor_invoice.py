@@ -89,7 +89,7 @@ class VendorInvoice(models.Model):
     )
 
     notes = fields.Text(string='Vendor Notes')
-    internal_notes = fields.Text(string='Internal Notes')
+    internal_notes = fields.Text(string='Internal Notes', groups='base.group_user')
 
     review_comment = fields.Text(
         string='Review Comment for Vendor',
@@ -157,7 +157,7 @@ class VendorInvoice(models.Model):
             raise_if_not_found=False
         )
         if group:
-            for user in group.users.filtered(lambda u: u.active):
+            for user in group.users.filtered(lambda u: u.active and u._is_internal()):
                 record.activity_schedule(
                     'mail.mail_activity_data_todo',
                     user_id=user.id,

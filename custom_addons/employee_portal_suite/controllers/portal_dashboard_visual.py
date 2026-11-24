@@ -29,14 +29,14 @@ def week_windows(today, timezone):
 
 
 class EmployeePortalVisualDashboard(EmployeePortalMain):
-    @http.route()
+    @http.route(auth="absar_internal")
     def employee_portal_dashboard(self, **kw):
         response = super().employee_portal_dashboard(**kw)
         context = getattr(response, 'qcontext', None)
         if context is None:
             return response  # Preserve internal/attendance-only/no-employee redirects.
         user = request.env.user
-        if not user.share or not user.employee_id or user.has_group('employee_portal_suite.group_attendance_only'):
+        if not user.employee_id or user.has_group('employee_portal_suite.group_attendance_only'):
             return response
         context['visual_dashboard'] = self._visual_dashboard(user)
         return response

@@ -24,7 +24,7 @@ class EmployeePortalAnnouncements(http.Controller):
 
         return announcement, attachment
 
-    @http.route('/my/employee/announcements/<int:announcement_id>/attachments/<int:attachment_id>/view', type='http', auth='user', website=True)
+    @http.route('/my/employee/announcements/<int:announcement_id>/attachments/<int:attachment_id>/view', type='http', auth='absar_internal', website=True)
     def portal_announcement_attachment_view(self, announcement_id, attachment_id, **kw):
         announcement, attachment = self._get_accessible_announcement_attachment(announcement_id, attachment_id, target='portal')
         content = base64.b64decode(attachment.datas)
@@ -38,7 +38,7 @@ class EmployeePortalAnnouncements(http.Controller):
         ]
         return request.make_response(content, headers=headers)
 
-    @http.route('/my/employee/announcements/<int:announcement_id>/attachments/<int:attachment_id>/download', type='http', auth='user', website=True)
+    @http.route('/my/employee/announcements/<int:announcement_id>/attachments/<int:attachment_id>/download', type='http', auth='absar_internal', website=True)
     def portal_announcement_attachment_download(self, announcement_id, attachment_id, **kw):
         announcement, attachment = self._get_accessible_announcement_attachment(announcement_id, attachment_id, target='portal')
         content = base64.b64decode(attachment.datas)
@@ -51,7 +51,7 @@ class EmployeePortalAnnouncements(http.Controller):
             ('X-Content-Type-Options', 'nosniff'),
         ]
         return request.make_response(content, headers=headers)
-    @http.route('/employee_portal_suite/announcements/<int:announcement_id>/attachments/<int:attachment_id>/view', type='http', auth='user')
+    @http.route('/employee_portal_suite/announcements/<int:announcement_id>/attachments/<int:attachment_id>/view', type='http', auth='absar_internal')
     def backend_announcement_attachment_view(self, announcement_id, attachment_id, **kw):
         announcement, attachment = self._get_accessible_announcement_attachment(announcement_id, attachment_id, target='backend')
         content = base64.b64decode(attachment.datas)
@@ -65,7 +65,7 @@ class EmployeePortalAnnouncements(http.Controller):
         ]
         return request.make_response(content, headers=headers)
 
-    @http.route('/employee_portal_suite/announcements/<int:announcement_id>/attachments/<int:attachment_id>/download', type='http', auth='user')
+    @http.route('/employee_portal_suite/announcements/<int:announcement_id>/attachments/<int:attachment_id>/download', type='http', auth='absar_internal')
     def backend_announcement_attachment_download(self, announcement_id, attachment_id, **kw):
         announcement, attachment = self._get_accessible_announcement_attachment(announcement_id, attachment_id, target='backend')
         content = base64.b64decode(attachment.datas)
