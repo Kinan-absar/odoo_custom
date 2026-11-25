@@ -5,9 +5,4 @@
         <field name="model_id" ref="model_absar_sales_bell_event"/>
         <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
     </record>
-    <record id="internal_only_id:id" model="ir.rule">
-        <field name="name">Internal accounts only</field>
-        <field name="model_id" ref="model_id:id"/>
-        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
-    </record>
 </odoo>

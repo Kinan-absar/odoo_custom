@@ -1,6 +1,6 @@
 {
     'name': 'ABSAR Portal Sales - Employee Bell Bridge',
-    'version': '18.0.1.0.2',
+    'version': '18.0.1.0.3',
     'category': 'Sales',
     'summary': 'Sales review notifications in the existing Employee Portal bell',
     'author': 'ABSAR Al Omran Construction Company',

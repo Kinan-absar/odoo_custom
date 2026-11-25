@@ -95,11 +95,6 @@
         <field name="model_id" ref="model_hr_work_location_project"/>
         <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
     </record>
-    <record id="internal_only_id:id" model="ir.rule">
-        <field name="name">Internal accounts only</field>
-        <field name="model_id" ref="model_id:id"/>
-        <field name="domain_force">[] if user.has_group('base.group_user') else [(0, '=', 1)]</field>
-    </record>
     <record id="internal_only_material_request" model="ir.rule">
         <field name="name">Internal accounts only</field>
         <field name="model_id" ref="model_material_request"/>
